@@ -143,13 +143,15 @@ export class ApiService {
 
   getLoanProducts(tenantId?: string, customerId?: number): Observable<any[]> {
     if (tenantId) {
-      const params: any = {};
+      const params: any = {
+        _t: Date.now() // Cache buster - force fresh data every time
+      };
       if (customerId) {
         params.customerId = customerId;
       }
       return this.get<any[]>(`loan-products/tenant/${tenantId}`, params);
     }
-    return this.get<any[]>('loan-products');
+    return this.get<any[]>('loan-products', { _t: Date.now() });
   }
 
   applyForLoan(applicationData: any): Observable<any> {

@@ -1086,9 +1086,11 @@ export class ApplyLoanPage implements OnInit {
   }
 
   ionViewWillEnter() {
-    // Re-check pending applications when returning to this page
-    console.log('🔄 ionViewWillEnter - Re-checking pending applications');
+    // Reload products and pending applications when returning to this page
+    // This ensures fresh data if admin changed product availability
+    console.log('🔄 ionViewWillEnter - Reloading products and applications');
     console.log('📍 Current route:', this.router.url);
+    this.loadLoanProducts();
     this.checkPendingApplications();
   }
 

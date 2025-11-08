@@ -145,37 +145,70 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
                 <!-- Amount Breakdown -->
                 <div class="amounts-section">
                   <div class="amount-row">
-                    <span class="amount-label">💵 Principal</span>
+                    <span class="amount-label">💵 Principal Amount</span>
                     <span class="amount-value principal">₱{{ formatCurrency(disbursement.principalAmount) }}</span>
                   </div>
 
-                  @if (disbursement.interestAmount !== undefined && disbursement.interestAmount !== null) {
-                    <div class="amount-row interest-row">
+                  <!-- Fees Deducted in Advance (reduces net proceeds) -->
+                  @if (isDeductedInAdvance(disbursement, 'interest') && disbursement.interestAmount !== undefined && disbursement.interestAmount !== null) {
+                    <div class="amount-row fee-row">
                       <span class="amount-label">
                         📈 Interest ({{ (disbursement.interestRate ?? 0) | number:'1.0-2' }}%)
+                      </span>
+                      <span class="amount-value fee">-₱{{ formatCurrency(disbursement.interestAmount) }}</span>
+                    </div>
+                  }
+                  
+                  @if (isDeductedInAdvance(disbursement, 'processing')) {
+                    <div class="amount-row fee-row">
+                      <span class="amount-label">
+                        📝 Processing Fee ({{ (disbursement.processingFeePercent ?? 0) | number:'1.0-2' }}%)
+                      </span>
+                      <span class="amount-value fee">-₱{{ formatCurrency(disbursement.processingFee) }}</span>
+                    </div>
+                  }
+                  
+                  @if (isDeductedInAdvance(disbursement, 'platform')) {
+                    <div class="amount-row fee-row">
+                      <span class="amount-label">
+                        ⚡ Platform Fee (₱{{ formatCurrency(disbursement.platformFeeMonthly ?? 0) }}/month)
+                      </span>
+                      <span class="amount-value fee">-₱{{ formatCurrency(disbursement.platformFee) }}</span>
+                    </div>
+                  }
+                  
+                  <div class="amount-row net-row">
+                    <span class="amount-label bold">💰 Net Disbursement (Customer Receives)</span>
+                    <span class="amount-value net">₱{{ formatCurrency(disbursement.netDisbursement) }}</span>
+                  </div>
+                  
+                  <!-- Fees NOT Deducted in Advance (will be added to repayment) -->
+                  @if (!isDeductedInAdvance(disbursement, 'interest') && disbursement.interestAmount !== undefined && disbursement.interestAmount !== null) {
+                    <div class="amount-row interest-row">
+                      <span class="amount-label">
+                        + Interest ({{ (disbursement.interestRate ?? 0) | number:'1.0-2' }}%)
                       </span>
                       <span class="amount-value interest">₱{{ formatCurrency(disbursement.interestAmount) }}</span>
                     </div>
                   }
                   
-                  <div class="amount-row fee-row">
-                    <span class="amount-label">
-                      📝 Processing Fee ({{ (disbursement.processingFeePercent ?? 0) | number:'1.0-2' }}%)
-                    </span>
-                    <span class="amount-value fee">-₱{{ formatCurrency(disbursement.processingFee) }}</span>
-                  </div>
+                  @if (!isDeductedInAdvance(disbursement, 'processing')) {
+                    <div class="amount-row">
+                      <span class="amount-label">
+                        + Processing Fee ({{ (disbursement.processingFeePercent ?? 0) | number:'1.0-2' }}%)
+                      </span>
+                      <span class="amount-value">₱{{ formatCurrency(disbursement.processingFee) }}</span>
+                    </div>
+                  }
                   
-                  <div class="amount-row fee-row">
-                    <span class="amount-label">
-                      ⚡ Platform Fee (₱{{ formatCurrency(disbursement.platformFeeMonthly ?? 0) }}/month)
-                    </span>
-                    <span class="amount-value fee">-₱{{ formatCurrency(disbursement.platformFee) }}</span>
-                  </div>
-                  
-                  <div class="amount-row net-row">
-                    <span class="amount-label bold">Net Disbursement</span>
-                    <span class="amount-value net">₱{{ formatCurrency(disbursement.netDisbursement) }}</span>
-                  </div>
+                  @if (!isDeductedInAdvance(disbursement, 'platform')) {
+                    <div class="amount-row">
+                      <span class="amount-label">
+                        + Platform Fee (₱{{ formatCurrency(disbursement.platformFeeMonthly ?? 0) }}/month)
+                      </span>
+                      <span class="amount-value">₱{{ formatCurrency(disbursement.platformFee) }}</span>
+                    </div>
+                  }
                 </div>
 
                 <!-- Details -->
@@ -1242,6 +1275,33 @@ export class CollectorDisbursementsPage implements OnInit, ViewWillEnter {
       paymaya: '💳 PayMaya',
     };
     return labels[method] || method;
+  }
+
+  /**
+   * Check if a specific fee is deducted in advance (from net proceeds)
+   * @param disbursement The disbursement object
+   * @param feeType The type of fee: 'processing', 'platform', or 'interest'
+   * @returns true if the fee is deducted in advance, false otherwise
+   */
+  isDeductedInAdvance(disbursement: PendingDisbursement, feeType: 'processing' | 'platform' | 'interest'): boolean {
+    const anyDisbursement = disbursement as any;
+    
+    switch (feeType) {
+      case 'processing':
+        return anyDisbursement.deductProcessingFeeInAdvance ?? 
+               anyDisbursement.deduct_processing_fee_in_advance ?? 
+               false;
+      case 'platform':
+        return anyDisbursement.deductPlatformFeeInAdvance ?? 
+               anyDisbursement.deduct_platform_fee_in_advance ?? 
+               false;
+      case 'interest':
+        return anyDisbursement.deductInterestInAdvance ?? 
+               anyDisbursement.deduct_interest_in_advance ?? 
+               false;
+      default:
+        return false;
+    }
   }
 
   async showToast(message: string, color: string = 'success') {

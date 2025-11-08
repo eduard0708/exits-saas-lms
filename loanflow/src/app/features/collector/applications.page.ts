@@ -183,57 +183,93 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
                   
                   <div class="loan-summary">
                     <div class="summary-row">
-                      <span class="summary-label">Principal</span>
+                      <span class="summary-label">Principal Amount</span>
                       <span class="summary-value">₱{{ calculation()!.loanAmount.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</span>
                     </div>
                     <div class="summary-divider"></div>
                     
-                    <div class="summary-row">
-                      <span class="summary-label">
-                        Interest ({{ approveForm.approvedInterestRate | number:'1.0-2' }}%)
-                      </span>
-                      <span class="summary-value highlight-orange">₱{{ calculation()!.interestAmount.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</span>
-                    </div>
-                    <div class="summary-divider"></div>
+                    <!-- Show fees deducted in advance (net proceeds section) -->
+                    @if (deductInterestInAdvance) {
+                      <div class="summary-row">
+                        <span class="summary-label">
+                          Interest ({{ approveForm.approvedInterestRate | number:'1.0-2' }}%)
+                        </span>
+                        <span class="summary-value highlight-orange">-₱{{ calculation()!.interestAmount.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</span>
+                      </div>
+                      <div class="summary-divider"></div>
+                    }
                     
-                    <div class="summary-row">
-                      <span class="summary-label">
-                        Processing Fee ({{ productProcessingFeePercent | number:'1.0-2' }}%)
-                      </span>
-                      <span class="summary-value">₱{{ calculation()!.processingFeeAmount.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</span>
-                    </div>
-                    <div class="summary-divider"></div>
+                    @if (deductProcessingFeeInAdvance) {
+                      <div class="summary-row">
+                        <span class="summary-label">
+                          Processing Fee ({{ productProcessingFeePercent | number:'1.0-2' }}%)
+                        </span>
+                        <span class="summary-value">-₱{{ calculation()!.processingFeeAmount.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</span>
+                      </div>
+                      <div class="summary-divider"></div>
+                    }
                     
-                    @if (calculation()!.platformFee > 0) {
+                    @if (deductPlatformFeeInAdvance && calculation()!.platformFee > 0) {
                       <div class="summary-row">
                         <span class="summary-label">
                           Platform Fee (₱{{ productPlatformFee | number:'1.0-2' }}/month)
+                        </span>
+                        <span class="summary-value">-₱{{ calculation()!.platformFee.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</span>
+                      </div>
+                      <div class="summary-divider"></div>
+                    }
+                    
+                    <div class="summary-row highlight-row">
+                      <span class="summary-label">💵 Net Proceeds (Customer Receives)</span>
+                      <span class="summary-value amount">₱{{ calculation()!.netProceeds.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</span>
+                    </div>
+                    <div class="summary-divider"></div>
+                    
+                    <!-- Show fees NOT deducted in advance (will be added to repayment) -->
+                    @if (!deductInterestInAdvance) {
+                      <div class="summary-row">
+                        <span class="summary-label">
+                          + Interest ({{ approveForm.approvedInterestRate | number:'1.0-2' }}%)
+                        </span>
+                        <span class="summary-value highlight-orange">₱{{ calculation()!.interestAmount.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</span>
+                      </div>
+                      <div class="summary-divider"></div>
+                    }
+                    
+                    @if (!deductProcessingFeeInAdvance) {
+                      <div class="summary-row">
+                        <span class="summary-label">
+                          + Processing Fee ({{ productProcessingFeePercent | number:'1.0-2' }}%)
+                        </span>
+                        <span class="summary-value">₱{{ calculation()!.processingFeeAmount.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</span>
+                      </div>
+                      <div class="summary-divider"></div>
+                    }
+                    
+                    @if (!deductPlatformFeeInAdvance && calculation()!.platformFee > 0) {
+                      <div class="summary-row">
+                        <span class="summary-label">
+                          + Platform Fee (₱{{ productPlatformFee | number:'1.0-2' }}/month)
                         </span>
                         <span class="summary-value">₱{{ calculation()!.platformFee.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</span>
                       </div>
                       <div class="summary-divider"></div>
                     }
                     
-                    <div class="summary-row">
-                      <span class="summary-label">Net Proceeds</span>
-                      <span class="summary-value amount">₱{{ calculation()!.netProceeds.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</span>
-                    </div>
-                    <div class="summary-divider"></div>
-                    
-                    <div class="summary-row">
-                      <span class="summary-label">Total Repayment</span>
+                    <div class="summary-row highlight-row">
+                      <span class="summary-label">📊 Total Repayment</span>
                       <span class="summary-value highlight-green">₱{{ calculation()!.totalRepayable.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</span>
                     </div>
                     <div class="summary-divider"></div>
                     
                     <div class="summary-row">
-                      <span class="summary-label">Installments</span>
-                      <span class="summary-value">{{ calculation()!.numPayments }} payments</span>
+                      <span class="summary-label">Number of Payments</span>
+                      <span class="summary-value">{{ calculation()!.numPayments }} installments</span>
                     </div>
                     <div class="summary-divider"></div>
                     
                     <div class="summary-row highlight-row">
-                      <span class="summary-label">Per Installment</span>
+                      <span class="summary-label">💳 Per Installment</span>
                       <span class="summary-value highlight-large">₱{{ calculation()!.installmentAmount.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</span>
                     </div>
                   </div>
@@ -1069,6 +1105,11 @@ export class CollectorApplicationsPage implements OnInit, OnDestroy {
   productPlatformFee = 0;
   productPaymentFrequency: 'daily' | 'weekly' | 'biweekly' | 'monthly' = 'daily';
   productInterestType: 'flat' | 'reducing' | 'compound' = 'flat';
+  
+  // Deduction flags
+  deductPlatformFeeInAdvance = false;
+  deductProcessingFeeInAdvance = false;
+  deductInterestInAdvance = false;
 
   constructor() {
     addIcons({
@@ -1180,6 +1221,11 @@ export class CollectorApplicationsPage implements OnInit, OnDestroy {
       'product_interest_type',
     ]);
     this.productInterestType = this.normalizeInterestType(resolvedInterestType);
+    
+    // Extract deduction flags
+    this.deductPlatformFeeInAdvance = app.deductPlatformFeeInAdvance ?? app.deduct_platform_fee_in_advance ?? false;
+    this.deductProcessingFeeInAdvance = app.deductProcessingFeeInAdvance ?? app.deduct_processing_fee_in_advance ?? false;
+    this.deductInterestInAdvance = app.deductInterestInAdvance ?? app.deduct_interest_in_advance ?? false;
 
     const defaultInterestRate = productInterestRate !== null && productInterestRate > 0
       ? productInterestRate
@@ -1235,6 +1281,9 @@ export class CollectorApplicationsPage implements OnInit, OnDestroy {
         platformFee: Math.max(0, this.productPlatformFee || 0),
         latePenaltyPercentage: 0,
         disbursementDate: new Date().toISOString(),
+        deductPlatformFeeInAdvance: this.deductPlatformFeeInAdvance,
+        deductProcessingFeeInAdvance: this.deductProcessingFeeInAdvance,
+        deductInterestInAdvance: this.deductInterestInAdvance,
       };
 
       this.calculationLoading.set(true);

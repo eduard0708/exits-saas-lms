@@ -16,12 +16,6 @@
   <!-- Content Container with Padding -->
   <div class="application-form-container">
   
-  <!-- Back Button in Content -->
-  <button class="content-back-button" (click)="goBack()">
-    <span class="back-icon">←</span>
-    <span class="back-text">Back to Products</span>
-  </button>
-
   @if (loading()) {
     <div class="loading-container">
       <ion-spinner name="crescent"></ion-spinner>
@@ -193,19 +187,19 @@
           </div>
           @if (product()!.processingFee > 0 && product()!.deductProcessingFeeInAdvance) {
             <div class="summary-line negative">
-              <span class="summary-label">Processing Fee ({{ product()!.processingFee }}%) <span class="deduct-badge">Deducted</span></span>
+              <span class="summary-label">Processing Fee ({{ product()!.processingFee }}%)</span>
               <span class="summary-value">-₱{{ formatCurrency(getProcessingFeeAmount()) }}</span>
             </div>
           }
           @if (hasPlatformFee() && product()!.deductPlatformFeeInAdvance) {
             <div class="summary-line negative">
-              <span class="summary-label">Platform Fee (per month) <span class="deduct-badge">Deducted</span></span>
+              <span class="summary-label">Platform Fee (per month)</span>
               <span class="summary-value">-₱{{ formatCurrency(getPlatformFee()) }}</span>
             </div>
           }
           @if (getTotalInterest() > 0 && product()!.deductInterestInAdvance) {
             <div class="summary-line negative">
-              <span class="summary-label">Interest ({{ product()!.interestRate }}%) <span class="deduct-badge">Deducted</span></span>
+              <span class="summary-label">Interest ({{ product()!.interestRate }}%)</span>
               <span class="summary-value">-₱{{ formatCurrency(getTotalInterest()) }}</span>
             </div>
           }
@@ -253,7 +247,7 @@
         <div class="summary-note">
           <ion-icon name="information-circle-outline" class="note-icon"></ion-icon>
           <div class="note-text">
-            <p>Fees marked as "Deducted" will be taken from the loan amount before disbursement. Net Received shows what you'll actually get. This is an estimate - actual terms may vary. Late payments may incur penalties.</p>
+            <p>Fees shown above will be deducted from the loan amount before disbursement. Net Received shows what you'll actually get. This is an estimate - actual terms may vary. Late payments may incur penalties.</p>
           </div>
         </div>
       </ion-card-content>
@@ -270,6 +264,12 @@
       <ion-icon slot="start" name="checkmark-circle-outline"></ion-icon>
       {{ submitting() ? 'Submitting...' : 'Submit Application' }}
     </ion-button>
+    
+    <!-- Back Button -->
+    <button class="back-bottom-button" (click)="goBack()">
+      <ion-icon name="arrow-back-outline"></ion-icon>
+      Back to Products
+    </button>
   }
   </div>
 </ion-content>

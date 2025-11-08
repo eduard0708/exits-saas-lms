@@ -69,6 +69,13 @@ export interface CollectorApplication {
   product_loan_term_type?: string | null;
   productFixedTermDays?: number | null;
   product_fixed_term_days?: number | null;
+  // Deduction flags - determine which fees are deducted from net proceeds
+  deductPlatformFeeInAdvance?: boolean;
+  deduct_platform_fee_in_advance?: boolean;
+  deductProcessingFeeInAdvance?: boolean;
+  deduct_processing_fee_in_advance?: boolean;
+  deductInterestInAdvance?: boolean;
+  deduct_interest_in_advance?: boolean;
   // Fallback fields (if API changes)
   customerName?: string;
   loanProductName?: string;
@@ -123,6 +130,13 @@ export interface PendingDisbursement {
   paymentFrequency?: string;
   status?: string;
   type?: 'loan' | 'application';
+  // Deduction flags - determine which fees are deducted from net proceeds
+  deductPlatformFeeInAdvance?: boolean;
+  deduct_platform_fee_in_advance?: boolean;
+  deductProcessingFeeInAdvance?: boolean;
+  deduct_processing_fee_in_advance?: boolean;
+  deductInterestInAdvance?: boolean;
+  deduct_interest_in_advance?: boolean;
 }
 
 export interface DisburseDto {

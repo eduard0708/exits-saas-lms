@@ -76,6 +76,13 @@ interface RouteCustomer {
   dueDate: string;
   status: 'not-visited' | 'visited' | 'collected' | 'missed';
   distance: string;
+  // Grace period info
+  gracePeriodDays?: number;
+  latePenaltyPercent?: number;
+  daysOverdue?: number;
+  gracePeriodRemaining?: number;
+  gracePeriodConsumed?: boolean;
+  totalPenalties?: number;
 }
 
 interface CollectionStats {
@@ -351,6 +358,43 @@ interface CollectionStats {
                       <span class="info-value">{{ getInstallmentsPaid(loan) }} / {{ getTotalInstallments(loan) }}</span>
                     </div>
                   </div>
+
+                  <!-- Grace Period Status (for overdue loans) -->
+                  @if (loan.status === 'missed' && loan.daysOverdue && loan.daysOverdue > 0) {
+                    <div class="grace-period-alert" [class.grace-consumed]="loan.gracePeriodConsumed">
+                      <div class="alert-header">
+                        <ion-icon [name]="loan.gracePeriodConsumed ? 'alert-circle' : 'time'"></ion-icon>
+                        <span class="alert-title">
+                          {{ loan.gracePeriodConsumed ? 'Grace Period Expired' : 'Within Grace Period' }}
+                        </span>
+                      </div>
+                      <div class="alert-body">
+                        <div class="alert-stat">
+                          <span class="stat-label">Days Overdue:</span>
+                          <span class="stat-value overdue">{{ loan.daysOverdue }} day(s)</span>
+                        </div>
+                        @if (loan.gracePeriodConsumed) {
+                          <div class="alert-stat">
+                            <span class="stat-label">Total Penalties:</span>
+                            <span class="stat-value penalty">₱{{ formatCurrency(loan.totalPenalties || 0) }}</span>
+                          </div>
+                          <div class="penalty-note">
+                            <ion-icon name="information-circle-outline"></ion-icon>
+                            Penalty: {{ loan.latePenaltyPercent }}%/day after {{ loan.gracePeriodDays }} day grace
+                          </div>
+                        } @else {
+                          <div class="alert-stat">
+                            <span class="stat-label">Grace Remaining:</span>
+                            <span class="stat-value grace">{{ loan.gracePeriodRemaining }} day(s)</span>
+                          </div>
+                          <div class="grace-note">
+                            <ion-icon name="checkmark-circle-outline"></ion-icon>
+                            No penalty yet. {{ loan.gracePeriodDays }} day grace period.
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
 
                   <!-- Actions -->
                   <div class="card-actions">
@@ -1230,6 +1274,101 @@ interface CollectionStats {
 
     .info-item ion-icon {
       font-size: 12px;
+    }
+
+    /* Grace Period Alert */
+    .grace-period-alert {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(99, 102, 241, 0.05));
+      border: 1.5px solid rgba(59, 130, 246, 0.25);
+    }
+
+    .grace-period-alert.grace-consumed {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(220, 38, 38, 0.05));
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .alert-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .alert-header ion-icon {
+      font-size: 18px;
+      color: #3b82f6;
+    }
+
+    .grace-period-alert.grace-consumed .alert-header ion-icon {
+      color: #ef4444;
+    }
+
+    .alert-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ion-text-color);
+    }
+
+    .alert-body {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .alert-stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    .alert-stat .stat-label {
+      color: var(--ion-color-medium);
+      font-weight: 500;
+    }
+
+    .alert-stat .stat-value {
+      font-weight: 700;
+    }
+
+    .alert-stat .stat-value.overdue {
+      color: #f59e0b;
+    }
+
+    .alert-stat .stat-value.penalty {
+      color: #ef4444;
+    }
+
+    .alert-stat .stat-value.grace {
+      color: #10b981;
+    }
+
+    .penalty-note, .grace-note {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--ion-color-medium);
+      margin-top: 4px;
+      padding: 6px 8px;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 6px;
+    }
+
+    .penalty-note ion-icon, .grace-note ion-icon {
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .penalty-note ion-icon {
+      color: #ef4444;
+    }
+
+    .grace-note ion-icon {
+      color: #10b981;
     }
 
     .address-row {

@@ -44,6 +44,9 @@ export class LoanProductsController {
       gracePeriodDays: product.gracePeriodDays,
       paymentFrequency: product.paymentFrequency,
       isActive: product.isActive,
+      deductPlatformFeeInAdvance: product.deductPlatformFeeInAdvance ?? false,
+      deductProcessingFeeInAdvance: product.deductProcessingFeeInAdvance ?? false,
+      deductInterestInAdvance: product.deductInterestInAdvance ?? false,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     };
@@ -102,6 +105,9 @@ export class LoanProductsController {
         'payment_frequency',
         'is_active',
         'availability_type',
+        'deduct_platform_fee_in_advance',
+        'deduct_processing_fee_in_advance',
+        'deduct_interest_in_advance',
         'created_at',
         'updated_at'
       )

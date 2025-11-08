@@ -809,6 +809,9 @@ export class MoneyLoanService {
         'mlp.interest_type as product_interest_type',
         'mlp.interest_rate as product_interest_rate',
         'mlp.fixed_term_days',
+        'mlp.deduct_platform_fee_in_advance',
+        'mlp.deduct_processing_fee_in_advance',
+        'mlp.deduct_interest_in_advance',
         knex.raw("CONCAT_WS(' ', assigned_emp.first_name, assigned_emp.last_name) as assigned_employee_name"),
       )
   .where('mll.tenant_id', tenantId)
@@ -884,6 +887,11 @@ export class MoneyLoanService {
   const assignedEmployeeIdValue = getNumber(row, ['assignedEmployeeId', 'assigned_employee_id'], NaN);
   const assignedEmployeeId = Number.isNaN(assignedEmployeeIdValue) ? null : assignedEmployeeIdValue;
   const assignedEmployeeName = getString(row, ['assignedEmployeeName', 'assigned_employee_name'], null);
+      
+      // Extract deduction flags
+      const deductPlatformFeeInAdvance = row.deduct_platform_fee_in_advance ?? row.deductPlatformFeeInAdvance ?? false;
+      const deductProcessingFeeInAdvance = row.deduct_processing_fee_in_advance ?? row.deductProcessingFeeInAdvance ?? false;
+      const deductInterestInAdvance = row.deduct_interest_in_advance ?? row.deductInterestInAdvance ?? false;
 
       return {
         id: loanId ?? customerId ?? 0,
@@ -910,6 +918,12 @@ export class MoneyLoanService {
         termDays,
         termMonths,
         paymentFrequency,
+        deductPlatformFeeInAdvance,
+        deduct_platform_fee_in_advance: deductPlatformFeeInAdvance,
+        deductProcessingFeeInAdvance,
+        deduct_processing_fee_in_advance: deductProcessingFeeInAdvance,
+        deductInterestInAdvance,
+        deduct_interest_in_advance: deductInterestInAdvance,
         customer: {
           fullName: customerFullName || customerEmail || 'N/A',
           email: customerEmail,
@@ -949,6 +963,9 @@ export class MoneyLoanService {
         'mlp.interest_type',
         'mlp.interest_rate',
         'mlp.fixed_term_days',
+        'mlp.deduct_platform_fee_in_advance',
+        'mlp.deduct_processing_fee_in_advance',
+        'mlp.deduct_interest_in_advance',
         knex.raw("CONCAT_WS(' ', assigned_emp.first_name, assigned_emp.last_name) as assigned_employee_name"),
       )
   .where('mla.tenant_id', tenantId)
@@ -1028,6 +1045,11 @@ export class MoneyLoanService {
   const assignedEmployeeIdValue = getNumber(row, ['assignedEmployeeId', 'assigned_employee_id'], NaN);
   const assignedEmployeeId = Number.isNaN(assignedEmployeeIdValue) ? null : assignedEmployeeIdValue;
   const assignedEmployeeName = getString(row, ['assignedEmployeeName', 'assigned_employee_name'], null);
+      
+      // Extract deduction flags
+      const deductPlatformFeeInAdvance = row.deduct_platform_fee_in_advance ?? row.deductPlatformFeeInAdvance ?? false;
+      const deductProcessingFeeInAdvance = row.deduct_processing_fee_in_advance ?? row.deductProcessingFeeInAdvance ?? false;
+      const deductInterestInAdvance = row.deduct_interest_in_advance ?? row.deductInterestInAdvance ?? false;
 
       return {
         id: applicationId ?? customerId ?? 0,
@@ -1054,6 +1076,12 @@ export class MoneyLoanService {
         termDays,
         termMonths,
         paymentFrequency,
+        deductPlatformFeeInAdvance,
+        deduct_platform_fee_in_advance: deductPlatformFeeInAdvance,
+        deductProcessingFeeInAdvance,
+        deduct_processing_fee_in_advance: deductProcessingFeeInAdvance,
+        deductInterestInAdvance,
+        deduct_interest_in_advance: deductInterestInAdvance,
         customer: {
           fullName: customerFullName || customerEmail || 'N/A',
           email: customerEmail,
@@ -2341,10 +2369,13 @@ export class MoneyLoanService {
         'ml.status as loan_status',
         'ml.disbursement_date',
         'mlp.name as product_name',
+        'mlp.grace_period_days as grace_period_days',
+        'mlp.late_payment_penalty_percent as late_penalty_percent',
         // Next repayment info
         knex.raw('MIN(rs.installment_number) as next_installment'),
         knex.raw('MIN(rs.due_date) as next_due_date'),
-        knex.raw('SUM(rs.outstanding_amount) as total_due')
+        knex.raw('SUM(rs.outstanding_amount) as total_due'),
+        knex.raw('SUM(rs.penalty_amount) as total_penalties')
       )
       .where('ml.tenant_id', tenantId)
       .where('c.assigned_employee_id', collectorId)
@@ -2366,7 +2397,9 @@ export class MoneyLoanService {
         'ml.outstanding_balance',
         'ml.status',
         'ml.disbursement_date',
-        'mlp.name'
+        'mlp.name',
+        'mlp.grace_period_days',
+        'mlp.late_payment_penalty_percent'
       )
       .orderBy('c.first_name', 'asc')
       .orderBy('c.last_name', 'asc')
@@ -2403,6 +2436,29 @@ export class MoneyLoanService {
         status = 'visited';
       }
 
+      // Calculate grace period status (only from product since loan table doesn't have these columns)
+      const gracePeriodDays = parseInt(loan.grace_period_days || '0');
+      const latePenaltyPercent = parseFloat(loan.late_penalty_percent || '0');
+      const totalPenalties = Number(loan.total_penalties ?? 0);
+      
+      let daysOverdue = 0;
+      let gracePeriodRemaining = 0;
+      let gracePeriodConsumed = false;
+      
+      if (dueDate && status === 'missed') {
+        const today = new Date();
+        const diffTime = today.getTime() - dueDate.getTime();
+        daysOverdue = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (daysOverdue <= gracePeriodDays) {
+          gracePeriodRemaining = gracePeriodDays - daysOverdue;
+          gracePeriodConsumed = false;
+        } else {
+          gracePeriodRemaining = 0;
+          gracePeriodConsumed = true;
+        }
+      }
+
       const result = {
         customerId: loan.customerId ?? loan.customer_id,
         customerName: fullName || loan.email || 'Assigned Customer',
@@ -2420,6 +2476,13 @@ export class MoneyLoanService {
         dueDate: formattedDueDate,
         status,
         disbursementDate: loan.disbursementDate ?? loan.disbursement_date,
+        // Grace period info
+        gracePeriodDays,
+        latePenaltyPercent,
+        daysOverdue,
+        gracePeriodRemaining,
+        gracePeriodConsumed,
+        totalPenalties,
       };
 
       console.log('📋 [GET COLLECTOR ROUTE] Mapped loan object:', result);

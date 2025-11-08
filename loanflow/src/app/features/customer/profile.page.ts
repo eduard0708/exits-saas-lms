@@ -626,8 +626,20 @@ import { environment } from '../../../environments/environment';
     .hero-progress {
       display: flex;
       flex-direction: column;
-      gap: 0.4rem;
-      margin-top: 0.35rem;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      animation: fadeInUp 0.6s ease-out 0.3s both;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .progress-meta {
@@ -641,35 +653,154 @@ import { environment } from '../../../environments/environment';
 
     .progress-label {
       color: rgba(226, 232, 240, 0.8);
+      animation: slideInLeft 0.5s ease-out 0.4s both;
+    }
+
+    @keyframes slideInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
     }
 
     .progress-value {
       color: white;
+      font-size: 0.85rem;
+      text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+      animation: 
+        countUp 0.8s ease-out 0.5s both,
+        numberPulse 2s ease-in-out 1.5s infinite;
+    }
+
+    @keyframes countUp {
+      0% {
+        opacity: 0;
+        transform: translateY(15px) scale(0.7) rotateX(90deg);
+      }
+      60% {
+        transform: translateY(-5px) scale(1.1) rotateX(-10deg);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1) rotateX(0deg);
+      }
+    }
+
+    @keyframes numberPulse {
+      0%, 100% {
+        transform: scale(1);
+        text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+      }
+      50% {
+        transform: scale(1.05);
+        text-shadow: 0 0 25px rgba(255, 255, 255, 0.8);
+      }
     }
 
     .progress-track {
       position: relative;
       width: 100%;
-      height: 6px;
+      height: 10px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.15);
-      overflow: hidden;
+      background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0.15) 0%, 
+        rgba(255, 255, 255, 0.2) 100%
+      );
+      overflow: visible;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.2);
+      animation: progressTrackPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes progressTrackPulse {
+      0%, 100% {
+        box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.2), 0 0 0 rgba(255, 255, 255, 0);
+      }
+      50% {
+        box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.2), 0 0 20px rgba(255, 255, 255, 0.3);
+      }
     }
 
     .progress-bar {
       position: absolute;
       inset: 0;
       border-radius: inherit;
-      background: linear-gradient(90deg, rgba(255, 255, 255, 0.85) 0%, rgba(219, 234, 254, 0.95) 50%, rgba(191, 219, 254, 0.9) 100%);
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.45);
+      background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0.95) 0%, 
+        rgba(219, 234, 254, 1) 25%,
+        rgba(191, 219, 254, 0.98) 50%,
+        rgba(219, 234, 254, 1) 75%,
+        rgba(255, 255, 255, 0.95) 100%
+      );
+      background-size: 300% 100%;
+      box-shadow: 
+        0 0 25px rgba(255, 255, 255, 0.7),
+        0 0 45px rgba(59, 130, 246, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      animation: 
+        shimmerFlow 3s ease-in-out infinite,
+        progressSlide 1.5s cubic-bezier(0.4, 0, 0.2, 1) 0.5s both,
+        progressGlow 2s ease-in-out infinite alternate;
+      overflow: hidden;
+    }
+
+    @keyframes progressSlide {
+      from {
+        transform: scaleX(0);
+        opacity: 0;
+      }
+      to {
+        transform: scaleX(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes shimmerFlow {
+      0% {
+        background-position: 300% center;
+      }
+      100% {
+        background-position: -300% center;
+      }
+    }
+
+    @keyframes progressGlow {
+      0% {
+        box-shadow: 
+          0 0 20px rgba(255, 255, 255, 0.6),
+          0 0 40px rgba(59, 130, 246, 0.4),
+          inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      }
+      100% {
+        box-shadow: 
+          0 0 30px rgba(255, 255, 255, 0.9),
+          0 0 60px rgba(59, 130, 246, 0.7),
+          inset 0 1px 0 rgba(255, 255, 255, 1);
+      }
     }
 
     .progress-bar::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(120deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.45) 45%, rgba(255, 255, 255, 0) 90%);
-      animation: shimmer 1.8s linear infinite;
+      background: linear-gradient(120deg, 
+        rgba(255, 255, 255, 0) 0%, 
+        rgba(255, 255, 255, 0.7) 45%, 
+        rgba(255, 255, 255, 0) 90%
+      );
+      animation: progressShine 2.5s ease-in-out infinite;
+    }
+
+    @keyframes progressShine {
+      0% {
+        transform: translateX(-100%);
+      }
+      50%, 100% {
+        transform: translateX(300%);
+      }
     }
 
     .hero-tags {

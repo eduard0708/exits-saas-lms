@@ -227,6 +227,9 @@ export class CollectorActionsController {
         'mlp.payment_frequency as productPaymentFrequency',
         'mlp.loan_term_type as productLoanTermType',
         'mlp.fixed_term_days as productFixedTermDays',
+        'mlp.deduct_platform_fee_in_advance as deductPlatformFeeInAdvance',
+        'mlp.deduct_processing_fee_in_advance as deductProcessingFeeInAdvance',
+        'mlp.deduct_interest_in_advance as deductInterestInAdvance',
       );
 
     if (status) {
@@ -259,6 +262,11 @@ export class CollectorActionsController {
       const productLoanTermType = application.productLoanTermType
         ?? application.product_loan_term_type
         ?? null;
+      
+      // Parse deduction flags - default to false if not set
+      const deductPlatformFeeInAdvance = application.deductPlatformFeeInAdvance ?? application.deduct_platform_fee_in_advance ?? false;
+      const deductProcessingFeeInAdvance = application.deductProcessingFeeInAdvance ?? application.deduct_processing_fee_in_advance ?? false;
+      const deductInterestInAdvance = application.deductInterestInAdvance ?? application.deduct_interest_in_advance ?? false;
 
       return {
         ...application,
@@ -276,6 +284,12 @@ export class CollectorActionsController {
         product_loan_term_type: productLoanTermType,
         productFixedTermDays,
         product_fixed_term_days: productFixedTermDays,
+        deductPlatformFeeInAdvance,
+        deduct_platform_fee_in_advance: deductPlatformFeeInAdvance,
+        deductProcessingFeeInAdvance,
+        deduct_processing_fee_in_advance: deductProcessingFeeInAdvance,
+        deductInterestInAdvance,
+        deduct_interest_in_advance: deductInterestInAdvance,
       };
     });
 

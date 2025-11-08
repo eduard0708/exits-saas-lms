@@ -1511,7 +1511,9 @@ export class CustomerService {
         'money_loan_products.description as productDescription',
         'money_loan_products.min_amount as productMinAmount',
         'money_loan_products.max_amount as productMaxAmount',
-        'money_loan_products.payment_frequency as productPaymentFrequency'
+        'money_loan_products.payment_frequency as productPaymentFrequency',
+        'money_loan_products.grace_period_days as productGracePeriodDays',
+        'money_loan_products.late_payment_penalty_percent as productLatePenaltyPercent'
       )
       .leftJoin('money_loan_products', 'money_loan_loans.loan_product_id', 'money_loan_products.id')
       .where({
@@ -1597,6 +1599,49 @@ export class CustomerService {
       ? Math.min(100, Math.round((totalPaid / totalRepayableForProgress) * 100))
       : 0;
 
+    // Calculate grace period and penalties for each installment
+    const gracePeriodDays = loan.productGracePeriodDays ?? 0;
+    const latePenaltyPercent = loan.productLatePenaltyPercent ?? 0;
+    let totalPenalties = 0;
+    let hasOverdueWithPenalty = false;
+
+    console.log(`🎯 Grace Period Calculation - Days: ${gracePeriodDays}, Penalty Rate: ${latePenaltyPercent}%`);
+
+    scheduleData.forEach(installment => {
+      if (installment.status === 'overdue') {
+        const dueDate = new Date(installment.due_date);
+        const today = new Date();
+        const daysLate = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        installment.daysLate = daysLate;
+        installment.gracePeriodDays = gracePeriodDays;
+        
+        if (daysLate <= gracePeriodDays) {
+          installment.gracePeriodRemaining = gracePeriodDays - daysLate;
+          installment.gracePeriodConsumed = false;
+          installment.penaltyAmount = 0;
+          console.log(`✅ Installment ${installment.installment_number}: ${daysLate} days late, ${installment.gracePeriodRemaining} grace days remaining`);
+        } else {
+          installment.gracePeriodRemaining = 0;
+          installment.gracePeriodConsumed = true;
+          const daysOverGrace = daysLate - gracePeriodDays;
+          const penaltyAmount = (installment.total_amount * (latePenaltyPercent / 100) * daysOverGrace);
+          installment.penaltyAmount = penaltyAmount;
+          totalPenalties += penaltyAmount;
+          hasOverdueWithPenalty = true;
+          console.log(`⚠️ Installment ${installment.installment_number}: ${daysLate} days late, grace consumed, penalty: ${penaltyAmount}`);
+        }
+      } else {
+        installment.daysLate = 0;
+        installment.gracePeriodDays = gracePeriodDays;
+        installment.gracePeriodRemaining = gracePeriodDays;
+        installment.gracePeriodConsumed = false;
+        installment.penaltyAmount = 0;
+      }
+    });
+
+    console.log(`💰 Total Penalties: ${totalPenalties}, Has Overdue With Penalty: ${hasOverdueWithPenalty}`);
+
     return {
       loan: {
         id: loan.id,
@@ -1618,6 +1663,10 @@ export class CustomerService {
         productDescription: loan.productDescription,
         nextPaymentDate: scheduleData.find(s => s.status !== 'paid')?.due_date || null,
         nextPaymentAmount: scheduleData.find(s => s.status !== 'paid')?.total_amount || 0,
+        gracePeriodDays,
+        latePenaltyPercent,
+        totalPenalties,
+        hasOverdueWithPenalty,
       },
       paymentProgress: paymentProgress,
       schedule: scheduleData,
@@ -1714,7 +1763,9 @@ export class CustomerService {
         'money_loan_products.interest_type as productInterestType',
         'money_loan_products.description as productDescription',
         'money_loan_products.min_amount as productMinAmount',
-        'money_loan_products.max_amount as productMaxAmount'
+        'money_loan_products.max_amount as productMaxAmount',
+        'money_loan_products.grace_period_days as productGracePeriodDays',
+        'money_loan_products.late_payment_penalty_percent as productLatePenaltyPercent'
       )
       .leftJoin('money_loan_products', 'money_loan_loans.loan_product_id', 'money_loan_products.id')
       .where({
@@ -1729,6 +1780,8 @@ export class CustomerService {
     }
 
     console.log(`🔍 Found loan ${loanId} for customer ${mainCustomerId}`);
+    console.log(`⏳ Product Grace Period Days: ${loan.productGracePeriodDays || loan.grace_period_days || 'NOT SET'}`);
+    console.log(`💰 Product Late Penalty Percent: ${loan.productLatePenaltyPercent || loan.late_payment_penalty_percent || 'NOT SET'}`);
 
     // Get payment history
     const payments = await knex('money_loan_payments')
@@ -1777,8 +1830,24 @@ export class CustomerService {
 
     console.log(`💰 Total paid from ${payments.length} payments: ${totalPaid}`);
 
+    // Get grace period from product (loan table doesn't have these columns)
+    console.log('🔍 Raw product grace period data:', {
+      productGracePeriodDays: loan.productGracePeriodDays,
+      productLatePenaltyPercent: loan.productLatePenaltyPercent
+    });
+    
+    const gracePeriodDays = parseInt(loan.productGracePeriodDays || '0');
+    const latePenaltyPercent = parseFloat(loan.productLatePenaltyPercent || '0');
+    
+    console.log('⏳ Parsed Grace Period:', {
+      gracePeriodDays,
+      latePenaltyPercent
+    });
+
     // Generate installment schedule
     const scheduleData = [];
+    const today = new Date();
+    
     for (let i = 1; i <= numberOfInstallments; i++) {
       const dueDate = new Date(disbursementDate);
       dueDate.setDate(dueDate.getDate() + (i * daysBetweenPayments));
@@ -1798,10 +1867,32 @@ export class CustomerService {
         status = 'partial';
       }
 
-      // Check if overdue
-      const today = new Date();
+      // Calculate grace period and penalty info
+      let daysLate = 0;
+      let gracePeriodRemaining = 0;
+      let gracePeriodConsumed = false;
+      let penaltyAmount = 0;
+      
       if (status !== 'paid' && dueDate < today) {
         status = 'overdue';
+        
+        // Calculate days late
+        const diffTime = today.getTime() - dueDate.getTime();
+        daysLate = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        // Check grace period status
+        if (daysLate <= gracePeriodDays) {
+          // Still within grace period
+          gracePeriodRemaining = gracePeriodDays - daysLate;
+          gracePeriodConsumed = false;
+        } else {
+          // Grace period consumed, calculate penalty
+          gracePeriodRemaining = 0;
+          gracePeriodConsumed = true;
+          
+          const effectiveLateDays = daysLate - gracePeriodDays;
+          penaltyAmount = amountPerInstallment * (latePenaltyPercent / 100) * effectiveLateDays;
+        }
       }
 
       const principalForInstallment = principalAmount / numberOfInstallments;
@@ -1817,15 +1908,27 @@ export class CustomerService {
         total_amount: Math.round(amountPerInstallment * 100) / 100,
         outstanding_amount: Math.round(outstandingForInstallment * 100) / 100,
         status: status,
+        days_late: daysLate,
+        grace_period_days: gracePeriodDays,
+        grace_period_remaining: gracePeriodRemaining,
+        grace_period_consumed: gracePeriodConsumed,
+        penalty_amount: Math.round(penaltyAmount * 100) / 100,
       });
     }
 
     const outstandingBalance = parseFloat(loan.outstanding_balance ?? loan.outstandingBalance ?? 0);
-    const paymentProgress = principalAmount > 0 ? Math.round((totalPaid / principalAmount) * 100) : 0;
+    // Calculate payment progress based on total repayable amount (not just principal)
+    const paymentProgress = totalAmount > 0 ? Math.round((totalPaid / totalAmount) * 100) : 0;
 
-    console.log(`💰 Loan ${loanId} - Principal: ${principalAmount}, Total Paid: ${totalPaid}, Outstanding: ${outstandingBalance}, Progress: ${paymentProgress}%`);
+    console.log(`💰 Loan ${loanId} - Principal: ${principalAmount}, Total Repayable: ${totalAmount}, Total Paid: ${totalPaid}, Outstanding: ${outstandingBalance}, Progress: ${paymentProgress}%`);
     console.log(`📊 Schedule count: ${scheduleData.length}, Payments count: ${payments.length}`);
 
+    // Calculate total penalties across all overdue installments
+    const totalPenalties = scheduleData.reduce((sum, s) => sum + (s.penalty_amount || 0), 0);
+    const hasOverdueWithPenalty = scheduleData.some(s => s.grace_period_consumed && s.penalty_amount > 0);
+    
+    console.log(`📤 Returning grace period data - Days: ${gracePeriodDays}, Penalty: ${latePenaltyPercent}%, Total Penalties: ${totalPenalties}`);
+    
     return {
       id: loan.id,
       loanNumber: loan.loan_number ?? loan.loanNumber,
@@ -1846,6 +1949,10 @@ export class CustomerService {
       productDescription: loan.productDescription,
       productMinAmount: parseFloat(loan.productMinAmount ?? 0),
       productMaxAmount: parseFloat(loan.productMaxAmount ?? 0),
+      gracePeriodDays: gracePeriodDays,
+      latePenaltyPercent: latePenaltyPercent,
+      totalPenalties: Math.round(totalPenalties * 100) / 100,
+      hasOverdueWithPenalty: hasOverdueWithPenalty,
       schedule: scheduleData.map(s => ({
         id: s.id,
         installmentNumber: s.installment_number ?? s.installmentNumber,
@@ -1855,6 +1962,11 @@ export class CustomerService {
         totalAmount: parseFloat(s.total_amount ?? s.totalAmount ?? 0),
         outstandingAmount: parseFloat(s.outstanding_amount ?? s.outstandingAmount ?? 0),
         status: s.status,
+        daysLate: s.days_late ?? s.daysLate ?? 0,
+        gracePeriodDays: s.grace_period_days ?? s.gracePeriodDays ?? 0,
+        gracePeriodRemaining: s.grace_period_remaining ?? s.gracePeriodRemaining ?? 0,
+        gracePeriodConsumed: s.grace_period_consumed ?? s.gracePeriodConsumed ?? false,
+        penaltyAmount: parseFloat(s.penalty_amount ?? s.penaltyAmount ?? 0),
       })),
       payments: payments.map(p => ({
         id: p.id,

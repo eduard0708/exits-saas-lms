@@ -35,6 +35,10 @@ interface LoanDetails {
   productMinAmount: number;
   productMaxAmount: number;
   processingFee?: number;
+  gracePeriodDays?: number;
+  latePenaltyPercent?: number;
+  totalPenalties?: number;
+  hasOverdueWithPenalty?: boolean;
   schedule: RepaymentSchedule[];
   payments: Payment[];
 }
@@ -48,6 +52,11 @@ interface RepaymentSchedule {
   totalAmount: number;
   outstandingAmount: number;
   status: string;
+  daysLate?: number;
+  gracePeriodDays?: number;
+  gracePeriodRemaining?: number;
+  gracePeriodConsumed?: boolean;
+  penaltyAmount?: number;
 }
 
 interface Payment {
@@ -206,13 +215,63 @@ interface Payment {
                 <div class="term-list-content">
                   <p class="term-list-label">Late Penalty</p>
                   <div style="text-align: right;">
-                    <p class="term-list-value warning">10.00%/day</p>
-                    <p class="term-list-value muted">0 day grace period</p>
+                    <p class="term-list-value warning">{{ loanDetails()!.latePenaltyPercent || 0 }}%/day</p>
+                    <p class="term-list-value muted">{{ loanDetails()!.gracePeriodDays || 0 }} day grace period</p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
+          <!-- Grace Period Status -->
+          @if (hasOverdueInstallments()) {
+            <div class="grace-period-card" [class.grace-consumed]="loanDetails()!.hasOverdueWithPenalty">
+              <div class="grace-period-header">
+                <span class="emoji-icon-large">{{ loanDetails()!.hasOverdueWithPenalty ? '⚠️' : '⏳' }}</span>
+                <h3 class="grace-period-title">
+                  {{ loanDetails()!.hasOverdueWithPenalty ? 'Grace Period Consumed' : 'Grace Period Active' }}
+                </h3>
+              </div>
+              
+              <div class="grace-period-body">
+                @if (loanDetails()!.hasOverdueWithPenalty) {
+                  <div class="grace-status consumed">
+                    <p class="grace-status-text">
+                      <span class="emoji-icon-inline">🚫</span>
+                      Your grace period has been used up. Late payment penalties are now being applied.
+                    </p>
+                    <div class="penalty-summary">
+                      <div class="penalty-row">
+                        <span class="penalty-label">Total Penalties:</span>
+                        <span class="penalty-value">₱{{ formatCurrency(loanDetails()!.totalPenalties || 0) }}</span>
+                      </div>
+                      <div class="penalty-detail">
+                        <span class="emoji-icon-inline">📊</span>
+                        Calculated at {{ loanDetails()!.latePenaltyPercent }}% per day after grace period
+                      </div>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="grace-status active">
+                    <p class="grace-status-text">
+                      <span class="emoji-icon-inline">✅</span>
+                      You have overdue payments but are still within the grace period.
+                    </p>
+                    <div class="grace-info">
+                      <div class="grace-row">
+                        <span class="grace-label">Grace Period:</span>
+                        <span class="grace-value">{{ loanDetails()!.gracePeriodDays || 0 }} days</span>
+                      </div>
+                      <div class="grace-detail">
+                        <span class="emoji-icon-inline">💡</span>
+                        Make payment before grace period ends to avoid penalties
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
 
           <!-- Next Payment -->
           @if (loanDetails()!.nextPaymentDate && loanDetails()!.nextPaymentAmount > 0 && loanDetails()!.outstandingBalance > 0) {
@@ -316,6 +375,28 @@ interface Payment {
                           <div class="amount-label">Amount Due</div>
                           <div class="amount-value">₱{{ formatCurrency(item.totalAmount) }}</div>
                         </div>
+                        
+                        @if (item.status === 'overdue' && item.daysLate && item.daysLate > 0) {
+                          <div class="overdue-info">
+                            <div class="overdue-badge">
+                              <span class="emoji-icon-inline">⚠️</span>
+                              {{ item.daysLate }} day(s) late
+                            </div>
+                            
+                            @if (item.gracePeriodConsumed) {
+                              <div class="penalty-info">
+                                <span class="emoji-icon-inline">💰</span>
+                                Penalty: ₱{{ formatCurrency(item.penaltyAmount || 0) }}
+                                <span class="penalty-note">(Grace period consumed)</span>
+                              </div>
+                            } @else {
+                              <div class="grace-info-inline">
+                                <span class="emoji-icon-inline">⏳</span>
+                                {{ item.gracePeriodRemaining || 0 }} day(s) grace left
+                              </div>
+                            }
+                          </div>
+                        }
                       </div>
                     </div>
                   }
@@ -597,11 +678,52 @@ interface Payment {
     .progress-percent {
       color: var(--ion-color-success);
       font-weight: 700;
+      font-size: 1rem;
     }
 
     .progress-bar-compact {
-      height: 8px;
-      border-radius: 4px;
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+      background: rgba(16, 185, 129, 0.15);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .progress-bar-compact::part(progress) {
+      position: relative;
+      border-radius: inherit;
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.85) 0%, rgba(5, 150, 105, 0.95) 50%, rgba(16, 185, 129, 0.9) 100%);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.45);
+      overflow: hidden;
+    }
+
+    .progress-bar-compact::part(progress)::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.45) 45%, rgba(255, 255, 255, 0) 90%);
+      animation: shimmer 1.8s linear infinite;
+    }
+
+    @keyframes shimmer {
+      0% {
+        transform: translateX(-100%);
+      }
+      100% {
+        transform: translateX(200%);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     /* Loan Header */
@@ -738,6 +860,102 @@ interface Payment {
       margin-bottom: 1.25rem;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
       border: 1px solid var(--ion-border-color, #e5e7eb);
+    }
+
+    /* Grace Period Card */
+    .grace-period-card {
+      background: linear-gradient(135deg, #e3f2fd 0%, #f3f4f6 100%);
+      border-radius: 18px;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      border: 2px solid #90caf9;
+    }
+
+    .grace-period-card.grace-consumed {
+      background: linear-gradient(135deg, #ffebee 0%, #f3f4f6 100%);
+      border-color: #ef5350;
+    }
+
+    .grace-period-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .grace-period-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--ion-text-color);
+      margin: 0;
+    }
+
+    .grace-period-body {
+      margin-top: 0.75rem;
+    }
+
+    .grace-status {
+      padding: 0.75rem;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    .grace-status.active {
+      background: rgba(76, 175, 80, 0.1);
+      border: 1px solid rgba(76, 175, 80, 0.3);
+    }
+
+    .grace-status.consumed {
+      background: rgba(244, 67, 54, 0.1);
+      border: 1px solid rgba(244, 67, 54, 0.3);
+    }
+
+    .grace-status-text {
+      font-size: 0.875rem;
+      color: var(--ion-text-color);
+      margin: 0 0 0.75rem 0;
+      line-height: 1.5;
+    }
+
+    .penalty-summary, .grace-info {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .penalty-row, .grace-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .penalty-label, .grace-label {
+      font-size: 0.875rem;
+      color: var(--ion-color-medium);
+      font-weight: 500;
+    }
+
+    .penalty-value {
+      font-size: 1.1rem;
+      color: var(--ion-color-danger);
+      font-weight: 700;
+    }
+
+    .grace-value {
+      font-size: 1.1rem;
+      color: var(--ion-color-success);
+      font-weight: 700;
+    }
+
+    .penalty-detail, .grace-detail {
+      font-size: 0.75rem;
+      color: var(--ion-color-medium);
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
     }
 
     .section-title {
@@ -1298,6 +1516,51 @@ interface Payment {
 
     .schedule-item-modern.paid .amount-value {
       color: #10b981;
+    }
+
+    .overdue-info {
+      margin-top: 0.75rem;
+      padding: 0.75rem;
+      background: rgba(239, 68, 68, 0.05);
+      border-radius: 8px;
+      border-left: 3px solid #ef4444;
+    }
+
+    .overdue-badge {
+      font-size: 0.813rem;
+      font-weight: 600;
+      color: #dc2626;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .penalty-info {
+      font-size: 0.875rem;
+      color: var(--ion-color-danger);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      margin-top: 0.5rem;
+    }
+
+    .penalty-note {
+      font-size: 0.75rem;
+      color: var(--ion-color-medium);
+      font-weight: 400;
+      margin-left: 0.25rem;
+    }
+
+    .grace-info-inline {
+      font-size: 0.875rem;
+      color: #059669;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      margin-top: 0.5rem;
     }
 
     .schedule-item-modern.pending .amount-value {
@@ -1993,6 +2256,11 @@ export class LoanDetailsPage implements OnInit {
         // Flatten the response structure for template compatibility
         const flattenedData = {
           ...loanData.loan,
+          // Add grace period fields from backend response
+          gracePeriodDays: loanData.loan?.gracePeriodDays || loanData.loan?.grace_period_days || 0,
+          latePenaltyPercent: loanData.loan?.latePenaltyPercent || loanData.loan?.late_penalty_percent || 0,
+          totalPenalties: loanData.loan?.totalPenalties || loanData.loan?.total_penalties || 0,
+          hasOverdueWithPenalty: loanData.loan?.hasOverdueWithPenalty || loanData.loan?.has_overdue_with_penalty || false,
           schedule: (loanData.schedule || []).map((item: any) => {
             const mappedItem = {
               id: item.id,
@@ -2002,7 +2270,12 @@ export class LoanDetailsPage implements OnInit {
               interestAmount: item.interest_amount || item.interestAmount || 0,
               totalAmount: item.total_amount || item.totalAmount || 0,
               outstandingAmount: item.outstanding_amount || item.outstandingAmount || 0,
-              status: item.status
+              status: item.status,
+              daysLate: item.days_late || item.daysLate || 0,
+              gracePeriodDays: item.grace_period_days || item.gracePeriodDays || 0,
+              gracePeriodRemaining: item.grace_period_remaining || item.gracePeriodRemaining || 0,
+              gracePeriodConsumed: item.grace_period_consumed || item.gracePeriodConsumed || false,
+              penaltyAmount: item.penalty_amount || item.penaltyAmount || 0
             };
             
             // Log first 3 mapped items
@@ -2021,25 +2294,37 @@ export class LoanDetailsPage implements OnInit {
           totalPaid: loanData.payments?.reduce((sum: number, p: any) => sum + parseFloat(p.amount || 0), 0) || 0
         };
         
-        // Calculate payment progress correctly
-        const principalAmount = parseFloat(flattenedData.principalAmount || flattenedData.principal_amount || 0);
-        const outstandingBalance = parseFloat(flattenedData.outstandingBalance || flattenedData.outstanding_balance || 0);
-        
+        // Use the payment progress from backend if available, otherwise calculate
         let paymentProgress = 0;
-        if (principalAmount > 0) {
-          if (outstandingBalance <= 0) {
-            paymentProgress = 100; // Fully paid
-          } else {
-            const amountPaid = principalAmount - outstandingBalance;
-            paymentProgress = Math.round((amountPaid / principalAmount) * 100);
+        
+        // Backend already calculates this correctly: totalPaid / totalRepayable
+        if (loanData.paymentProgress !== undefined && loanData.paymentProgress !== null) {
+          paymentProgress = parseFloat(loanData.paymentProgress.toString());
+        } else if (flattenedData.paymentProgress !== undefined && flattenedData.paymentProgress !== null) {
+          paymentProgress = parseFloat(flattenedData.paymentProgress.toString());
+        } else {
+          // Fallback: calculate from totalPaid and totalAmount
+          const totalPaid = parseFloat(flattenedData.totalPaid || 0);
+          const totalRepayable = parseFloat(flattenedData.totalAmount || flattenedData.total_amount || 0);
+          
+          if (totalRepayable > 0) {
+            if (totalPaid >= totalRepayable) {
+              paymentProgress = 100; // Fully paid
+            } else {
+              paymentProgress = Math.round((totalPaid / totalRepayable) * 100);
+            }
           }
         }
         
-        flattenedData.paymentProgress = paymentProgress;
+        flattenedData.paymentProgress = Math.max(0, Math.min(100, paymentProgress)); // Clamp between 0-100
         
         console.log('📈 Total Paid:', flattenedData.totalPaid);
         console.log('📉 Outstanding:', flattenedData.outstandingBalance);
         console.log('📊 Payment Progress:', paymentProgress + '%');
+        console.log('⏳ Grace Period Days:', flattenedData.gracePeriodDays);
+        console.log('💰 Late Penalty Percent:', flattenedData.latePenaltyPercent);
+        console.log('💸 Total Penalties:', flattenedData.totalPenalties);
+        console.log('⚠️ Has Overdue With Penalty:', flattenedData.hasOverdueWithPenalty);
         console.log('📅 Mapped schedule:', flattenedData.schedule);
         
         this.loanDetails.set(flattenedData);
@@ -2077,6 +2362,11 @@ export class LoanDetailsPage implements OnInit {
     if (s === 'pending' || s === 'partially_paid') return 'warning';
     if (s === 'overdue' || s === 'late') return 'danger';
     return 'medium';
+  }
+
+  hasOverdueInstallments(): boolean {
+    const schedule = this.loanDetails()?.schedule || [];
+    return schedule.some((item: any) => item.status === 'overdue');
   }
 
   getScheduleStatusLabel(status: string): string {
