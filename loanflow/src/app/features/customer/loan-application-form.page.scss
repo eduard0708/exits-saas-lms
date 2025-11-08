@@ -5,10 +5,20 @@
   left: 0;
   right: 0;
   z-index: 100;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   padding-top: env(safe-area-inset-top);
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
-  transition: box-shadow 0.3s ease;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fixed-top-bar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
 }
 
 .top-bar-content {
@@ -35,7 +45,13 @@
 .app-emoji {
   font-size: 1.5rem;
   line-height: 1;
-  animation: fadeInSlide 0.5s ease;
+  color: white;
+  animation: fadeInSlide 0.5s ease, iconFloat 3s ease-in-out infinite;
+}
+
+@keyframes iconFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-3px); }
 }
 
 .app-title {
@@ -59,7 +75,7 @@
 
 /* ===== MAIN CONTENT ===== */
 .main-content {
-  --background: linear-gradient(to bottom, #f7f7f9 0%, #eeeef2 100%);
+  --background: linear-gradient(to bottom, rgba(99, 102, 241, 0.04) 0%, rgba(139, 92, 246, 0.02) 100%), var(--ion-background-color);
 }
 
 .application-form-container {
@@ -100,11 +116,13 @@
 
   &:hover {
     transform: translateX(-4px);
-    border-color: #667eea;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    border-color: #6366f1;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.05), transparent);
     
     .back-icon {
       transform: translateX(-3px);
+      color: #6366f1;
     }
   }
 
@@ -125,7 +143,7 @@
 }
 
 ion-content {
-  --background: linear-gradient(180deg, rgba(236, 233, 252, 0.9) 0%, rgba(255, 255, 255, 0.95) 35%, var(--ion-background-color) 100%);
+  --background: linear-gradient(180deg, rgba(99, 102, 241, 0.06) 0%, rgba(139, 92, 246, 0.03) 35%, var(--ion-background-color) 100%);
   --padding-top: 0.5rem;
   --padding-bottom: 0.5rem;
   --padding-start: 0.25rem;
@@ -167,14 +185,16 @@ ion-content {
 .product-summary {
   margin-bottom: 0.6rem;
   border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(76, 81, 191, 0.12);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.12);
   overflow: hidden;
+  border: 1px solid rgba(99, 102, 241, 0.1);
   animation: slideInUp 0.5s ease;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 32px rgba(76, 81, 191, 0.18);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.2);
   }
 
   ion-card-content {
@@ -205,14 +225,17 @@ ion-content {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.6);
-    box-shadow: inset 0 0 0 1px rgba(103, 114, 229, 0.25);
-    transition: transform 0.3s ease;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+    color: #6366f1;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     animation: scaleIn 0.5s ease 0.2s backwards;
   }
 
   .product-emoji:hover {
-    transform: scale(1.1) rotate(5deg);
+    transform: scale(1.15) rotate(8deg);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.25));
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
   }
 
   .headline-text {
@@ -290,11 +313,12 @@ ion-content {
 
   .chip-emoji {
     font-size: 1.1rem;
+    color: #6366f1;
     transition: transform 0.3s ease;
   }
 
   .highlight-chip:hover .chip-emoji {
-    transform: scale(1.2);
+    transform: scale(1.3) rotate(5deg);
   }
 
   .chip-text {
@@ -339,17 +363,20 @@ ion-content {
 .application-form {
   margin-bottom: 0.65rem;
   border-radius: 14px;
+  border: 1px solid rgba(99, 102, 241, 0.1);
   animation: slideInUp 0.5s ease 0.2s backwards;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.12);
+    border-color: rgba(99, 102, 241, 0.2);
   }
 
   ion-card-header {
     padding: 0.65rem 0.85rem;
-    border-bottom: 2px solid rgba(102, 126, 234, 0.15);
+    border-bottom: 2px solid rgba(99, 102, 241, 0.15);
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.02), transparent);
   }
 
   ion-card-title {
@@ -395,6 +422,7 @@ ion-content {
 
       .label-emoji {
         font-size: 1rem;
+        color: #6366f1;
         animation: bounce 2s ease-in-out infinite;
       }
 
@@ -425,7 +453,10 @@ ion-content {
       text-align: center;
       font-size: 1.18rem;
       font-weight: 700;
-      color: var(--ion-color-primary);
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       margin-bottom: 0.375rem;
       transition: all 0.3s ease;
       animation: scaleIn 0.5s ease;
@@ -433,21 +464,23 @@ ion-content {
 
     .amount-display:hover,
     .term-display:hover {
-      transform: scale(1.05);
-      text-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+      transform: scale(1.08);
+      filter: drop-shadow(0 2px 8px rgba(99, 102, 241, 0.4));
     }
 
     ion-range {
-      --bar-background: var(--ion-color-light);
-      --bar-background-active: var(--ion-color-primary);
-      --knob-background: var(--ion-color-primary);
+      --bar-background: rgba(99, 102, 241, 0.15);
+      --bar-background-active: linear-gradient(90deg, #6366f1, #8b5cf6);
+      --knob-background: #6366f1;
+      --knob-box-shadow: 0 3px 8px rgba(99, 102, 241, 0.4);
       --knob-size: 22px;
-      --pin-background: var(--ion-color-primary);
+      --pin-background: #6366f1;
       padding: 0.3rem 0;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
       &:hover {
-        --knob-size: 24px;
+        --knob-size: 26px;
+        --knob-box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
       }
 
       ion-label {
@@ -531,20 +564,20 @@ ion-content {
         display: inline-flex;
         align-items: center;
         padding: 0.75rem 1.25rem;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
         color: white;
         border-radius: 12px;
         font-size: 0.95rem;
         font-weight: 600;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         letter-spacing: 0.01em;
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: default;
       }
 
       .frequency-badge:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
       }
 
       .frequency-note {
@@ -623,17 +656,17 @@ ion-content {
 .repayment-summary {
   margin-bottom: 0.65rem;
   border-radius: 12px;
-  background: linear-gradient(160deg, #1f2a44, #2c2a68);
-  color: #e2e8f0;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.25);
+  background: linear-gradient(160deg, #6366f1, #8b5cf6);
+  color: #ffffff;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  box-shadow: 0 12px 32px rgba(99, 102, 241, 0.25);
   overflow: hidden;
-  animation: slideInUp 0.5s ease 0.4s backwards;
-  transition: all 0.3s ease;
+  animation: slideInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.4s backwards;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
     transform: translateY(-3px);
-    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.35);
+    box-shadow: 0 16px 40px rgba(99, 102, 241, 0.35);
   }
 
   ion-card-header {
@@ -673,16 +706,17 @@ ion-content {
     flex-direction: column;
     gap: 0.4rem;
     padding: 0.6rem 0.7rem;
-    background: rgba(15, 23, 42, 0.32);
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    border: 1px solid rgba(148, 163, 184, 0.25);
-    animation: fadeInUp 0.5s ease 0.5s backwards;
-    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.5s backwards;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .basic-charges:hover {
-    background: rgba(15, 23, 42, 0.4);
-    border-color: rgba(148, 163, 184, 0.35);
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: scale(1.01);
   }
 
   .summary-line {
@@ -690,18 +724,36 @@ ion-content {
     justify-content: space-between;
     align-items: center;
     font-size: 0.8rem;
-    color: rgba(226, 232, 240, 0.92);
-    transition: all 0.3s ease;
+    color: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .summary-line:hover {
-    color: rgba(226, 232, 240, 1);
-    transform: translateX(2px);
+    color: rgba(255, 255, 255, 1);
+    transform: translateX(3px);
   }
 
   .summary-label {
     font-weight: 500;
     letter-spacing: 0.01em;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .deduct-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.1rem 0.4rem;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.95);
   }
 
   .summary-value {
@@ -719,15 +771,15 @@ ion-content {
     gap: 0.75rem;
     padding: 0.65rem 0.7rem;
     border-radius: 12px;
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.22), rgba(4, 120, 87, 0.38));
-    border: 1px solid rgba(45, 212, 191, 0.45);
-    animation: fadeInUp 0.5s ease 0.6s backwards;
-    transition: all 0.3s ease;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.25));
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.6s backwards;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .net-row:hover {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(4, 120, 87, 0.45));
-    border-color: rgba(45, 212, 191, 0.6);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.3));
+    border-color: rgba(255, 255, 255, 0.5);
     transform: scale(1.02);
   }
 
@@ -778,21 +830,21 @@ ion-content {
 
   .interest-item {
     flex: 1;
-    background: rgba(15, 23, 42, 0.32);
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 10px;
     padding: 0.65rem 0.75rem;
-    border: 1px solid rgba(148, 163, 184, 0.23);
-    animation: fadeInUp 0.5s ease backwards;
-    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) backwards;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .interest-item:nth-child(1) { animation-delay: 0.7s; }
   .interest-item:nth-child(2) { animation-delay: 0.8s; }
 
   .interest-item:hover {
-    background: rgba(15, 23, 42, 0.45);
-    border-color: rgba(148, 163, 184, 0.35);
-    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px) scale(1.02);
   }
 
   .interest-label {
@@ -800,7 +852,24 @@ ion-content {
     font-size: 0.68rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: rgba(226, 232, 240, 0.6);
+    color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .interest-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.1rem 0.35rem;
+    background: rgba(251, 191, 36, 0.2);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    border-radius: 4px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(254, 243, 199, 1);
   }
 
   .interest-value {
@@ -822,10 +891,10 @@ ion-content {
     display: flex;
     flex-direction: column;
     gap: 0.15rem;
-    border: 1px solid rgba(148, 163, 184, 0.3);
-    background: rgba(15, 23, 42, 0.32);
-    animation: fadeInUp 0.5s ease backwards;
-    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.1);
+    animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) backwards;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .total-card:nth-child(1) { animation-delay: 0.9s; }
@@ -833,26 +902,27 @@ ion-content {
 
   .total-card:hover {
     transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
   }
 
   .total-card.primary {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.35), rgba(37, 99, 235, 0.45));
-    border-color: rgba(59, 130, 246, 0.55);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.25));
+    border-color: rgba(255, 255, 255, 0.35);
   }
 
   .total-card.primary:hover {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.45), rgba(37, 99, 235, 0.55));
-    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.3));
+    box-shadow: 0 4px 16px rgba(255, 255, 255, 0.25);
   }
 
   .total-card.secondary {
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(124, 58, 237, 0.45));
-    border-color: rgba(168, 85, 247, 0.55);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.22));
+    border-color: rgba(255, 255, 255, 0.3);
   }
 
   .total-card.secondary:hover {
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.45), rgba(124, 58, 237, 0.55));
-    box-shadow: 0 4px 16px rgba(168, 85, 247, 0.4);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.28));
+    box-shadow: 0 4px 16px rgba(255, 255, 255, 0.22);
   }
 
   .total-label {
@@ -876,10 +946,10 @@ ion-content {
     justify-content: center;
     gap: 0.4rem;
     font-size: 0.74rem;
-    color: rgba(226, 232, 240, 0.75);
+    color: rgba(255, 255, 255, 0.8);
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    animation: fadeIn 0.5s ease 1.1s backwards;
+    animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) 1.1s backwards;
   }
 
   .separator {
@@ -892,15 +962,15 @@ ion-content {
     gap: 0.45rem;
     padding: 0.6rem 0.75rem;
     border-radius: 12px;
-    background: rgba(251, 191, 36, 0.18);
-    border: 1px solid rgba(245, 158, 11, 0.45);
-    animation: fadeInUp 0.5s ease 1.2s backwards;
-    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) 1.2s backwards;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .summary-note:hover {
-    background: rgba(251, 191, 36, 0.25);
-    border-color: rgba(245, 158, 11, 0.6);
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.35);
     transform: translateX(4px);
   }
 
@@ -923,14 +993,14 @@ ion-content {
 
 .submit-button {
   margin: 0.75rem 0.75rem 1rem 0.75rem;
-  --background: linear-gradient(135deg, var(--ion-color-primary) 0%, var(--ion-color-primary-shade) 100%);
-  --background-hover: linear-gradient(135deg, var(--ion-color-primary-shade) 0%, var(--ion-color-primary-tint) 100%);
+  --background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --background-hover: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
   --border-radius: 12px;
   font-size: 0.9375rem;
   font-weight: 600;
   height: 50px;
-  animation: slideInUp 0.5s ease 1.3s backwards;
-  box-shadow: 0 4px 16px rgba(var(--ion-color-primary-rgb), 0.3);
+  animation: slideInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) 1.3s backwards;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
 
   &::part(native) {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -938,7 +1008,7 @@ ion-content {
 
   &:not([disabled]):hover {
     transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 8px 24px rgba(var(--ion-color-primary-rgb), 0.5);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.5);
   }
 
   &:not([disabled]):active {

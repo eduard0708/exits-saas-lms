@@ -31,7 +31,9 @@ import { HeaderUtilsComponent } from './header-utils.component';
           <ion-button fill="clear" class="icon-button" size="small" (click)="openMenu()">
             <ion-icon slot="icon-only" name="menu-outline"></ion-icon>
           </ion-button>
-          <span class="app-emoji">{{ emoji }}</span>
+          @if (icon) {
+            <ion-icon [name]="icon" class="app-icon"></ion-icon>
+          }
           <div class="title-group">
             <span class="app-title">{{ title }}</span>
             <span class="app-subtitle">{{ subtitle }}</span>
@@ -95,8 +97,9 @@ import { HeaderUtilsComponent } from './header-utils.component';
       gap: 0.15rem;
     }
 
-    .app-emoji {
+    .app-icon {
       font-size: 1.6rem;
+      color: white;
       filter: drop-shadow(0 2px 6px rgba(15, 23, 42, 0.28));
     }
 
@@ -187,7 +190,7 @@ import { HeaderUtilsComponent } from './header-utils.component';
 export class CollectorTopBarComponent {
   @Input() title = 'Collector HQ';
   @Input() subtitle = 'Daily progress overview';
-  @Input() emoji = '🛡️';
+  @Input() icon = 'shield-outline';
   @Input() notificationsLink: string | any[] = ['/notifications'];
   @Input() showLogout = true;
   notifications$ = this.notificationService.notifications$;

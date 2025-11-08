@@ -24,7 +24,18 @@ import {
   checkmarkCircleOutline,
   moonOutline,
   sunnyOutline,
-  cardOutline
+  cardOutline,
+  briefcaseOutline,
+  cashOutline,
+  trendingUpOutline,
+  timeOutline,
+  calendarOutline,
+  clipboardOutline,
+  documentTextOutline,
+  lockClosedOutline,
+  walletOutline,
+  pieChartOutline,
+  informationCircleOutline
 } from 'ionicons/icons';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
@@ -48,6 +59,9 @@ interface LoanProduct {
   loanTermType?: string; // 'fixed' or 'flexible' (lowercase from DB)
   fixedTermDays?: number; // Fixed term in days
   interestType?: string;
+  deductPlatformFeeInAdvance?: boolean;
+  deductProcessingFeeInAdvance?: boolean;
+  deductInterestInAdvance?: boolean;
 }
 
 interface LoanApplicationRequest {
@@ -118,7 +132,18 @@ export class LoanApplicationFormPage implements OnInit, OnDestroy {
       checkmarkCircleOutline,
       moonOutline,
       sunnyOutline,
-      cardOutline
+      cardOutline,
+      briefcaseOutline,
+      cashOutline,
+      trendingUpOutline,
+      timeOutline,
+      calendarOutline,
+      clipboardOutline,
+      documentTextOutline,
+      lockClosedOutline,
+      walletOutline,
+      pieChartOutline,
+      informationCircleOutline
     });
   }
   
@@ -232,6 +257,9 @@ export class LoanApplicationFormPage implements OnInit, OnDestroy {
       platformFee: Number(product.platformFee) || 0,
       latePenaltyPercentage: 0,
       disbursementDate: new Date().toISOString(),
+      deductPlatformFeeInAdvance: product.deductPlatformFeeInAdvance ?? true,
+      deductProcessingFeeInAdvance: product.deductProcessingFeeInAdvance ?? true,
+      deductInterestInAdvance: product.deductInterestInAdvance ?? false,
     };
 
     this.calculationLoading.set(true);
@@ -277,7 +305,10 @@ export class LoanApplicationFormPage implements OnInit, OnDestroy {
       features: productData.features || [],
       loanTermType: productData.loanTermType || 'flexible',
       fixedTermDays: Number(productData.fixedTermDays) || 90,
-      interestType
+      interestType,
+      deductPlatformFeeInAdvance: productData.deductPlatformFeeInAdvance ?? true,
+      deductProcessingFeeInAdvance: productData.deductProcessingFeeInAdvance ?? true,
+      deductInterestInAdvance: productData.deductInterestInAdvance ?? false
     };
     
     console.log('🎯 Processed product:', product);

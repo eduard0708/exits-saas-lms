@@ -5,9 +5,24 @@ import {
   IonRefresher,
   IonRefresherContent,
   IonSkeletonText,
+  IonIcon,
   ToastController
 } from '@ionic/angular/standalone';
 import { Router, RouterLink } from '@angular/router';
+import { addIcons } from 'ionicons';
+import {
+  documentTextOutline,
+  briefcaseOutline,
+  trendingUpOutline,
+  ribbonOutline,
+  refreshOutline,
+  homeOutline,
+  chevronUpOutline,
+  chevronDownOutline,
+  calendarOutline,
+  cashOutline,
+  arrowForwardOutline
+} from 'ionicons/icons';
 
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -37,10 +52,11 @@ interface Loan {
     IonRefresher,
     IonRefresherContent,
     IonSkeletonText,
+    IonIcon,
     CustomerTopBarComponent
   ],
   template: `
-    <app-customer-top-bar emoji="📄" title="My Loans" />
+    <app-customer-top-bar icon="document-text-outline" title="My Loans" />
     
     <ion-content [fullscreen]="true" class="main-content">
       <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
@@ -52,7 +68,7 @@ interface Loan {
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-icon-wrapper purple-gradient">
-              <span class="emoji-icon">💼</span>
+              <ion-icon name="briefcase-outline" class="stat-icon"></ion-icon>
             </div>
             <div class="stat-content">
               <div class="stat-label">Total Loans</div>
@@ -66,7 +82,7 @@ interface Loan {
 
           <div class="stat-card">
             <div class="stat-icon-wrapper green-gradient">
-              <span class="emoji-icon">📈</span>
+              <ion-icon name="trending-up-outline" class="stat-icon"></ion-icon>
             </div>
             <div class="stat-content">
               <div class="stat-label">Total Balance</div>
@@ -140,25 +156,29 @@ interface Loan {
           </div>
         } @else if (filter() === 'submitted' && applications().length === 0) {
           <div class="empty-state">
-            <div class="empty-icon">📋</div>
+            <div class="empty-icon-wrapper">
+              <ion-icon name="clipboard-outline" class="empty-icon"></ion-icon>
+            </div>
             <h3 class="empty-title">No Submitted Applications</h3>
             <p class="empty-message">
               You don't have any submitted applications at the moment.
             </p>
             <div class="empty-actions">
               <button class="refresh-btn" (click)="loadApplications()" [disabled]="loading()">
-                <span class="emoji-icon-inline">🔄</span>
+                <ion-icon name="refresh-outline" class="btn-icon"></ion-icon>
                 <span>Refresh</span>
               </button>
               <button class="dashboard-btn" routerLink="/customer/dashboard">
-                <span class="emoji-icon-inline">🏠</span>
+                <ion-icon name="home-outline" class="btn-icon"></ion-icon>
                 <span>Back to Dashboard</span>
               </button>
             </div>
           </div>
         } @else if (filter() !== 'submitted' && filteredLoans().length === 0) {
           <div class="empty-state">
-            <div class="empty-icon">🎗️</div>
+            <div class="empty-icon-wrapper">
+              <ion-icon name="ribbon-outline" class="empty-icon"></ion-icon>
+            </div>
             <h3 class="empty-title">No Loans Found</h3>
             <p class="empty-message">
               @if (filter() === 'all') {
@@ -173,11 +193,11 @@ interface Loan {
             </p>
             <div class="empty-actions">
               <button class="refresh-btn" (click)="loadLoans()" [disabled]="loading()">
-                <span class="emoji-icon-inline">🔄</span>
+                <ion-icon name="refresh-outline" class="btn-icon"></ion-icon>
                 <span>Refresh</span>
               </button>
               <button class="dashboard-btn" routerLink="/customer/dashboard">
-                <span class="emoji-icon-inline">🏠</span>
+                <ion-icon name="home-outline" class="btn-icon"></ion-icon>
                 <span>Back to Dashboard</span>
               </button>
             </div>
@@ -194,7 +214,9 @@ interface Loan {
                 <!-- Compact Header -->
                 <div class="app-header">
                   <div class="app-left">
-                    <div class="app-icon">📋</div>
+                    <div class="app-icon-wrapper">
+                      <ion-icon name="clipboard-outline" class="app-icon"></ion-icon>
+                    </div>
                     <div class="app-info">
                       <div class="app-number">{{ app.applicationNumber }}</div>
                       <div class="app-product">{{ app.productName }}</div>
@@ -226,16 +248,14 @@ interface Loan {
                       'status-overdue': loan.status === 'overdue',
                       'status-pending': loan.status === 'pending'
                     }">
-                      <span class="emoji-icon-small">🎗️</span>
+                      <ion-icon name="ribbon-outline" class="loan-icon"></ion-icon>
                     </div>
                     <div>
                       <div class="loan-number">{{ loan.loanNumber }}</div>
                       <div class="loan-date">Applied: {{ loan.dueDate }}</div>
                     </div>
                   </div>
-                  <span class="emoji-icon-small">
-                    {{ expandedLoanId() === loan.id ? '🔼' : '🔽' }}
-                  </span>
+                  <ion-icon [name]="expandedLoanId() === loan.id ? 'chevron-up-outline' : 'chevron-down-outline'" class="expand-icon"></ion-icon>
                 </div>
 
                 <!-- Status Badge -->
@@ -291,7 +311,7 @@ interface Loan {
                     <div class="details-grid">
                       <div class="detail-row">
                         <div class="detail-icon-wrapper">
-                          <span class="emoji-icon-tiny">📅</span>
+                          <ion-icon name="calendar-outline" class="detail-icon"></ion-icon>
                         </div>
                         <div class="detail-content">
                           <div class="detail-label">Due Date</div>
@@ -301,7 +321,7 @@ interface Loan {
 
                       <div class="detail-row">
                         <div class="detail-icon-wrapper">
-                          <span class="emoji-icon-tiny">💵</span>
+                          <ion-icon name="cash-outline" class="detail-icon"></ion-icon>
                         </div>
                         <div class="detail-content">
                           <div class="detail-label">Monthly Payment</div>
@@ -316,7 +336,7 @@ interface Loan {
                       (click)="viewLoanDetails(loan); $event.stopPropagation()"
                     >
                       View Full Details
-                      <span class="emoji-icon-inline" style="transform: rotate(-90deg);">🔽</span>
+                      <ion-icon name="arrow-forward-outline" class="btn-icon"></ion-icon>
                     </button>
                   </div>
                 }
@@ -407,30 +427,45 @@ interface Loan {
       background: linear-gradient(135deg, #10b981, #059669);
     }
 
-    .emoji-icon {
+    .stat-icon {
       font-size: 1.5rem;
-      line-height: 1;
+      color: white;
     }
 
-    .emoji-icon-small {
+    .loan-icon {
       font-size: 1rem;
-      line-height: 1;
+      color: white;
     }
 
-    .emoji-icon-tiny {
+    .expand-icon {
       font-size: 1.125rem;
-      line-height: 1;
+      color: var(--ion-color-medium);
     }
 
-    .emoji-icon-inline {
+    .detail-icon {
+      font-size: 1rem;
+      color: var(--ion-color-primary);
+    }
+
+    .btn-icon {
       font-size: 1.125rem;
-      line-height: 1;
-      display: inline-block;
+      margin-right: 0.25rem;
     }
 
-    .emoji-icon-large {
+    .empty-icon-wrapper {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(124, 58, 237, 0.1));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+
+    .empty-icon {
       font-size: 2.5rem;
-      line-height: 1;
+      color: var(--ion-color-primary);
     }
 
     .stat-content {
@@ -1038,6 +1073,19 @@ export class CustomerLoansPage implements OnInit {
     public themeService: ThemeService,
     private toastController: ToastController
   ) {
+    addIcons({
+      documentTextOutline,
+      briefcaseOutline,
+      trendingUpOutline,
+      ribbonOutline,
+      refreshOutline,
+      homeOutline,
+      chevronUpOutline,
+      chevronDownOutline,
+      calendarOutline,
+      cashOutline,
+      arrowForwardOutline
+    });
   }
 
   ngOnInit() {

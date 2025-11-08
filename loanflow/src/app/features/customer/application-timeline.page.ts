@@ -21,7 +21,10 @@ import {
   documentTextOutline,
   cashOutline,
   moonOutline,
-  sunnyOutline
+  sunnyOutline,
+  clipboardOutline,
+  homeOutline,
+  closeCircleOutline
 } from 'ionicons/icons';
 import { ApiService } from '../../core/services/api.service';
 import { ThemeService } from '../../core/services/theme.service';
@@ -70,7 +73,7 @@ interface TimelineStep {
       <div class="fixed-top-bar">
         <div class="top-bar-content">
           <div class="top-bar-left">
-            <span class="app-emoji">📋</span>
+            <ion-icon name="clipboard-outline" class="app-emoji"></ion-icon>
             <span class="app-title">Application Status</span>
           </div>
           
@@ -179,7 +182,7 @@ interface TimelineStep {
           <!-- Back to Dashboard Button -->
           <div class="dashboard-button-container">
             <button class="dashboard-button" (click)="goBack()">
-              <span class="dashboard-icon">🏠</span>
+              <ion-icon name="home-outline" class="dashboard-icon"></ion-icon>
               <span class="dashboard-text">Back to Dashboard</span>
             </button>
           </div>
@@ -712,7 +715,10 @@ export class ApplicationTimelinePage implements OnInit {
       documentTextOutline,
       cashOutline,
       moonOutline,
-      sunnyOutline
+      sunnyOutline,
+      clipboardOutline,
+      homeOutline,
+      closeCircleOutline
     });
   }
 

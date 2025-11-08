@@ -17,7 +17,7 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
   template: `
     <ion-content [fullscreen]="true" class="main-content">
       <app-collector-top-bar
-        emoji="👤"
+        icon="person-outline"
         title="Customer Visit"
         subtitle="Feature in progress"
       />

@@ -85,7 +85,7 @@ interface AssignedCollector {
       </ion-refresher>
 
       <app-customer-top-bar
-        emoji="💼"
+        icon="layout-dashboard"
         title="Dashboard"
         [subtitle]="currentDateTime()"
       />
@@ -108,7 +108,7 @@ interface AssignedCollector {
 
           <div class="hero-info-cards">
             <div class="info-card">
-              <span class="info-icon">🏢</span>
+              <ion-icon name="business-outline" class="info-icon"></ion-icon>
               <div class="info-details">
                 <span class="info-label">Tenant</span>
                 <span class="info-value">{{ authService.currentUser()?.tenant?.name || 'LoanFlow Tenant' }}</span>
@@ -116,7 +116,7 @@ interface AssignedCollector {
             </div>
 
             <div class="info-card" *ngIf="assignedCollector() as collector">
-              <span class="info-icon">🧑‍💼</span>
+              <ion-icon name="people-outline" class="info-icon"></ion-icon>
               <div class="info-details">
                 <span class="info-label">Collector</span>
                 <span class="info-value">{{ collector.fullName }}</span>
@@ -126,7 +126,7 @@ interface AssignedCollector {
             </div>
 
             <div class="info-card" *ngIf="stats().activeLoans > 0">
-              <span class="info-icon">📊</span>
+              <ion-icon name="trending-up-outline" class="info-icon"></ion-icon>
               <div class="info-details">
                 <span class="info-label">Active Loans</span>
                 <span class="info-value">{{ stats().activeLoans }}</span>
@@ -318,7 +318,7 @@ interface AssignedCollector {
   <div class="section-card animate-fade-up delay-5">
           <div class="section-header">
             <div class="section-header-left">
-              <span class="section-emoji">📋</span>
+              <ion-icon name="document-text-outline" class="section-icon"></ion-icon>
               <h2 class="section-title">Recent Loans</h2>
             </div>
             <ion-button 
@@ -423,7 +423,7 @@ interface AssignedCollector {
                     
                     <!-- Row 3: Due Date -->
                     <div class="loan-compact-footer">
-                      <span class="due-icon-compact">📅</span>
+                      <ion-icon name="calendar-outline" class="due-icon-compact"></ion-icon>
                       <span class="due-text-compact">{{ loan.dueDate }}</span>
                     </div>
                   </div>
@@ -665,8 +665,9 @@ interface AssignedCollector {
     }
 
     .info-icon {
-      font-size: 1rem;
-      line-height: 1;
+      font-size: 1.25rem;
+      color: var(--ion-color-primary);
+      flex-shrink: 0;
     }
 
     .info-details {
@@ -1218,9 +1219,10 @@ interface AssignedCollector {
       gap: 0.5rem;
     }
 
-    .section-emoji {
+    .section-icon {
       font-size: 1.25rem;
-      line-height: 1;
+      color: var(--ion-color-primary);
+      margin-right: 0.25rem;
     }
 
     .section-title {
@@ -1716,8 +1718,8 @@ interface AssignedCollector {
     }
 
     .due-icon-compact {
-      font-size: 0.875rem;
-      line-height: 1;
+      font-size: 1rem;
+      color: var(--ion-color-medium);
     }
 
     .due-text-compact {

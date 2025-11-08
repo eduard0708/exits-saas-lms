@@ -57,10 +57,22 @@ export class MoneyLoanTenantController {
 
   @Get('loans/products')
   @Permissions('money-loan:read')
-  async getLoanProducts(@Param('tenantId') tenantIdParam: string, @Req() req: any) {
+  async getLoanProducts(@Param('tenantId') tenantIdParam: string, @Query('customerId') customerIdStr: string, @Req() req: any) {
     const tenantId = this.ensureTenantAccess(req, this.parseTenantId(tenantIdParam));
     const onlyActive = req.user?.type === 'customer';
-    const products = await this.moneyLoanService.getProducts(tenantId, { onlyActive });
+    const customerId = customerIdStr ? parseInt(customerIdStr, 10) : undefined;
+    
+    console.log('🔵 [CONTROLLER] getLoanProducts called');
+    console.log('   - tenantId:', tenantId);
+    console.log('   - customerId from query:', customerIdStr);
+    console.log('   - customerId parsed:', customerId);
+    console.log('   - onlyActive:', onlyActive);
+    
+    const products = await this.moneyLoanService.getProducts(tenantId, { onlyActive, customerId });
+    
+    console.log('🟢 [CONTROLLER] Returning products count:', products.length);
+    console.log('🟢 [CONTROLLER] Products being returned:', products.map(p => ({ id: p.id, name: p.name, availabilityType: p.availabilityType, selectedCustomerIds: p.selectedCustomerIds })));
+    
     return {
       success: true,
       data: products,

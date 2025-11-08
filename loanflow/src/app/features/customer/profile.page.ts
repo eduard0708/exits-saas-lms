@@ -67,7 +67,7 @@ import { environment } from '../../../environments/environment';
       <div class="fixed-top-bar">
         <div class="top-bar-content">
           <div class="top-bar-left">
-            <span class="app-emoji">👤</span>
+            <ion-icon name="person-outline" class="app-icon"></ion-icon>
             <span class="app-title">Profile</span>
           </div>
           
@@ -484,8 +484,9 @@ import { environment } from '../../../environments/environment';
       gap: 0.25rem;
     }
 
-    .app-emoji {
+    .app-icon {
       font-size: 1.5rem;
+      color: white;
       filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
     }
 

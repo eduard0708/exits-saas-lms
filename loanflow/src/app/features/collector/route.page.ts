@@ -109,7 +109,7 @@ interface CollectionStats {
       </ion-refresher>
 
       <app-collector-top-bar
-        emoji="📍"
+        icon="navigate-outline"
         title="Route HQ"
         [subtitle]="currentDate"
       />

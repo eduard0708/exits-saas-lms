@@ -51,10 +51,18 @@ import {
   IonContent,
   IonRefresher,
   IonRefresherContent,
+  IonIcon,
   ToastController,
   AlertController,
   ViewWillEnter,
 } from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import {
+  cashOutline,
+  sparklesOutline,
+  clipboardOutline,
+  checkmarkOutline
+} from 'ionicons/icons';
 import {
   CollectorService,
   PendingDisbursement,
@@ -72,6 +80,7 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
     IonContent,
     IonRefresher,
     IonRefresherContent,
+    IonIcon,
     CollectorTopBarComponent
   ],
   template: `
@@ -82,7 +91,7 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
       </ion-refresher>
 
       <app-collector-top-bar
-        emoji="💰"
+        icon="cash-outline"
         title="Disbursements"
         subtitle="Process approved loans"
       />
@@ -102,12 +111,19 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
         <!-- Empty State -->
         @else if (disbursements().length === 0) {
           <div class="empty-state">
-            <div class="empty-emoji">💰</div>
+            <div class="empty-icon-wrapper">
+              <ion-icon name="cash-outline" class="empty-icon"></ion-icon>
+            </div>
             <h3 class="empty-title">No Pending Disbursements</h3>
             <p class="empty-subtitle">All approved loans have been disbursed</p>
             <div class="hint-box">
-              <div class="hint-label">✨ Quick Tip</div>
-              <div class="hint-text">New disbursements will appear here when loans are approved by your manager</div>
+              <div class="hint-icon">
+                <ion-icon name="sparkles-outline"></ion-icon>
+              </div>
+              <div class="hint-content">
+                <div class="hint-label">Quick Tip</div>
+                <div class="hint-text">New disbursements will appear here when loans are approved by your manager</div>
+              </div>
             </div>
           </div>
         }
@@ -273,14 +289,16 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
 
                 <!-- Info Box -->
                 <div class="info-box">
-                  <div class="info-icon">📋</div>
+                  <div class="info-icon-wrapper">
+                    <ion-icon name="clipboard-outline" class="info-icon"></ion-icon>
+                  </div>
                   <div class="info-content">
                     <div class="info-title">Important Checklist:</div>
                     <ul class="checklist">
-                      <li>✓ Verify customer identity before disbursing</li>
-                      <li>✓ Customer must sign disbursement receipt</li>
-                      <li>✓ For cash: Count amount in front of customer</li>
-                      <li>✓ For transfers: Confirm receipt before closing</li>
+                      <li><ion-icon name="checkmark-outline"></ion-icon> Verify customer identity before disbursing</li>
+                      <li><ion-icon name="checkmark-outline"></ion-icon> Customer must sign disbursement receipt</li>
+                      <li><ion-icon name="checkmark-outline"></ion-icon> For cash: Count amount in front of customer</li>
+                      <li><ion-icon name="checkmark-outline"></ion-icon> For transfers: Confirm receipt before closing</li>
                     </ul>
                   </div>
                 </div>
@@ -361,10 +379,21 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
       padding: 3rem 1.5rem;
     }
 
-    .empty-emoji {
-      font-size: 4rem;
+    .empty-icon-wrapper {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.1));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       margin-bottom: 1.25rem;
       animation: float 3s ease-in-out infinite;
+    }
+
+    .empty-icon {
+      font-size: 3rem;
+      color: var(--ion-color-success);
     }
 
     @keyframes float {
@@ -390,8 +419,28 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
       background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
       border-radius: 12px;
       padding: 1rem;
-      max-width: 300px;
+      max-width: 320px;
       box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+
+    .hint-icon {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      background: rgba(16, 185, 129, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #065f46;
+      font-size: 1rem;
+    }
+
+    .hint-content {
+      flex: 1;
     }
 
     .hint-label {
@@ -836,9 +885,20 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
       align-items: flex-start;
     }
 
+    .info-icon-wrapper {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      background: rgba(59, 130, 246, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     .info-icon {
-      font-size: 1.25rem;
-      line-height: 1;
+      font-size: 1.125rem;
+      color: #1e40af;
     }
 
     .info-content {
@@ -854,7 +914,7 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
 
     .checklist {
       margin: 0;
-      padding-left: 1.25rem;
+      padding: 0;
       list-style: none;
     }
 
@@ -863,11 +923,16 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
       color: #1e3a8a;
       line-height: 1.6;
       margin-bottom: 0.25rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
     }
 
-    .checklist li::before {
-      content: '';
-      margin-right: 0;
+    .checklist li ion-icon {
+      font-size: 1rem;
+      color: #10b981;
+      flex-shrink: 0;
+      margin-top: 0.125rem;
     }
 
     /* Modal Actions */
@@ -965,6 +1030,15 @@ export class CollectorDisbursementsPage implements OnInit, ViewWillEnter {
     referenceNumber: '',
     notes: '',
   };
+
+  constructor() {
+    addIcons({
+      cashOutline,
+      sparklesOutline,
+      clipboardOutline,
+      checkmarkOutline
+    });
+  }
 
   ngOnInit() {
     const user = this.authService.currentUser();

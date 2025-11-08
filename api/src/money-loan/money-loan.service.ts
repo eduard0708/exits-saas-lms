@@ -1680,8 +1680,12 @@ export class MoneyLoanService {
     return schedule;
   }
 
-  async getProducts(tenantId: number, options: { onlyActive?: boolean } = {}) {
+  async getProducts(tenantId: number, options: { onlyActive?: boolean; customerId?: number } = {}) {
     const knex = this.knexService.instance;
+
+    console.log('🔵 [SERVICE getProducts] Started');
+    console.log('   - tenantId:', tenantId);
+    console.log('   - options:', options);
 
     const query = knex('money_loan_products')
       .where({ tenant_id: tenantId })
@@ -1693,13 +1697,43 @@ export class MoneyLoanService {
 
     const products = await query;
     
-    console.log('🔍 [GET PRODUCTS] Raw products from DB:', products);
+    console.log('� [SERVICE] Raw products from DB count:', products.length);
+    console.log('� [SERVICE] Raw products:', products.map(p => ({ id: p.id, name: p.name, availability_type: p.availability_type })));
     
     // Transform database fields to camelCase with proper formatting
     const transformed = await Promise.all(products.map(product => this.transformProductFields(product)));
     
-    console.log('✅ [GET PRODUCTS] Transformed products:', transformed);
+    console.log('🔄 [SERVICE] Transformed products count:', transformed.length);
+    console.log('🔄 [SERVICE] Transformed products:', transformed.map(p => ({ id: p.id, name: p.name, availabilityType: p.availabilityType, selectedCustomerIds: p.selectedCustomerIds })));
     
+    // Filter by customer availability if customerId is provided
+    if (options.customerId) {
+      console.log('🔍 [SERVICE] FILTERING for customer ID:', options.customerId);
+      
+      const filtered = transformed.filter(product => {
+        // Show all products with availability_type = 'all'
+        if (product.availabilityType === 'all') {
+          console.log(`   ✅ Product "${product.name}" (ID: ${product.id}) INCLUDED - availabilityType='all'`);
+          return true;
+        }
+        
+        // For 'selected' type, check if customer is in the list
+        if (product.availabilityType === 'selected') {
+          const isAvailable = product.selectedCustomerIds.includes(options.customerId);
+          console.log(`   ${isAvailable ? '✅' : '❌'} Product "${product.name}" (ID: ${product.id}) ${isAvailable ? 'INCLUDED' : 'EXCLUDED'} - selectedCustomerIds=[${product.selectedCustomerIds}], looking for ${options.customerId}`);
+          return isAvailable;
+        }
+        
+        console.log(`   ⚠️  Product "${product.name}" (ID: ${product.id}) INCLUDED - unknown availabilityType: ${product.availabilityType}`);
+        return true; // Default: show product
+      });
+      
+      console.log('🟢 [SERVICE] Filtered products count:', filtered.length);
+      console.log('🟢 [SERVICE] Returning filtered products:', filtered.map(p => ({ id: p.id, name: p.name })));
+      return filtered;
+    }
+    
+    console.log('🟢 [SERVICE] NO FILTER - Returning all products count:', transformed.length);
     return transformed;
   }
 
@@ -1721,6 +1755,9 @@ export class MoneyLoanService {
   private async transformProductFields(product: any) {
     const knex = this.knexService.instance;
     
+    console.log(`🔍 [TRANSFORM] Product "${product.name}" (ID: ${product.id})`);
+    console.log(`   - availabilityType: "${product.availabilityType}"`);
+    
     // Get assigned customer IDs if availability_type is 'selected'
     let selectedCustomerIds = [];
     if (product.availabilityType === 'selected') {
@@ -1728,6 +1765,9 @@ export class MoneyLoanService {
         .where('product_id', product.id)
         .pluck('customer_id');
       selectedCustomerIds = assignments;
+      console.log(`   - Found ${assignments.length} customer assignments:`, assignments);
+    } else {
+      console.log(`   - No customer assignments (availability is "${product.availabilityType}")`);
     }
     
     // Knex postProcessResponse already converts snake_case to camelCase

@@ -84,7 +84,7 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
       </ion-refresher>
 
       <app-collector-top-bar
-        emoji="📄"
+        icon="document-text-outline"
         title="Pending Applications"
         subtitle="Review and approve requests"
       />

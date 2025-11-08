@@ -58,7 +58,7 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
       </ion-refresher>
 
       <app-collector-top-bar
-        emoji="🛡️"
+        icon="shield-outline"
         title="Collector HQ"
       />
 

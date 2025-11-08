@@ -86,7 +86,7 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
       </ion-refresher>
 
       <app-collector-top-bar
-        emoji="🧭"
+        icon="compass-outline"
         title="Customer Visits"
         subtitle="Live check-ins and history"
       >

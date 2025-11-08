@@ -9,9 +9,15 @@ import {
   IonRefresherContent,
   IonSegment,
   IonSegmentButton,
+  IonIcon,
   ToastController,
   AlertController,
 } from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import {
+  alertCircleOutline,
+  bulbOutline
+} from 'ionicons/icons';
 import { 
   CollectorService, 
   PenaltyWaiver,
@@ -32,12 +38,13 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
     IonRefresherContent,
     IonSegment,
     IonSegmentButton,
+    IonIcon,
     CollectorTopBarComponent
   ],
   template: `
     <ion-content [fullscreen]="true" class="main-content">
       <app-collector-top-bar
-        emoji="⚠️"
+        icon="alert-circle-outline"
         title="Penalty Waivers"
         subtitle="Request and track waivers"
       />
@@ -74,12 +81,19 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
           <!-- Empty State -->
           @else if (pendingWaivers().length === 0) {
             <div class="empty-state">
-              <div class="empty-emoji">⚠️</div>
+              <div class="empty-icon-wrapper">
+                <ion-icon name="alert-circle-outline" class="empty-icon"></ion-icon>
+              </div>
               <h3 class="empty-title">No Pending Waivers</h3>
               <p class="empty-subtitle">You don't have any waiver requests at the moment</p>
               <div class="hint-box">
-                <div class="hint-label">💡 Quick Tip</div>
-                <div class="hint-text">Switch to "Request New" tab to submit a waiver request for your customers</div>
+                <div class="hint-icon">
+                  <ion-icon name="bulb-outline"></ion-icon>
+                </div>
+                <div class="hint-content">
+                  <div class="hint-label">Quick Tip</div>
+                  <div class="hint-text">Switch to "Request New" tab to submit a waiver request for your customers</div>
+                </div>
               </div>
             </div>
           }
@@ -357,10 +371,21 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
       text-align: center;
     }
 
-    .empty-emoji {
-      font-size: 4rem;
+    .empty-icon-wrapper {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, rgba(251, 146, 60, 0.1), rgba(249, 115, 22, 0.1));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       margin-bottom: 1.25rem;
       animation: float 3s ease-in-out infinite;
+    }
+
+    .empty-icon {
+      font-size: 3rem;
+      color: var(--ion-color-warning);
     }
 
     @keyframes float {
@@ -386,8 +411,28 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
       background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
       border-radius: 12px;
       padding: 1rem;
-      max-width: 280px;
+      max-width: 320px;
       box-shadow: 0 2px 8px rgba(251, 191, 36, 0.15);
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+
+    .hint-icon {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      background: rgba(251, 191, 36, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #92400e;
+      font-size: 1rem;
+    }
+
+    .hint-content {
+      flex: 1;
     }
 
     .hint-label {
@@ -858,6 +903,13 @@ export class CollectorWaiversPage implements OnInit {
     reason: '',
     notes: '',
   };
+
+  constructor() {
+    addIcons({
+      alertCircleOutline,
+      bulbOutline
+    });
+  }
 
   async ngOnInit() {
     const user = this.authService.currentUser();

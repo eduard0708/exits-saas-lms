@@ -7,9 +7,27 @@ import {
   IonRefresher,
   IonRefresherContent,
   IonSkeletonText,
+  IonIcon,
   ToastController,
   ModalController
 } from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import {
+  cardOutline,
+  starOutline,
+  refreshOutline,
+  hourglassOutline,
+  briefcaseOutline,
+  cashOutline,
+  trendingUpOutline,
+  timeOutline,
+  calendarOutline,
+  cogOutline,
+  shieldOutline,
+  checkmarkOutline,
+  clipboardOutline,
+  rocketOutline
+} from 'ionicons/icons';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
@@ -32,6 +50,11 @@ interface LoanProduct {
   loanTermType?: string;  // 'fixed' or 'flexible' (lowercase from DB)
   fixedTermDays?: number;
   interestType?: string;
+  deductPlatformFeeInAdvance?: boolean;
+  deductProcessingFeeInAdvance?: boolean;
+  deductInterestInAdvance?: boolean;
+  availabilityType?: 'all' | 'selected';
+  selectedCustomerIds?: number[];
 }
 
 @Component({
@@ -44,6 +67,7 @@ interface LoanProduct {
     IonRefresher,
     IonRefresherContent,
     IonSkeletonText,
+    IonIcon,
     CustomerTopBarComponent
   ],
   template: `
@@ -53,7 +77,7 @@ interface LoanProduct {
       </ion-refresher>
 
       <app-customer-top-bar
-        emoji="💳"
+        icon="card-outline"
         title="Apply for Loan"
         subtitle="Choose your loan product"
       />
@@ -82,16 +106,16 @@ interface LoanProduct {
         <!-- Empty State -->
         @else if (products().length === 0) {
           <div class="empty-state">
-            <div class="empty-hero">
-              <span class="empty-emoji">🌟</span>
+            <div class="empty-icon-wrapper">
+              <ion-icon name="star-outline" class="empty-icon"></ion-icon>
             </div>
-            <h3 class="empty-title">Loan offers are on the way</h3>
+            <h3 class="empty-title">No loan products available</h3>
             <p class="empty-message">
-              It looks like your lender is still setting things up. We will let you know as soon as new loan products are ready.
+              We currently don't have any loan products available for your account. Please contact your lender for more information or check back later.
             </p>
             <div class="empty-hint">
-              <span class="emoji-icon-inline">🔄</span>
-              <span>We refresh the catalog automatically throughout the day.</span>
+              <ion-icon name="refresh-outline" class="hint-icon"></ion-icon>
+              <span>Pull down to refresh or tap the button below</span>
             </div>
             <div class="empty-actions">
               <ion-button
@@ -100,7 +124,7 @@ interface LoanProduct {
                 (click)="refreshProducts()"
                 [disabled]="loading()"
               >
-                <span class="emoji-icon-inline" slot="start">🔄</span>
+                <ion-icon name="refresh-outline" slot="start"></ion-icon>
                 Refresh products
               </ion-button>
               <button type="button" class="empty-secondary" (click)="goToDashboard()">
@@ -117,13 +141,13 @@ interface LoanProduct {
               <div class="product-card" [class.card-disabled]="isProductPending(product.id)">
                 @if (isProductPending(product.id)) {
                   <div class="pending-overlay">
-                    <span class="overlay-icon">⏳</span>
+                    <ion-icon name="hourglass-outline" class="overlay-icon"></ion-icon>
                     <span class="overlay-text">Application Pending</span>
                   </div>
                 }
                 <div class="product-headline">
                   <div class="headline-main">
-                    <span class="product-emoji">💼</span>
+                    <ion-icon name="briefcase-outline" class="product-emoji"></ion-icon>
                     <div class="product-title-section">
                       <h3 class="product-name">{{ product.name }}</h3>
                       <p class="product-description">{{ product.description }}</p>
@@ -136,15 +160,15 @@ interface LoanProduct {
 
                 <div class="product-info">
                   <div class="info-item">
-                    <span class="info-emoji">💰</span>
+                    <ion-icon name="cash-outline" class="info-emoji"></ion-icon>
                     <span class="info-text">₱{{ formatCurrency(product.minAmount) }} - ₱{{ formatCurrency(product.maxAmount) }}</span>
                   </div>
                   <div class="info-item">
-                    <span class="info-emoji">📈</span>
+                    <ion-icon name="trending-up-outline" class="info-emoji"></ion-icon>
                     <span class="info-text">{{ product.interestRate }}% monthly ({{ product.interestType || 'flat' }})</span>
                   </div>
                   <div class="info-item">
-                    <span class="info-emoji">🕒</span>
+                    <ion-icon name="time-outline" class="info-emoji"></ion-icon>
                     <span class="info-text">
                       @if (product.loanTermType === 'fixed') {
                         {{ Math.round((product.fixedTermDays || 90) / 30) }} month term
@@ -155,19 +179,19 @@ interface LoanProduct {
                   </div>
                   @if (product.paymentFrequency) {
                     <div class="info-item">
-                      <span class="info-emoji">📅</span>
+                      <ion-icon name="calendar-outline" class="info-emoji"></ion-icon>
                       <span class="info-text">{{ formatFrequency(product.paymentFrequency) }} payments</span>
                     </div>
                   }
                   @if (product.processingFee > 0) {
                     <div class="info-item">
-                      <span class="info-emoji">⚙️</span>
+                      <ion-icon name="cog-outline" class="info-emoji"></ion-icon>
                       <span class="info-text">Processing fee {{ product.processingFee }}%</span>
                     </div>
                   }
                   @if (product.platformFee && product.platformFee > 0) {
                     <div class="info-item">
-                      <span class="info-emoji">🛡️</span>
+                      <ion-icon name="shield-outline" class="info-emoji"></ion-icon>
                       <span class="info-text">Platform fee ₱{{ formatCurrency(product.platformFee) }}/mo</span>
                     </div>
                   }
@@ -179,7 +203,7 @@ interface LoanProduct {
                     <ul class="features-list">
                       @for (feature of product.features.slice(0, 3); track feature) {
                         <li class="feature-item">
-                          <span class="feature-bullet">✅</span>
+                          <ion-icon name="checkmark-outline" class="feature-bullet"></ion-icon>
                           <span class="feature-text">{{ feature }}</span>
                         </li>
                       }
@@ -191,7 +215,7 @@ interface LoanProduct {
                   @if (isProductPending(product.id)) {
                     <div class="application-status">
                       <div class="status-header">
-                        <span class="status-icon">📋</span>
+                        <ion-icon name="clipboard-outline" class="status-icon"></ion-icon>
                         <span class="status-title">Your Application</span>
                       </div>
                       <div class="status-details">
@@ -216,7 +240,7 @@ interface LoanProduct {
                   } @else {
                     <button class="apply-btn" (click)="applyForProduct(product)">
                       <span>Apply Now</span>
-                      <span class="btn-emoji">🚀</span>
+                      <ion-icon name="rocket-outline" class="btn-emoji"></ion-icon>
                     </button>
                   }
                 </div>
@@ -235,10 +259,22 @@ interface LoanProduct {
       margin-top: 2.5rem;
       padding: 2.5rem 2rem;
       border-radius: 22px;
-      background: linear-gradient(145deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.12) 45%, #ffffff 100%);
-      border: 1px solid rgba(148, 163, 184, 0.18);
-      box-shadow: 0 18px 36px rgba(15, 23, 42, 0.1);
+      background: linear-gradient(145deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.08) 45%, var(--ion-card-background) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.15);
+      box-shadow: 0 18px 36px rgba(99, 102, 241, 0.12);
       text-align: center;
+      animation: fadeInUp 0.5s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .empty-state::before,
@@ -255,7 +291,8 @@ interface LoanProduct {
       height: 200px;
       top: -80px;
       right: -50px;
-      background: rgba(236, 72, 153, 0.2);
+      background: rgba(139, 92, 246, 0.15);
+      animation: float 6s ease-in-out infinite;
     }
 
     .empty-state::after {
@@ -263,7 +300,17 @@ interface LoanProduct {
       height: 160px;
       bottom: -70px;
       left: -40px;
-      background: rgba(14, 165, 233, 0.18);
+      background: rgba(99, 102, 241, 0.12);
+      animation: float 8s ease-in-out infinite reverse;
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-20px);
+      }
     }
 
     .empty-hero {
@@ -276,9 +323,21 @@ interface LoanProduct {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(255, 255, 255, 0.65);
-      box-shadow: 0 15px 30px rgba(102, 126, 234, 0.25);
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+      box-shadow: 0 15px 30px rgba(99, 102, 241, 0.2);
       backdrop-filter: blur(14px);
+      animation: scaleIn 0.6s ease-out 0.2s both;
+    }
+
+    @keyframes scaleIn {
+      from {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
     }
 
     .empty-emoji {
@@ -314,12 +373,13 @@ interface LoanProduct {
       gap: 0.5rem;
       padding: 0.5rem 0.85rem;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.7);
-      color: #1e293b;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+      color: var(--ion-text-color);
       font-size: 0.85rem;
       font-weight: 600;
-      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+      box-shadow: 0 10px 20px rgba(99, 102, 241, 0.12);
       margin-bottom: 1.75rem;
+      animation: fadeInUp 0.6s ease-out 0.4s both;
     }
 
     .emoji-icon-inline {
@@ -338,28 +398,42 @@ interface LoanProduct {
     }
 
     .empty-refresh {
-      --background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-      --background-activated: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+      --background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      --background-activated: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
       --border-radius: 999px;
       --padding-start: 1.35rem;
       --padding-end: 1.35rem;
-      --box-shadow: 0 15px 28px rgba(37, 99, 235, 0.28);
+      --box-shadow: 0 15px 28px rgba(99, 102, 241, 0.3);
       font-weight: 600;
       letter-spacing: 0.02em;
+      animation: fadeInUp 0.6s ease-out 0.6s both;
+      transition: all 0.3s ease;
+    }
+
+    .empty-refresh:hover {
+      --box-shadow: 0 20px 35px rgba(99, 102, 241, 0.4);
+      transform: translateY(-2px);
     }
 
     .empty-secondary {
       background: none;
       border: none;
-      color: #1d4ed8;
+      color: #6366f1;
       font-weight: 600;
       font-size: 0.9rem;
       text-decoration: underline;
       cursor: pointer;
+      animation: fadeInUp 0.6s ease-out 0.7s both;
+      transition: all 0.2s ease;
+    }
+
+    .empty-secondary:hover {
+      color: #4f46e5;
     }
 
     .empty-secondary:active {
       opacity: 0.7;
+      transform: scale(0.98);
     }
 
     .app-title {
@@ -372,7 +446,7 @@ interface LoanProduct {
 
     /* ===== MAIN CONTENT ===== */
     .main-content {
-      --background: linear-gradient(160deg, rgba(102, 126, 234, 0.12), rgba(118, 75, 162, 0.06)), var(--ion-background-color);
+      --background: linear-gradient(160deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.04)), var(--ion-background-color);
     }
 
     .products-container {
@@ -519,18 +593,31 @@ interface LoanProduct {
 
     .product-card {
       background: var(--ion-card-background);
-      border: 1px solid var(--ion-border-color, #e5e7eb);
+      border: 1px solid rgba(99, 102, 241, 0.1);
       border-radius: 14px;
       padding: 1.25rem 1.5rem;
-      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
-      transition: all 0.3s ease;
+      box-shadow: 0 6px 18px rgba(99, 102, 241, 0.06);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       width: 100%;
+      animation: slideInUp 0.4s ease-out both;
+    }
+
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .product-card:hover {
-      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
-      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(99, 102, 241, 0.15);
+      transform: translateY(-4px);
+      border-color: rgba(99, 102, 241, 0.2);
     }
 
     .product-card.card-disabled {
@@ -606,7 +693,14 @@ interface LoanProduct {
       width: 48px;
       height: 48px;
       border-radius: 14px;
-      background: rgba(102, 126, 234, 0.12);
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+      color: #6366f1;
+      transition: all 0.3s ease;
+    }
+
+    .product-card:hover .product-emoji {
+      transform: scale(1.1) rotate(5deg);
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.25));
     }
 
     .product-title-section {
@@ -631,13 +725,19 @@ interface LoanProduct {
     .product-type-chip {
       padding: 0.3rem 0.65rem;
       border-radius: 999px;
-      background: rgba(102, 126, 234, 0.12);
-      color: rgba(67, 56, 202, 0.85);
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+      color: #6366f1;
       font-size: 0.68rem;
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       white-space: nowrap;
+      transition: all 0.3s ease;
+    }
+
+    .product-card:hover .product-type-chip {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.25));
+      transform: scale(1.05);
     }
 
     .product-info {
@@ -659,6 +759,12 @@ interface LoanProduct {
     .info-emoji {
       font-size: 1.1rem;
       flex-shrink: 0;
+      color: #6366f1;
+      transition: transform 0.2s ease;
+    }
+
+    .info-item:hover .info-emoji {
+      transform: scale(1.2);
     }
 
     .info-text {
@@ -696,6 +802,12 @@ interface LoanProduct {
     .feature-bullet {
       font-size: 0.9rem;
       line-height: 1.2;
+      color: #10b981;
+      transition: transform 0.2s ease;
+    }
+
+    .feature-item:hover .feature-bullet {
+      transform: scale(1.2);
     }
 
     .feature-text {
@@ -724,16 +836,34 @@ interface LoanProduct {
       justify-content: center;
       gap: 0.45rem;
       cursor: pointer;
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .apply-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .apply-btn:hover::before {
+      left: 100%;
     }
 
     .apply-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 10px 24px rgba(99, 102, 241, 0.35);
+      box-shadow: 0 10px 24px rgba(99, 102, 241, 0.4);
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
     }
 
     .apply-btn:active {
-      transform: translateY(0);
+      transform: translateY(0) scale(0.98);
     }
 
     .apply-btn.disabled {
@@ -749,14 +879,29 @@ interface LoanProduct {
 
     .btn-emoji {
       font-size: 1.1rem;
+      transition: transform 0.3s ease;
+    }
+
+    .apply-btn:hover .btn-emoji {
+      transform: translateX(4px);
     }
 
     /* ===== APPLICATION STATUS ===== */
     .application-status {
-      background: linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(245, 158, 11, 0.08));
-      border: 1px solid rgba(251, 191, 36, 0.3);
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.08));
+      border: 1px solid rgba(251, 191, 36, 0.25);
       border-radius: 12px;
       padding: 1rem;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
     }
 
     .status-header {
@@ -770,6 +915,8 @@ interface LoanProduct {
 
     .status-icon {
       font-size: 1.25rem;
+      color: #f59e0b;
+      animation: pulse 2s ease-in-out infinite;
     }
 
     .status-title {
@@ -915,6 +1062,22 @@ export class ApplyLoanPage implements OnInit {
     public themeService: ThemeService,
     private toastController: ToastController
   ) {
+    addIcons({
+      cardOutline,
+      starOutline,
+      refreshOutline,
+      hourglassOutline,
+      briefcaseOutline,
+      cashOutline,
+      trendingUpOutline,
+      timeOutline,
+      calendarOutline,
+      cogOutline,
+      shieldOutline,
+      checkmarkOutline,
+      clipboardOutline,
+      rocketOutline
+    });
   }
 
   ngOnInit() {
@@ -940,43 +1103,70 @@ export class ApplyLoanPage implements OnInit {
       const user = this.authService.currentUser();
       const tenantId = user?.tenant?.id;
       
+      // Get current customer ID
+      const customerStr = localStorage.getItem('customer');
+      let customerId = 0;
+      if (customerStr) {
+        try {
+          const customer = JSON.parse(customerStr);
+          customerId = customer.id || 0;
+        } catch (e) {
+          console.error('Error parsing customer data:', e);
+        }
+      }
+      
       console.log('🏢 Loading products for tenant:', tenantId);
+      console.log('👤 Current customer ID:', customerId);
       
-      const productsData = await this.apiService.getLoanProducts(tenantId).toPromise();
+      const productsData = await this.apiService.getLoanProducts(tenantId, customerId).toPromise();
       
-      console.log('📦 Raw products from API:', productsData);
+      console.log('📦 Raw products from API (already filtered by backend):', productsData);
       
       if (productsData && Array.isArray(productsData)) {
+        console.log('📦 Total products available for this customer:', productsData.length);
+        // Backend already filtered products based on customer ID and availability
+        // Just map the data to our format
         const mappedProducts = productsData.map((product: any) => {
-          // API now returns camelCase fields - use them directly like web version
-          console.log('🔍 Mapping product:', product);
-          
-          const mapped = {
-            id: Number(product.id),  // Ensure ID is a number
-            name: product.name || 'Loan Product',
-            description: product.description || '',
-            minAmount: Number(product.minAmount) || 0,
-            maxAmount: Number(product.maxAmount) || 0,
-            interestRate: Number(product.interestRate) || 0,
-            minTerm: Number(product.minTermDays) || 30,  // Store as days, convert in template
-            maxTerm: Number(product.maxTermDays) || 360, // Store as days, convert in template
-            processingFee: Number(product.processingFeePercent) || 0,
-            platformFee: Number(product.platformFee) || 0,
-            paymentFrequency: product.paymentFrequency || 'monthly',
-            requirements: product.requirements || [],
-            features: product.features || [],
-            loanTermType: product.loanTermType || 'flexible',
-            fixedTermDays: Number(product.fixedTermDays) || 90,
-            interestType: this.normalizeInterestType(product)
-          };
-          
-          console.log('✅ Mapped product:', mapped);
-          console.log('🔍 Product ID type:', typeof mapped.id, 'Value:', mapped.id);
-          return mapped;
-        });
+            // API now returns camelCase fields - use them directly like web version
+            console.log('🔍 Mapping product:', product);
+            
+            const mapped = {
+              id: Number(product.id),  // Ensure ID is a number
+              name: product.name || 'Loan Product',
+              description: product.description || '',
+              minAmount: Number(product.minAmount) || 0,
+              maxAmount: Number(product.maxAmount) || 0,
+              interestRate: Number(product.interestRate) || 0,
+              minTerm: Number(product.minTermDays) || 30,  // Store as days, convert in template
+              maxTerm: Number(product.maxTermDays) || 360, // Store as days, convert in template
+              processingFee: Number(product.processingFeePercent) || 0,
+              platformFee: Number(product.platformFee) || 0,
+              paymentFrequency: product.paymentFrequency || 'monthly',
+              requirements: product.requirements || [],
+              features: product.features || [],
+              loanTermType: product.loanTermType || 'flexible',
+              fixedTermDays: Number(product.fixedTermDays) || 90,
+              interestType: this.normalizeInterestType(product),
+              deductPlatformFeeInAdvance: product.deductPlatformFeeInAdvance ?? true,
+              deductProcessingFeeInAdvance: product.deductProcessingFeeInAdvance ?? true,
+              deductInterestInAdvance: product.deductInterestInAdvance ?? false,
+              availabilityType: product.availabilityType || 'all',
+              selectedCustomerIds: product.selectedCustomerIds || []
+            };
+            
+            console.log('✅ Mapped product:', mapped);
+            console.log('🔍 Product ID type:', typeof mapped.id, 'Value:', mapped.id);
+            return mapped;
+          });
         this.products.set(mappedProducts);
         console.log('📊 Total products loaded:', mappedProducts.length);
         console.log('📊 Product IDs:', mappedProducts.map(p => p.id));
+        console.log('📊 Products available to customer:', mappedProducts.map(p => p.name));
+        
+        // Show message if no products available
+        if (mappedProducts.length === 0 && productsData.length > 0) {
+          console.log('⚠️ No products available for this customer (all products are assigned to other customers)');
+        }
       }
     } catch (error) {
       console.error('Failed to load loan products:', error);

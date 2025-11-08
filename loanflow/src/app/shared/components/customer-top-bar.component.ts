@@ -2,10 +2,20 @@
 import { Component, Input, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { IonBadge } from '@ionic/angular/standalone';
+import { IonBadge, IonIcon } from '@ionic/angular/standalone';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { HeaderUtilsComponent } from './header-utils.component';
+import { addIcons } from 'ionicons';
+import { 
+  notificationsOutline,
+  businessOutline,
+  peopleOutline,
+  trendingUpOutline,
+  documentTextOutline,
+  calendarOutline,
+  gridOutline
+} from 'ionicons/icons';
 
 @Component({
   selector: 'app-customer-top-bar',
@@ -13,13 +23,16 @@ import { HeaderUtilsComponent } from './header-utils.component';
   imports: [
     CommonModule,
     IonBadge,
+    IonIcon,
     HeaderUtilsComponent
   ],
   template: `
     <div class="fixed-top-bar">
       <div class="top-bar-content">
         <div class="top-bar-left">
-          <span class="app-emoji">{{ emoji }}</span>
+          @if (icon) {
+            <ion-icon [name]="icon" class="app-icon"></ion-icon>
+          }
           <div class="title-group">
             <span class="app-title">{{ title }}</span>
             @if (subtitle) {
@@ -39,7 +52,7 @@ import { HeaderUtilsComponent } from './header-utils.component';
               class="icon-btn notifications-btn" 
               title="Notifications"
             >
-              <span class="emoji-icon">🔔</span>
+              <ion-icon name="notifications-outline" class="icon-bell"></ion-icon>
               @if (unreadCount() > 0) {
                 <ion-badge class="notification-badge">{{ unreadCount() }}</ion-badge>
               }
@@ -78,9 +91,9 @@ import { HeaderUtilsComponent } from './header-utils.component';
       min-width: 0;
     }
 
-    .app-emoji {
+    .app-icon {
       font-size: 1.75rem;
-      line-height: 1;
+      color: white;
       flex-shrink: 0;
     }
 
@@ -134,9 +147,9 @@ import { HeaderUtilsComponent } from './header-utils.component';
       padding: 0.5rem;
     }
 
-    .emoji-icon {
+    .icon-bell {
       font-size: 1.5rem;
-      line-height: 1;
+      color: white;
       filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
     }
 
@@ -171,7 +184,7 @@ import { HeaderUtilsComponent } from './header-utils.component';
   `]
 })
 export class CustomerTopBarComponent {
-  @Input() emoji: string = '💼';
+  @Input() icon: string = 'grid-outline';
   @Input() title: string = 'Dashboard';
   @Input() subtitle?: string;
   @Input() showLogout: boolean = true;
@@ -184,6 +197,16 @@ export class CustomerTopBarComponent {
     private authService: AuthService,
     private notificationService: NotificationService
   ) {
+    addIcons({
+      notificationsOutline,
+      businessOutline,
+      peopleOutline,
+      trendingUpOutline,
+      documentTextOutline,
+      calendarOutline,
+      gridOutline
+    });
+
     // Subscribe to notification count changes
     effect(() => {
       this.notificationService.unreadCount$.subscribe(count => {

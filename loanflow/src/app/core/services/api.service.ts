@@ -141,9 +141,13 @@ export class ApiService {
     return this.get<any>(`customers/auth/payments${params}`);
   }
 
-  getLoanProducts(tenantId?: string): Observable<any[]> {
+  getLoanProducts(tenantId?: string, customerId?: number): Observable<any[]> {
     if (tenantId) {
-      return this.get<any[]>(`loan-products/tenant/${tenantId}`);
+      const params: any = {};
+      if (customerId) {
+        params.customerId = customerId;
+      }
+      return this.get<any[]>(`loan-products/tenant/${tenantId}`, params);
     }
     return this.get<any[]>('loan-products');
   }

@@ -1730,6 +1730,8 @@ export class QuickProductComponent implements OnDestroy {
           console.log('🔍 First product keys:', response.data[0] ? Object.keys(response.data[0]) : 'no products');
           console.log('🔍 First product minAmount:', response.data[0]?.minAmount);
           console.log('🔍 First product maxAmount:', response.data[0]?.maxAmount);
+          console.log('🔍 First product availabilityType:', response.data[0]?.availabilityType);
+          console.log('🔍 First product selectedCustomerIds:', response.data[0]?.selectedCustomerIds);
 
           // Ensure all numeric fields are converted from strings to numbers (PostgreSQL returns decimals as strings)
           const normalizedProducts = response.data.map((p: any) => ({
@@ -1743,7 +1745,14 @@ export class QuickProductComponent implements OnDestroy {
             processingFeePercent: Number(p.processingFeePercent) || 0,
             platformFee: Number(p.platformFee) || 0,
             latePaymentPenaltyPercent: Number(p.latePaymentPenaltyPercent) || 0,
-            gracePeriodDays: Number(p.gracePeriodDays) || 0
+            gracePeriodDays: Number(p.gracePeriodDays) || 0,
+            // Preserve availability fields
+            availabilityType: p.availabilityType || 'all',
+            selectedCustomerIds: p.selectedCustomerIds || [],
+            // Preserve deduction flags
+            deductPlatformFeeInAdvance: p.deductPlatformFeeInAdvance ?? false,
+            deductProcessingFeeInAdvance: p.deductProcessingFeeInAdvance ?? false,
+            deductInterestInAdvance: p.deductInterestInAdvance ?? false
           }));
 
           console.log('✅ Normalized products:', normalizedProducts);
