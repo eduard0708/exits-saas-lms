@@ -26,7 +26,8 @@ import {
   chevronForwardOutline,
   calendarOutline,
   alertCircleOutline,
-  refreshOutline
+  refreshOutline,
+  gridOutline
 } from 'ionicons/icons';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -85,7 +86,7 @@ interface AssignedCollector {
       </ion-refresher>
 
       <app-customer-top-bar
-        icon="layout-dashboard"
+        icon="grid-outline"
         title="Dashboard"
         [subtitle]="currentDateTime()"
       />
@@ -1978,7 +1979,8 @@ export class CustomerDashboardPage implements OnInit {
       chevronForwardOutline,
       calendarOutline,
       alertCircleOutline,
-      refreshOutline
+      refreshOutline,
+      gridOutline
     });
   }
 

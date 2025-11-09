@@ -669,10 +669,6 @@ interface Loan {
       transform: scale(0.95);
     }
 
-    .emoji-icon-inline {
-      font-size: 1rem;
-    }
-
     /* ===== LOANS LIST ===== */
     .loans-list {
       display: flex;

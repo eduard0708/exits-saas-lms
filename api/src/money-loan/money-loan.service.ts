@@ -2436,26 +2436,42 @@ export class MoneyLoanService {
         status = 'visited';
       }
 
-      // Calculate grace period status (only from product since loan table doesn't have these columns)
-      const gracePeriodDays = parseInt(loan.grace_period_days || '0');
-      const latePenaltyPercent = parseFloat(loan.late_penalty_percent || '0');
-      const totalPenalties = Number(loan.total_penalties ?? 0);
+      // Calculate grace period status - ALWAYS return grace period info from product
+      // Handle both snake_case and camelCase from database
+      const gracePeriodDays = parseInt(
+        String(loan.gracePeriodDays ?? loan.grace_period_days ?? '0')
+      );
+      const latePenaltyPercent = parseFloat(
+        String(loan.latePenaltyPercent ?? loan.late_penalty_percent ?? '0')
+      );
+      const totalPenalties = Number(loan.totalPenalties ?? loan.total_penalties ?? 0);
       
       let daysOverdue = 0;
-      let gracePeriodRemaining = 0;
+      let gracePeriodRemaining = gracePeriodDays; // Default to full grace period
       let gracePeriodConsumed = false;
       
-      if (dueDate && status === 'missed') {
+      // Calculate overdue status if there's a due date
+      if (dueDate) {
         const today = new Date();
         const diffTime = today.getTime() - dueDate.getTime();
-        daysOverdue = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const calculatedDaysOverdue = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
-        if (daysOverdue <= gracePeriodDays) {
-          gracePeriodRemaining = gracePeriodDays - daysOverdue;
-          gracePeriodConsumed = false;
+        // Only set daysOverdue if actually overdue (positive days)
+        if (calculatedDaysOverdue > 0) {
+          daysOverdue = calculatedDaysOverdue;
+          
+          if (daysOverdue <= gracePeriodDays) {
+            gracePeriodRemaining = gracePeriodDays - daysOverdue;
+            gracePeriodConsumed = false;
+          } else {
+            gracePeriodRemaining = 0;
+            gracePeriodConsumed = true;
+          }
         } else {
-          gracePeriodRemaining = 0;
-          gracePeriodConsumed = true;
+          // Not overdue yet - show full grace period available
+          daysOverdue = 0;
+          gracePeriodRemaining = gracePeriodDays;
+          gracePeriodConsumed = false;
         }
       }
 

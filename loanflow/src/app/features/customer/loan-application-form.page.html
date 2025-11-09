@@ -3,7 +3,7 @@
   <div class="fixed-top-bar">
     <div class="top-bar-content">
       <div class="top-bar-left">
-        <ion-icon name="card-outline" class="app-emoji"></ion-icon>
+        <ion-icon name="card-outline" class="app-icon"></ion-icon>
         <span class="app-title">Apply for Loan</span>
       </div>
       
@@ -27,7 +27,7 @@
       <ion-card-content>
         <div class="product-headline">
           <div class="headline-main">
-            <ion-icon name="briefcase-outline" class="product-emoji"></ion-icon>
+            <ion-icon name="briefcase-outline" class="product-icon"></ion-icon>
             <div class="headline-text">
               <h3>{{ product()!.name }}</h3>
               @if (product()!.features.length > 0) {
@@ -42,15 +42,15 @@
 
         <div class="product-highlights">
           <div class="highlight-chip">
-            <ion-icon name="cash-outline" class="chip-emoji"></ion-icon>
+            <ion-icon name="cash-outline" class="chip-icon"></ion-icon>
             <span class="chip-text">₱{{ formatCurrency(product()!.minAmount) }} - ₱{{ formatCurrency(product()!.maxAmount) }}</span>
           </div>
           <div class="highlight-chip">
-            <ion-icon name="trending-up-outline" class="chip-emoji"></ion-icon>
+            <ion-icon name="trending-up-outline" class="chip-icon"></ion-icon>
             <span class="chip-text">{{ product()!.interestRate }}% monthly</span>
           </div>
           <div class="highlight-chip">
-            <ion-icon name="time-outline" class="chip-emoji"></ion-icon>
+            <ion-icon name="time-outline" class="chip-icon"></ion-icon>
             <span class="chip-text">
               @if (product()!.loanTermType === 'fixed') {
                 {{ Math.round((product()!.fixedTermDays || 90) / 30) }} month term
@@ -61,7 +61,7 @@
           </div>
           @if (product()!.paymentFrequency) {
             <div class="highlight-chip">
-              <ion-icon name="calendar-outline" class="chip-emoji"></ion-icon>
+              <ion-icon name="calendar-outline" class="chip-icon"></ion-icon>
               <span class="chip-text">{{ getPaymentFrequencyDisplay() }} payments</span>
             </div>
           }
@@ -81,7 +81,7 @@
         <!-- Amount Slider -->
         <div class="form-section">
           <ion-label class="section-label">
-          <ion-icon name="cash-outline" class="label-emoji"></ion-icon>
+          <ion-icon name="cash-outline" class="label-icon"></ion-icon>
           <span class="label-text">Requested Amount</span>
           </ion-label>
           <div class="amount-display">
@@ -104,7 +104,7 @@
         <!-- Term Slider -->
         <div class="form-section">
           <ion-label class="section-label">
-            <ion-icon name="calendar-outline" class="label-emoji"></ion-icon>
+            <ion-icon name="calendar-outline" class="label-icon"></ion-icon>
             <span class="label-text">Loan Term</span>
             @if (product()!.loanTermType === 'fixed') {<span class="fixed-badge"><ion-icon name="lock-closed-outline"></ion-icon> Fixed</span>}
           </ion-label>
@@ -144,7 +144,7 @@
         <div class="form-section">
           <div class="frequency-row">
             <div class="frequency-left">
-              <ion-icon name="calendar-outline" class="label-emoji"></ion-icon>
+              <ion-icon name="calendar-outline" class="label-icon"></ion-icon>
               <span class="label-text">Payment Frequency</span>
             </div>
             <div class="frequency-value">
@@ -158,7 +158,7 @@
         <div class="form-section">
           <ion-item lines="none">
             <ion-label position="stacked">
-                <ion-icon name="document-text-outline" class="label-emoji"></ion-icon>
+                <ion-icon name="document-text-outline" class="label-icon"></ion-icon>
                 <span class="label-text">Purpose (Optional)</span>
             </ion-label>
             <ion-textarea

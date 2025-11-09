@@ -389,6 +389,10 @@ export class LoginPage {
   }
 
   quickLogin(user: TestUser) {
+    // Remove focus to prevent aria-hidden accessibility warning
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     this.email.set(user.email);
     this.password.set(user.password);
     this.loginAsEmployee.set(user.type === 'employee');
