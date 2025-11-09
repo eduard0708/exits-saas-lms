@@ -916,6 +916,31 @@ export class CollectorWaiversPage implements OnInit {
     if (user) {
       this.collectorId.set(Number(user.id));
       await this.loadData();
+      
+      // Check for prefilled loan data from navigation state
+      const navigation = this.router.getCurrentNavigation();
+      const state = navigation?.extras?.state || (history.state as any);
+      
+      if (state && state.prefillLoan) {
+        // Switch to request tab
+        this.selectedTab = 'request';
+        
+        // Prefill the form
+        const prefillData = state.prefillLoan;
+        this.requestForm.loanId = prefillData.loanId;
+        this.requestForm.requestedWaiverAmount = prefillData.totalPenalty;
+        this.requestForm.reason = `Request waiver for ${prefillData.overdueInstallments} overdue installment(s)`;
+        this.requestForm.notes = `Customer: ${prefillData.customerName}, Loan: ${prefillData.loanNumber}, Total Penalty: ₱${prefillData.totalPenalty.toFixed(2)}`;
+        
+        // Show toast notification
+        const toast = await this.toastController.create({
+          message: `Waiver request form prefilled for ${prefillData.customerName}`,
+          duration: 3000,
+          position: 'top',
+          color: 'success'
+        });
+        await toast.present();
+      }
     }
   }
 

@@ -24,6 +24,7 @@ import {
   IonLabel,
   IonList,
   ToastController,
+  AlertController,
   ModalController,
   ViewWillEnter
 } from '@ionic/angular/standalone';
@@ -497,11 +498,26 @@ interface CollectionStats {
                                  [style.cursor]="item.status === 'paid' ? 'not-allowed' : 'pointer'"
                                  (click)="item.status !== 'paid' && openPaymentModal(loan, item)">
                               <div class="repayment-left">
-                                <div class="repayment-num">Installment {{ item.installmentNumber }}</div>
-                                <div class="repayment-date">{{ formatDueDate(item.dueDate) }}</div>
+                                <div class="repayment-num">
+                                  Installment {{ item.installmentNumber }}
+                                  @if ((item.penaltyAmount || item.penalty_amount || 0) > 0) {
+                                    <span class="penalty-badge">+₱{{ formatCurrency(item.penaltyAmount || item.penalty_amount || 0) }} penalty</span>
+                                  }
+                                </div>
+                                <div class="repayment-date">
+                                  {{ formatDueDate(item.dueDate) }}
+                                  @if (item.status === 'overdue' && (item.daysLate || item.days_late || 0) > 0) {
+                                    <span class="days-late-badge">{{ item.daysLate || item.days_late }} days late</span>
+                                  }
+                                </div>
                               </div>
                               <div class="repayment-right">
-                                <div class="repayment-amount">₱{{ formatCurrency(item.outstandingAmount) }}</div>
+                                <div class="repayment-amount">
+                                  ₱{{ formatCurrency(item.outstandingAmount + (item.penaltyAmount || item.penalty_amount || 0)) }}
+                                  @if ((item.penaltyAmount || item.penalty_amount || 0) > 0) {
+                                    <span class="amount-breakdown">(₱{{ formatCurrency(item.outstandingAmount) }} + ₱{{ formatCurrency(item.penaltyAmount || item.penalty_amount || 0) }})</span>
+                                  }
+                                </div>
                                 <div class="repayment-status" 
                                      [class.status-paid]="item.status === 'paid'"
                                      [class.status-partial]="item.status === 'partially_paid'"
@@ -509,6 +525,76 @@ interface CollectionStats {
                                      [class.status-overdue]="item.status === 'overdue'">
                                   {{ getStatusLabel(item.status) }}
                                 </div>
+                              </div>
+                            </div>
+                          }
+                          
+                          <!-- Penalty Summary Card -->
+                          @if (getTotalOverdueInstallments(getLoanDetailsFromCache(loan.loanId).schedule) > 0) {
+                            <div class="penalty-summary-card">
+                              <div class="penalty-summary-header">
+                                <ion-icon name="alert-circle" class="penalty-icon"></ion-icon>
+                                <div class="penalty-summary-title">
+                                  <h4>Overdue Summary</h4>
+                                  <p>{{ getTotalOverdueInstallments(getLoanDetailsFromCache(loan.loanId).schedule) }} installment(s) overdue</p>
+                                </div>
+                              </div>
+                              
+                              <!-- Grace Period Info -->
+                              <div class="grace-info-box">
+                                <div class="grace-info-row">
+                                  <span class="grace-label">Grace Period:</span>
+                                  <span class="grace-value">{{ loan.gracePeriodDays || 0 }} day(s)</span>
+                                </div>
+                                <div class="grace-info-row">
+                                  <span class="grace-label">Penalty Rate:</span>
+                                  <span class="grace-value">{{ loan.latePenaltyPercent || 0 }}% per day</span>
+                                </div>
+                                <div class="grace-info-row">
+                                  <span class="grace-label">Total Days Late:</span>
+                                  <span class="grace-value warning">{{ getTotalDaysLate(getLoanDetailsFromCache(loan.loanId).schedule) }} day(s)</span>
+                                </div>
+                              </div>
+                              
+                              <div class="penalty-summary-body">
+                                <div class="penalty-stat-row">
+                                  <span class="stat-label">Total Installments Due:</span>
+                                  <span class="stat-value">₱{{ formatCurrency(getTotalInstallmentAmount(getLoanDetailsFromCache(loan.loanId).schedule)) }}</span>
+                                </div>
+                                <div class="penalty-stat-row">
+                                  <span class="stat-label">Total Penalties:</span>
+                                  <span class="stat-value penalty-amount">₱{{ formatCurrency(getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule)) }}</span>
+                                </div>
+                                <div class="penalty-stat-row highlighted">
+                                  <span class="stat-label">Grand Total:</span>
+                                  <span class="stat-value grand-total">₱{{ formatCurrency(getTotalInstallmentAmount(getLoanDetailsFromCache(loan.loanId).schedule) + getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule)) }}</span>
+                                </div>
+                              </div>
+                              
+                              <div class="penalty-summary-actions">
+                                <ion-button 
+                                  expand="block" 
+                                  color="success"
+                                  (click)="payAllWithPenalties(loan); $event.stopPropagation()">
+                                  <ion-icon name="cash-outline" slot="start"></ion-icon>
+                                  Pay All (₱{{ formatCurrency(getTotalInstallmentAmount(getLoanDetailsFromCache(loan.loanId).schedule) + getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule)) }})
+                                </ion-button>
+                                <ion-button 
+                                  expand="block" 
+                                  color="danger"
+                                  fill="outline"
+                                  (click)="payPenaltyOnly(loan); $event.stopPropagation()">
+                                  <ion-icon name="alert-circle-outline" slot="start"></ion-icon>
+                                  Pay Penalty Only (₱{{ formatCurrency(getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule)) }})
+                                </ion-button>
+                                <ion-button 
+                                  expand="block" 
+                                  color="warning"
+                                  fill="outline"
+                                  (click)="requestPenaltyWaiver(loan); $event.stopPropagation()">
+                                  <ion-icon name="hand-right-outline" slot="start"></ion-icon>
+                                  Request Penalty Waiver
+                                </ion-button>
                               </div>
                             </div>
                           }
@@ -555,10 +641,14 @@ interface CollectionStats {
                 <span class="info-label">Installment</span>
                 <span class="info-value">#{{ selectedInstallment()!.installmentNumber }}</span>
               </div>
-              <div class="info-row">
-                <span class="info-label">Installment Amount</span>
-                <span class="info-value">₱{{ formatCurrency(selectedInstallment()!.outstandingAmount || 0) }}</span>
-              </div>
+              
+              <!-- Hide installment amount for penalty-only payments -->
+              @if (selectedInstallment()!.installmentNumber !== 0) {
+                <div class="info-row">
+                  <span class="info-label">Installment Amount</span>
+                  <span class="info-value">₱{{ formatCurrency(selectedInstallment()!.outstandingAmount || 0) }}</span>
+                </div>
+              }
               
               @if (getInstallmentPenalty(selectedInstallment()!) > 0) {
                 <div class="info-row penalty-row">
@@ -1651,11 +1741,64 @@ interface CollectionStats {
     }
 
     .repayment-left { display: flex; flex-direction: column; gap: 2px; }
-    .repayment-num { font-weight: 700; font-size: 13px; }
-    .repayment-date { font-size: 12px; color: var(--ion-color-medium); }
+    .repayment-num { 
+      font-weight: 700; 
+      font-size: 13px; 
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .repayment-date { 
+      font-size: 12px; 
+      color: var(--ion-color-medium);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
 
-    .repayment-right { text-align: right; }
-    .repayment-amount { font-weight: 700; color: var(--ion-text-color); }
+    .penalty-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      color: #dc2626;
+      background: rgba(220, 38, 38, 0.1);
+      padding: 2px 6px;
+      border-radius: 6px;
+      margin-top: 2px;
+    }
+
+    .days-late-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      color: #f59e0b;
+      background: rgba(245, 158, 11, 0.1);
+      padding: 2px 6px;
+      border-radius: 6px;
+      margin-top: 2px;
+    }
+
+    .repayment-right { 
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+    .repayment-amount { 
+      font-weight: 700; 
+      color: var(--ion-text-color);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+    
+    .amount-breakdown {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--ion-color-medium);
+    }
     .repayment-status { 
       font-size: 12px; 
       font-weight: 600;
@@ -1699,6 +1842,131 @@ interface CollectionStats {
     .repayment-row.overdue {
       background: rgba(239, 68, 68, 0.05);
       border-left: 3px solid #ef4444;
+    }
+
+    /* Penalty Summary Card */
+    .penalty-summary-card {
+      margin-top: 12px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(220, 38, 38, 0.05));
+      border: 2px solid rgba(239, 68, 68, 0.3);
+      border-radius: 12px;
+      animation: fadeInSlideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.5s backwards;
+    }
+
+    .penalty-summary-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .penalty-icon {
+      font-size: 28px;
+      color: #dc2626;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .penalty-summary-title h4 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ion-text-color);
+    }
+
+    .penalty-summary-title p {
+      margin: 4px 0 0 0;
+      font-size: 12px;
+      color: var(--ion-color-medium);
+    }
+
+    .grace-info-box {
+      margin: 12px 0;
+      padding: 12px;
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .grace-info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    .grace-label {
+      color: var(--ion-color-medium);
+      font-weight: 500;
+    }
+
+    .grace-value {
+      font-weight: 700;
+      color: var(--ion-text-color);
+    }
+
+    .grace-value.warning {
+      color: #dc2626;
+    }
+
+    .penalty-summary-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .penalty-stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+
+    .penalty-stat-row.highlighted {
+      padding-top: 12px;
+      margin-top: 8px;
+      border-top: 2px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .penalty-stat-row .stat-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ion-text-color);
+    }
+
+    .penalty-stat-row .stat-value {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ion-text-color);
+    }
+
+    .penalty-stat-row .penalty-amount {
+      color: #dc2626;
+    }
+
+    .penalty-stat-row .grand-total {
+      font-size: 18px;
+      color: #dc2626;
+    }
+
+    .penalty-summary-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .penalty-summary-actions ion-button {
+      margin: 0;
+      --border-radius: 10px;
+      font-weight: 600;
+      font-size: 14px;
     }
 
     .repayment-empty { padding: 8px; }
@@ -2291,6 +2559,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
   paymentReference: string = '';
   paymentNotes: string = '';
   isPartialPayment: boolean = false;
+  paymentType: 'installment' | 'penalty-only' | 'penalty-partial' | 'full-with-penalty' = 'installment'; // Track payment purpose
 
   constructor(
     private apiService: ApiService,
@@ -2299,7 +2568,8 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
     private router: Router,
     public themeService: ThemeService,
     private confirmationService: ConfirmationService,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private alertController: AlertController
   ) {
     addIcons({
       mapOutline,
@@ -2805,6 +3075,231 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
     return outstanding + penalty;
   }
 
+  /**
+   * Calculate total penalties for all overdue installments in a schedule
+   */
+  getTotalPenaltiesForLoan(schedule: any[]): number {
+    if (!schedule || !Array.isArray(schedule)) {
+      console.log('⚠️ No schedule data available');
+      return 0;
+    }
+    
+    console.log('📋 Full schedule data:', schedule.map(item => ({
+      num: item.installmentNumber || item.installment_number,
+      status: item.status,
+      daysLate: item.daysLate || item.days_late,
+      gracePeriod: item.gracePeriodDays || item.grace_period_days,
+      penaltyAmount: item.penaltyAmount || item.penalty_amount,
+      amount: item.installmentAmount || item.installment_amount
+    })));
+    
+    const totalPenalty = schedule.reduce((total, item) => {
+      if (item.status === 'overdue' || item.status === 'partially_paid') {
+        const penalty = Number(item.penaltyAmount || item.penalty_amount || 0);
+        console.log(`💰 Penalty for installment ${item.installmentNumber || item.installment_number}: ₱${penalty}`);
+        return total + penalty;
+      }
+      return total;
+    }, 0);
+    
+    console.log('💵 Total penalties calculated:', totalPenalty);
+    return totalPenalty;
+  }
+
+  /**
+   * Calculate total installment amount (without penalties) for overdue installments
+   */
+  getTotalInstallmentAmount(schedule: any[]): number {
+    if (!schedule || !Array.isArray(schedule)) return 0;
+    
+    return schedule.reduce((total, item) => {
+      if (item.status === 'overdue' || item.status === 'partially_paid') {
+        const outstanding = Number(item.outstandingAmount || item.outstanding_amount || 0);
+        return total + outstanding;
+      }
+      return total;
+    }, 0);
+  }
+
+  /**
+   * Get count of overdue installments
+   */
+  getTotalOverdueInstallments(schedule: any[]): number {
+    if (!schedule || !Array.isArray(schedule)) return 0;
+    
+    return schedule.filter(item => 
+      item.status === 'overdue' || item.status === 'partially_paid'
+    ).length;
+  }
+
+  /**
+   * Get total days late across all overdue installments (sum of the worst case)
+   */
+  getTotalDaysLate(schedule: any[]): number {
+    if (!schedule || !Array.isArray(schedule)) return 0;
+    
+    const overdue = schedule.filter(item => 
+      item.status === 'overdue' || item.status === 'partially_paid'
+    );
+    
+    if (overdue.length === 0) return 0;
+    
+    // Get the maximum days late (the oldest overdue installment)
+    const maxDaysLate = Math.max(...overdue.map(item => 
+      Number(item.daysLate || item.days_late || 0)
+    ));
+    
+    console.log('📊 Total days late:', maxDaysLate);
+    console.log('📊 Overdue installments:', overdue.map(i => ({
+      num: i.installmentNumber,
+      status: i.status,
+      daysLate: i.daysLate || i.days_late,
+      penalty: i.penaltyAmount || i.penalty_amount
+    })));
+    
+    return maxDaysLate;
+  }
+
+  /**
+   * Pay all overdue installments with penalties
+   */
+  async payAllWithPenalties(loan: RouteCustomer) {
+    const details = this.getLoanDetailsFromCache(loan.loanId);
+    if (!details || !details.schedule) {
+      const toast = await this.toastController.create({
+        message: 'Unable to load loan details',
+        duration: 2000,
+        position: 'bottom',
+        color: 'danger'
+      });
+      await toast.present();
+      return;
+    }
+
+    const totalInstallment = this.getTotalInstallmentAmount(details.schedule);
+    const totalPenalty = this.getTotalPenaltiesForLoan(details.schedule);
+    const grandTotal = totalInstallment + totalPenalty;
+    const overdueCount = this.getTotalOverdueInstallments(details.schedule);
+    
+    if (grandTotal <= 0) {
+      const toast = await this.toastController.create({
+        message: 'No overdue amounts to pay',
+        duration: 2000,
+        position: 'bottom',
+        color: 'warning'
+      });
+      await toast.present();
+      return;
+    }
+
+    // Open payment modal for full payment (installments + penalties)
+    this.selectedLoan.set(loan);
+    this.selectedInstallment.set({
+      installmentNumber: -1, // -1 indicates pay-all payment
+      outstandingAmount: totalInstallment,
+      penaltyAmount: totalPenalty,
+      status: 'pay-all'
+    } as any);
+    
+    // Pre-fill with grand total
+    this.paymentAmount = grandTotal;
+    this.paymentMethod = 'cash';
+    this.paymentReference = '';
+    this.paymentNotes = `Full payment: ${overdueCount} overdue installment(s) (₱${this.formatCurrency(totalInstallment)}) + penalties (₱${this.formatCurrency(totalPenalty)})`;
+    this.isPartialPayment = false;
+    this.paymentType = 'full-with-penalty'; // Tag as full payment with penalties
+    
+    this.showPaymentModal.set(true);
+  }
+
+  /**
+   * Pay penalty only for all overdue installments
+   */
+  /**
+   * Pay penalty only - full or partial
+   */
+  async payPenaltyOnly(loan: RouteCustomer) {
+    const details = this.getLoanDetailsFromCache(loan.loanId);
+    if (!details || !details.schedule) {
+      const toast = await this.toastController.create({
+        message: 'Unable to load loan details',
+        duration: 2000,
+        position: 'bottom',
+        color: 'danger'
+      });
+      await toast.present();
+      return;
+    }
+
+    const totalPenalty = this.getTotalPenaltiesForLoan(details.schedule);
+    
+    if (totalPenalty <= 0) {
+      const toast = await this.toastController.create({
+        message: 'No penalties to pay',
+        duration: 2000,
+        position: 'bottom',
+        color: 'warning'
+      });
+      await toast.present();
+      return;
+    }
+
+    // Open payment modal for penalty payment (can be partial or full)
+    this.selectedLoan.set(loan);
+    this.selectedInstallment.set({
+      installmentNumber: 0, // 0 indicates penalty-only payment
+      outstandingAmount: 0, // NO installment amount, penalty only!
+      penaltyAmount: totalPenalty,
+      status: 'penalty-only'
+    } as any);
+    
+    // Pre-fill with full penalty amount (user can change for partial)
+    this.paymentAmount = totalPenalty;
+    this.paymentMethod = 'cash';
+    this.paymentReference = '';
+    this.paymentNotes = `Penalty payment for ${this.getTotalOverdueInstallments(details.schedule)} overdue installment(s)`;
+    this.isPartialPayment = false;
+    this.paymentType = 'penalty-only'; // Tag as penalty payment
+    
+    this.showPaymentModal.set(true);
+  }
+
+  /**
+   * Request a penalty waiver for overdue installments
+   */
+  async requestPenaltyWaiver(loan: RouteCustomer) {
+    const details = this.getLoanDetailsFromCache(loan.loanId);
+    
+    if (!details || !details.schedule) {
+      const toast = await this.toastController.create({
+        message: 'Unable to load loan details',
+        duration: 2000,
+        position: 'bottom',
+        color: 'danger'
+      });
+      await toast.present();
+      return;
+    }
+
+    // Calculate total penalties
+    const totalPenalty = this.getTotalPenaltiesForLoan(details.schedule);
+    const overdueCount = this.getTotalOverdueInstallments(details.schedule);
+    
+    // Navigate to waivers page with loan info
+    this.router.navigate(['/collector/waivers'], {
+      state: {
+        prefillLoan: {
+          loanId: loan.loanId,
+          loanNumber: loan.loanNumber,
+          customerName: loan.customerName,
+          totalPenalty: totalPenalty,
+          overdueInstallments: overdueCount,
+          outstandingAmount: this.getTotalInstallmentAmount(details.schedule)
+        }
+      }
+    });
+  }
+
   async handleRefresh(event: any) {
     await this.loadRouteData();
     event.target.complete();
@@ -2936,6 +3431,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
     this.paymentReference = '';
     this.paymentNotes = '';
     this.isPartialPayment = false;
+    this.paymentType = 'installment'; // Reset to default
   }
 
   /**

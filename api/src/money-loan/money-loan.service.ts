@@ -1353,6 +1353,86 @@ export class MoneyLoanService {
     };
   }
 
+  /**
+   * Calculate penalty with cap to ensure fairness
+   * @param outstandingAmount - Amount that's unpaid
+   * @param daysOverGrace - Days beyond grace period
+   * @param dailyPenaltyRate - Daily penalty percentage (e.g., 10 for 10%)
+   * @param capPercent - Maximum penalty as percentage of outstanding (e.g., 20 for 20%)
+   * @returns Penalty amount, capped at maximum
+   */
+  private calculatePenaltyWithCap(
+    outstandingAmount: number,
+    daysOverGrace: number,
+    dailyPenaltyRate: number,
+    capPercent: number = 20
+  ): number {
+    if (outstandingAmount <= 0 || daysOverGrace <= 0) {
+      console.log(`      🚫 No penalty: outstanding=${outstandingAmount}, daysOverGrace=${daysOverGrace}`);
+      return 0;
+    }
+
+    // Calculate raw penalty (daily compound)
+    const rawPenalty = outstandingAmount * (dailyPenaltyRate / 100) * daysOverGrace;
+    
+    // Apply maximum cap
+    const maxPenalty = outstandingAmount * (capPercent / 100);
+    const cappedPenalty = Math.min(rawPenalty, maxPenalty);
+    
+    console.log(`      📊 Penalty Calculation:`, {
+      outstanding: outstandingAmount,
+      days: daysOverGrace,
+      rate: dailyPenaltyRate,
+      raw: rawPenalty.toFixed(2),
+      cap: maxPenalty.toFixed(2),
+      final: cappedPenalty.toFixed(2)
+    });
+    
+    // Round to 2 decimal places
+    return Math.round(cappedPenalty * 100) / 100;
+  }
+
+  /**
+   * Calculate tiered penalty for progressive rates
+   * @param outstandingAmount - Amount that's unpaid
+   * @param daysOverGrace - Days beyond grace period
+   * @param capPercent - Maximum penalty cap
+   * @returns Penalty amount with tiered rates
+   */
+  private calculateTieredPenalty(
+    outstandingAmount: number,
+    daysOverGrace: number,
+    capPercent: number = 20
+  ): number {
+    if (outstandingAmount <= 0 || daysOverGrace <= 0) {
+      return 0;
+    }
+
+    let penalty = 0;
+    
+    // Tier 1: Days 1-10 -> 1% per day
+    const tier1Days = Math.min(daysOverGrace, 10);
+    penalty += outstandingAmount * 0.01 * tier1Days;
+    
+    // Tier 2: Days 11-20 -> 2% per day
+    if (daysOverGrace > 10) {
+      const tier2Days = Math.min(daysOverGrace - 10, 10);
+      penalty += outstandingAmount * 0.02 * tier2Days;
+    }
+    
+    // Tier 3: Days 21+ -> 3% per day
+    if (daysOverGrace > 20) {
+      const tier3Days = daysOverGrace - 20;
+      penalty += outstandingAmount * 0.03 * tier3Days;
+    }
+    
+    // Apply cap
+    const maxPenalty = outstandingAmount * (capPercent / 100);
+    const cappedPenalty = Math.min(penalty, maxPenalty);
+    
+    return Math.round(cappedPenalty * 100) / 100;
+  }
+
   private mapLoanRow(row: any) {
     if (!row) {
       return null;
@@ -1572,14 +1652,16 @@ export class MoneyLoanService {
   async generateRepaymentSchedule(tenantId: number, loanId: number) {
     const knex = this.knexService.instance;
 
-    // Get loan details with product information
+    // Get loan details with product information including grace period
     const loan = await knex('money_loan_loans as mll')
       .leftJoin('money_loan_products as mlp', 'mll.loan_product_id', 'mlp.id')
       .select(
         'mll.*',
         'mlp.payment_frequency as product_payment_frequency',
         'mlp.interest_rate as product_interest_rate',
-        'mlp.interest_type as product_interest_type'
+        'mlp.interest_type as product_interest_type',
+        'mlp.grace_period_days as grace_period_days',
+        'mlp.late_payment_penalty_percent as late_penalty_percent'
       )
       .where('mll.id', loanId)
       .andWhere('mll.tenant_id', tenantId)
@@ -1588,6 +1670,21 @@ export class MoneyLoanService {
     if (!loan) {
       throw new NotFoundException('Loan not found');
     }
+    
+    // Get grace period settings
+    console.log('🔍 Raw loan data from DB:', {
+      loan_product_id: loan.loan_product_id,
+      grace_period_days_raw: loan.grace_period_days,
+      late_penalty_percent_raw: loan.late_penalty_percent,
+      gracePeriodDays_camel: loan.gracePeriodDays,
+      latePenaltyPercent_camel: loan.latePenaltyPercent
+    });
+    
+    const gracePeriodDays = parseInt(String(loan.grace_period_days ?? loan.gracePeriodDays ?? '0'));
+    const latePenaltyPercent = parseFloat(String(loan.late_penalty_percent ?? loan.latePenaltyPercent ?? '0'));
+    
+    console.log(`🎯 Grace Period Settings: ${gracePeriodDays} days, ${latePenaltyPercent}% penalty`);
+
 
     // Get all payments for this loan
     const payments = await knex('money_loan_payments')
@@ -1667,21 +1764,66 @@ export class MoneyLoanService {
         );
       }
 
-      // Determine status
+      // Determine status - check overdue FIRST, then payment status
+      const today = new Date();
+      const isOverdue = today > dueDate;
+      const daysOverdue = isOverdue 
+        ? Math.max(0, Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24))) 
+        : 0;
+      
       let status = 'pending';
       if (amountPaidForThisInstallment >= installmentAmount - 0.01) { // Small tolerance for rounding
         status = 'paid';
+      } else if (isOverdue) {
+        // If overdue, status depends on payment
+        status = amountPaidForThisInstallment > 0 ? 'partially_paid' : 'overdue';
       } else if (amountPaidForThisInstallment > 0) {
-        status = 'partial';
-      } else if (new Date() > dueDate) {
-        status = 'overdue';
+        status = 'partially_paid';
+      }
+      
+      // Calculate penalty based on grace period
+      let penaltyAmount = 0;
+      let gracePeriodRemaining = gracePeriodDays;
+      let gracePeriodConsumed = false;
+      let daysLate = daysOverdue;
+      
+      // Calculate penalties for overdue OR partially_paid overdue installments
+      if ((status === 'overdue' || status === 'partially_paid') && daysOverdue > 0) {
+        daysLate = daysOverdue;
+        
+        if (daysLate <= gracePeriodDays) {
+          // Within grace period - no penalty
+          gracePeriodRemaining = gracePeriodDays - daysLate;
+          gracePeriodConsumed = false;
+          penaltyAmount = 0;
+          console.log(`   ⏳ Installment ${i}: Within grace period (${daysLate}/${gracePeriodDays} days) - No penalty`);
+        } else {
+          // Grace period consumed - calculate penalty
+          gracePeriodRemaining = 0;
+          gracePeriodConsumed = true;
+          const daysOverGrace = daysLate - gracePeriodDays;
+          const outstandingForPenalty = installmentAmount - amountPaidForThisInstallment;
+          
+          console.log(`   ⚠️ Installment ${i} OVERDUE:`, {
+            outstanding: outstandingForPenalty,
+            daysOverGrace,
+            penaltyRate: latePenaltyPercent,
+            gracePeriod: gracePeriodDays
+          });
+          
+          // Calculate penalty with cap (default: 20% of outstanding)
+          penaltyAmount = this.calculatePenaltyWithCap(
+            outstandingForPenalty,
+            daysOverGrace,
+            latePenaltyPercent,
+            20 // Default cap at 20% of outstanding amount
+          );
+          
+          console.log(`   💰 Calculated penalty: ₱${penaltyAmount.toFixed(2)} (capped at 20% = ₱${(outstandingForPenalty * 0.20).toFixed(2)})`);
+        }
       }
 
-      const daysOverdue = status === 'overdue' 
-        ? Math.max(0, Math.floor((new Date().getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24))) 
-        : 0;
-
-      console.log(`📅 Installment ${i}: totalDue=${installmentAmount.toFixed(2)}, paid=${amountPaidForThisInstallment.toFixed(2)}, status=${status}`);
+      console.log(`📅 Installment ${i}: totalDue=${installmentAmount.toFixed(2)}, paid=${amountPaidForThisInstallment.toFixed(2)}, status=${status}, daysLate=${daysLate}, penalty=${penaltyAmount.toFixed(2)}`);
 
       // Return in both snake_case and camelCase for compatibility
       schedule.push({
@@ -1699,9 +1841,20 @@ export class MoneyLoanService {
         amountPaid: Math.round(amountPaidForThisInstallment * 100) / 100,
         amount_paid: Math.round(amountPaidForThisInstallment * 100) / 100,
         outstandingAmount: Math.round((installmentAmount - amountPaidForThisInstallment) * 100) / 100,
-        penaltyAmount: 0,
-        status: status === 'partial' ? 'partially_paid' : status,
-        daysOverdue
+        outstanding_amount: Math.round((installmentAmount - amountPaidForThisInstallment) * 100) / 100,
+        penaltyAmount: penaltyAmount,
+        penalty_amount: penaltyAmount,
+        daysLate: daysLate,
+        days_late: daysLate,
+        daysOverdue: daysOverdue,
+        days_overdue: daysOverdue,
+        gracePeriodDays: gracePeriodDays,
+        grace_period_days: gracePeriodDays,
+        gracePeriodRemaining: gracePeriodRemaining,
+        grace_period_remaining: gracePeriodRemaining,
+        gracePeriodConsumed: gracePeriodConsumed,
+        grace_period_consumed: gracePeriodConsumed,
+        status: status
       });
     }
 
@@ -2410,99 +2563,139 @@ export class MoneyLoanService {
       console.log('📋 [GET COLLECTOR ROUTE] First loan raw data:', loans[0]);
     }
 
-    return loans.map((loan) => {
-      // Handle both snake_case and camelCase from database
-      const firstName = loan.first_name || loan.firstName || '';
-      const lastName = loan.last_name || loan.lastName || '';
-      const fullName = `${firstName} ${lastName}`.trim();
-      
-      const dueDate = loan.next_due_date ? new Date(loan.next_due_date) : null;
-      let formattedDueDate: string | null = null;
-      if (dueDate && !Number.isNaN(dueDate.getTime())) {
-        formattedDueDate = dueDate.toISOString();
-      }
-
-      const outstandingBalance = Number(loan.outstanding_balance ?? 0);
-      const amountDue = Number(loan.total_due ?? 0);
-      const nextInstallment = loan.next_installment ? Number(loan.next_installment) : null;
-
-      // Determine status based on loan status and payment status
-      let status: 'not-visited' | 'collected' | 'visited' | 'missed' = 'not-visited';
-      if (loan.loan_status === 'overdue') {
-        status = 'missed';
-      } else if (amountDue <= 0 && outstandingBalance <= 0) {
-        status = 'collected';
-      } else if (amountDue <= 0 && outstandingBalance > 0) {
-        status = 'visited';
-      }
-
-      // Calculate grace period status - ALWAYS return grace period info from product
-      // Handle both snake_case and camelCase from database
-      const gracePeriodDays = parseInt(
-        String(loan.gracePeriodDays ?? loan.grace_period_days ?? '0')
-      );
-      const latePenaltyPercent = parseFloat(
-        String(loan.latePenaltyPercent ?? loan.late_penalty_percent ?? '0')
-      );
-      const totalPenalties = Number(loan.totalPenalties ?? loan.total_penalties ?? 0);
-      
-      let daysOverdue = 0;
-      let gracePeriodRemaining = gracePeriodDays; // Default to full grace period
-      let gracePeriodConsumed = false;
-      
-      // Calculate overdue status if there's a due date
-      if (dueDate) {
-        const today = new Date();
-        const diffTime = today.getTime() - dueDate.getTime();
-        const calculatedDaysOverdue = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    // Calculate penalties for each loan dynamically
+    const loansWithPenalties = await Promise.all(
+      loans.map(async (loan) => {
+        // Handle both snake_case and camelCase from database
+        const firstName = loan.first_name || loan.firstName || '';
+        const lastName = loan.last_name || loan.lastName || '';
+        const fullName = `${firstName} ${lastName}`.trim();
         
-        // Only set daysOverdue if actually overdue (positive days)
-        if (calculatedDaysOverdue > 0) {
-          daysOverdue = calculatedDaysOverdue;
-          
-          if (daysOverdue <= gracePeriodDays) {
-            gracePeriodRemaining = gracePeriodDays - daysOverdue;
-            gracePeriodConsumed = false;
-          } else {
-            gracePeriodRemaining = 0;
-            gracePeriodConsumed = true;
-          }
-        } else {
-          // Not overdue yet - show full grace period available
-          daysOverdue = 0;
-          gracePeriodRemaining = gracePeriodDays;
-          gracePeriodConsumed = false;
+        const dueDate = loan.next_due_date ? new Date(loan.next_due_date) : null;
+        let formattedDueDate: string | null = null;
+        if (dueDate && !Number.isNaN(dueDate.getTime())) {
+          formattedDueDate = dueDate.toISOString();
         }
-      }
 
-      const result = {
-        customerId: loan.customerId ?? loan.customer_id,
-        customerName: fullName || loan.email || 'Assigned Customer',
-        address: loan.fullAddress ?? loan.full_address ?? 'N/A',
-        phone: loan.phone ?? '',
-        email: loan.email ?? '',
-        // Loan specific info
-        loanId: loan.loanId ?? loan.loan_id,
-        loanNumber: loan.loanNumber ?? loan.loan_number,
-        productName: loan.productName ?? loan.product_name,
-        principalAmount: Number(loan.principalAmount ?? loan.principal_amount ?? 0),
-        outstandingBalance,
-        amountDue,
-        nextInstallment,
-        dueDate: formattedDueDate,
-        status,
-        disbursementDate: loan.disbursementDate ?? loan.disbursement_date,
-        // Grace period info
-        gracePeriodDays,
-        latePenaltyPercent,
-        daysOverdue,
-        gracePeriodRemaining,
-        gracePeriodConsumed,
-        totalPenalties,
-      };
+        const outstandingBalance = Number(loan.outstanding_balance ?? 0);
+        const amountDue = Number(loan.total_due ?? 0);
+        const nextInstallment = loan.next_installment ? Number(loan.next_installment) : null;
 
-      console.log('📋 [GET COLLECTOR ROUTE] Mapped loan object:', result);
-      return result;
-    });
+        // Determine status based on loan status and payment status
+        let status: 'not-visited' | 'collected' | 'visited' | 'missed' = 'not-visited';
+        if (loan.loan_status === 'overdue') {
+          status = 'missed';
+        } else if (amountDue <= 0 && outstandingBalance <= 0) {
+          status = 'collected';
+        } else if (amountDue <= 0 && outstandingBalance > 0) {
+          status = 'visited';
+        }
+
+        // Calculate grace period status - ALWAYS return grace period info from product
+        // Handle both snake_case and camelCase from database
+        const gracePeriodDays = parseInt(
+          String(loan.gracePeriodDays ?? loan.grace_period_days ?? '0')
+        );
+        const latePenaltyPercent = parseFloat(
+          String(loan.latePenaltyPercent ?? loan.late_penalty_percent ?? '0')
+        );
+        
+        let daysOverdue = 0;
+        let gracePeriodRemaining = gracePeriodDays; // Default to full grace period
+        let gracePeriodConsumed = false;
+        let totalPenalties = 0;
+        
+        // Calculate overdue status if there's a due date
+        if (dueDate) {
+          const today = new Date();
+          const diffTime = today.getTime() - dueDate.getTime();
+          const calculatedDaysOverdue = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          
+          // Only set daysOverdue if actually overdue (positive days)
+          if (calculatedDaysOverdue > 0) {
+            daysOverdue = calculatedDaysOverdue;
+            
+            if (daysOverdue <= gracePeriodDays) {
+              gracePeriodRemaining = gracePeriodDays - daysOverdue;
+              gracePeriodConsumed = false;
+            } else {
+              gracePeriodRemaining = 0;
+              gracePeriodConsumed = true;
+              
+              // Calculate penalties for overdue installments
+              const loanId = loan.loanId ?? loan.loan_id;
+              const overdueSchedules = await knex('money_loan_repayment_schedules')
+                .select('due_date', 'outstanding_amount')
+                .where('loan_id', loanId)
+                .whereIn('status', ['pending', 'partially_paid', 'overdue'])
+                .where('due_date', '<', today);
+              
+              // Calculate penalty for each overdue installment with cap
+              overdueSchedules.forEach((schedule: any) => {
+                const scheduleDueDate = new Date(schedule.due_date);
+                const scheduleDaysLate = Math.floor((today.getTime() - scheduleDueDate.getTime()) / (1000 * 60 * 60 * 24));
+                
+                if (scheduleDaysLate > gracePeriodDays) {
+                  const daysOverGrace = scheduleDaysLate - gracePeriodDays;
+                  const installmentAmount = Number(schedule.outstanding_amount || 0);
+                  
+                  // Use penalty calculation with 20% cap
+                  const penaltyAmount = this.calculatePenaltyWithCap(
+                    installmentAmount,
+                    daysOverGrace,
+                    latePenaltyPercent,
+                    20 // Cap at 20% of outstanding
+                  );
+                  
+                  totalPenalties += penaltyAmount;
+                }
+              });
+            }
+          } else {
+            // Not overdue yet - show full grace period available
+            daysOverdue = 0;
+            gracePeriodRemaining = gracePeriodDays;
+            gracePeriodConsumed = false;
+          }
+        }
+
+        const result = {
+          customerId: loan.customerId ?? loan.customer_id,
+          customerName: fullName || loan.email || 'Assigned Customer',
+          address: loan.fullAddress ?? loan.full_address ?? 'N/A',
+          phone: loan.phone ?? '',
+          email: loan.email ?? '',
+          // Loan specific info
+          loanId: loan.loanId ?? loan.loan_id,
+          loanNumber: loan.loanNumber ?? loan.loan_number,
+          productName: loan.productName ?? loan.product_name,
+          principalAmount: Number(loan.principalAmount ?? loan.principal_amount ?? 0),
+          outstandingBalance,
+          amountDue,
+          nextInstallment,
+          dueDate: formattedDueDate,
+          status,
+          disbursementDate: loan.disbursementDate ?? loan.disbursement_date,
+          // Grace period info
+          gracePeriodDays,
+          latePenaltyPercent,
+          daysOverdue,
+          gracePeriodRemaining,
+          gracePeriodConsumed,
+          totalPenalties: Math.round(totalPenalties * 100) / 100, // Round to 2 decimals
+        };
+
+        console.log('📋 [GET COLLECTOR ROUTE] Mapped loan with penalties:', {
+          loanId: result.loanId,
+          daysOverdue,
+          gracePeriodConsumed,
+          totalPenalties: result.totalPenalties
+        });
+        
+        return result;
+      })
+    );
+
+    return loansWithPenalties;
   }
 }
