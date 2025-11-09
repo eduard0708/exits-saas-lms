@@ -572,32 +572,21 @@ interface CollectionStats {
                 <span class="info-value amount">₱{{ formatCurrency(getTotalAmountDue(selectedInstallment()!)) }}</span>
               </div>
               
-              <!-- Grace Period & Penalty Info -->
-              @if (selectedLoan() && selectedLoan()!.daysOverdue && selectedLoan()!.daysOverdue! > 0) {
-                <div class="info-row" [class.warning-row]="!selectedLoan()!.gracePeriodConsumed" [class.danger-row]="selectedLoan()!.gracePeriodConsumed">
-                  <span class="info-label">Days Overdue</span>
-                  <span class="info-value overdue-value">{{ selectedLoan()!.daysOverdue }} day(s)</span>
+              <!-- Days Overdue & Penalty Warning -->
+              @if (selectedInstallment() && (selectedInstallment()!.daysOverdue || selectedInstallment()!.days_overdue)) {
+                <div class="penalty-warning-card">
+                  <div class="info-row warning-row">
+                    <ion-icon name="alert-circle-outline" class="warning-icon"></ion-icon>
+                    <div class="warning-content">
+                      <span class="warning-label">⚠️ Days Overdue: {{ selectedInstallment()!.daysOverdue || selectedInstallment()!.days_overdue }} day(s)</span>
+                      @if (getInstallmentPenalty(selectedInstallment()!) > 0) {
+                        <span class="warning-note">Penalty: {{ selectedLoan()?.latePenaltyPercent || 0 }}%/week after {{ selectedLoan()?.gracePeriodDays || 0 }} day grace period</span>
+                      } @else if (selectedLoan()?.gracePeriodDays && (selectedInstallment()!.daysOverdue || selectedInstallment()!.days_overdue) <= selectedLoan()!.gracePeriodDays!) {
+                        <span class="success-note">✓ Still within grace period ({{ selectedLoan()!.gracePeriodDays }} days)</span>
+                      }
+                    </div>
+                  </div>
                 </div>
-                
-                @if (selectedLoan()!.gracePeriodConsumed) {
-                  <div class="info-row danger-row">
-                    <span class="info-label">Total Penalties</span>
-                    <span class="info-value penalty-value">₱{{ formatCurrency(selectedLoan()!.totalPenalties || 0) }}</span>
-                  </div>
-                  <div class="penalty-info-note">
-                    <ion-icon name="alert-circle-outline"></ion-icon>
-                    <span>Penalty: {{ selectedLoan()!.latePenaltyPercent }}%/day after {{ selectedLoan()!.gracePeriodDays }} day grace period</span>
-                  </div>
-                } @else {
-                  <div class="info-row success-row">
-                    <span class="info-label">Grace Remaining</span>
-                    <span class="info-value grace-value">{{ selectedLoan()!.gracePeriodRemaining }} day(s)</span>
-                  </div>
-                  <div class="grace-info-note">
-                    <ion-icon name="checkmark-circle-outline"></ion-icon>
-                    <span>No penalty yet - {{ selectedLoan()!.gracePeriodDays }} day grace period</span>
-                  </div>
-                }
               }
             </div>
 
@@ -1956,6 +1945,56 @@ interface CollectionStats {
 
     .grace-info-note ion-icon {
       color: #10b981;
+    }
+
+    /* Penalty Warning Card */
+    .penalty-warning-card {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(239, 68, 68, 0.1) 100%);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 8px;
+      padding: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .penalty-warning-card .warning-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin: 0;
+      padding: 0;
+      background: none;
+    }
+
+    .penalty-warning-card .warning-icon {
+      font-size: 1.25rem;
+      color: #dc2626;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .penalty-warning-card .warning-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      flex: 1;
+    }
+
+    .penalty-warning-card .warning-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #991b1b;
+    }
+
+    .penalty-warning-card .warning-note {
+      font-size: 0.75rem;
+      color: #dc2626;
+      line-height: 1.4;
+    }
+
+    .penalty-warning-card .success-note {
+      font-size: 0.75rem;
+      color: #059669;
+      line-height: 1.4;
     }
 
     /* Form Fields */
