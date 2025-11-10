@@ -60,7 +60,7 @@ exports.seed = async function(knex) {
         max_term_days: 365,
         processing_fee_percent: 2.00,
         platform_fee: 50,
-        late_payment_penalty_percent: 5.00,
+        late_payment_penalty_percent: 1.00,
         grace_period_days: 3,
         payment_frequency: 'monthly',
         is_active: true,
@@ -88,8 +88,8 @@ exports.seed = async function(knex) {
         max_term_days: 730,
         processing_fee_percent: 1.00,
         platform_fee: 100,
-        late_payment_penalty_percent: 5.00,
-        grace_period_days: 5,
+        late_payment_penalty_percent: 1.00,
+        grace_period_days: 3,
         payment_frequency: 'weekly',
         is_active: true,
         deduct_platform_fee_in_advance: false,
@@ -116,7 +116,7 @@ exports.seed = async function(knex) {
         max_term_days: 30,
         processing_fee_percent: 1.00,
         platform_fee: 25,
-        late_payment_penalty_percent: 10.00,
+        late_payment_penalty_percent: 1.00,
         grace_period_days: 4,
         payment_frequency: 'daily',
         is_active: true,
@@ -152,6 +152,8 @@ exports.seed = async function(knex) {
   console.log(`📊 Summary:`);
   console.log(`   - Total Tenants Processed: ${tenants.length}`);
   console.log(`   - Total Loan Products: ${totalProducts}`);
+  console.log('   - Penalty Rate: 1.00% per day (after grace period)');
+  console.log('   - Grace Period: 3-4 days');
   console.log('   - All deduct options: false (unchecked by default)');
   console.log('   - All products: available to all customers');
 };

@@ -360,25 +360,22 @@ interface CollectionStats {
                     </div>
                   </div>
 
-                  <!-- Grace Period Information (Always Show) -->
-                  <div class="grace-period-alert" 
-                       [class.grace-consumed]="loan.gracePeriodConsumed"
-                       [class.grace-active]="loan.daysOverdue && loan.daysOverdue > 0 && !loan.gracePeriodConsumed"
-                       [class.grace-info]="!loan.daysOverdue || loan.daysOverdue === 0">
-                    <div class="alert-header">
-                      <ion-icon [name]="loan.gracePeriodConsumed ? 'alert-circle' : (loan.daysOverdue && loan.daysOverdue > 0 ? 'time' : 'information-circle')"></ion-icon>
-                      <span class="alert-title">
-                        @if (loan.gracePeriodConsumed) {
-                          Grace Period Expired
-                        } @else if (loan.daysOverdue && loan.daysOverdue > 0) {
-                          Within Grace Period
-                        } @else {
-                          Payment Terms
-                        }
-                      </span>
-                    </div>
-                    <div class="alert-body">
-                      @if (loan.daysOverdue && loan.daysOverdue > 0) {
+                  <!-- Grace Period Information (Only show when overdue) -->
+                  @if (loan.daysOverdue && loan.daysOverdue > 0) {
+                    <div class="grace-period-alert" 
+                         [class.grace-consumed]="loan.gracePeriodConsumed"
+                         [class.grace-active]="!loan.gracePeriodConsumed">
+                      <div class="alert-header">
+                        <ion-icon [name]="loan.gracePeriodConsumed ? 'alert-circle' : 'time'"></ion-icon>
+                        <span class="alert-title">
+                          @if (loan.gracePeriodConsumed) {
+                            Grace Period Expired
+                          } @else {
+                            Within Grace Period
+                          }
+                        </span>
+                      </div>
+                      <div class="alert-body">
                         <!-- Overdue: Show days overdue -->
                         <div class="alert-stat">
                           <span class="stat-label">Days Overdue:</span>
@@ -392,7 +389,7 @@ interface CollectionStats {
                           </div>
                           <div class="penalty-note">
                             <ion-icon name="information-circle-outline"></ion-icon>
-                            Penalty: {{ loan.latePenaltyPercent }}%/day after {{ loan.gracePeriodDays }} day grace
+                            Penalty: {{ formatPenaltyPercent(loan.latePenaltyPercent) }}%/day after {{ loan.gracePeriodDays }} day grace
                           </div>
                         } @else {
                           <!-- Within grace: Show remaining days -->
@@ -405,23 +402,9 @@ interface CollectionStats {
                             No penalty yet. {{ loan.gracePeriodDays }} day grace period.
                           </div>
                         }
-                      } @else {
-                        <!-- Not overdue: Show grace period info -->
-                        <div class="alert-stat">
-                          <span class="stat-label">Grace Period:</span>
-                          <span class="stat-value info">{{ loan.gracePeriodDays }} day(s)</span>
-                        </div>
-                        <div class="alert-stat">
-                          <span class="stat-label">Late Penalty:</span>
-                          <span class="stat-value info">{{ loan.latePenaltyPercent }}% per day</span>
-                        </div>
-                        <div class="grace-note">
-                          <ion-icon name="information-circle-outline"></ion-icon>
-                          Penalty applies after {{ loan.gracePeriodDays }} days overdue
-                        </div>
-                      }
+                      </div>
                     </div>
-                  </div>
+                  }
 
                   <!-- Actions -->
                   <div class="card-actions">
@@ -447,6 +430,26 @@ interface CollectionStats {
                       Visit
                     </ion-button>
 
+                    <ion-button 
+                      size="small" 
+                      fill="solid"
+                      [color]="getAlertColor(loan)"
+                      [class.pulse-animation]="loan.gracePeriodConsumed === true"
+                      [class.warning-pulse]="(loan.daysOverdue || 0) > 0 && loan.gracePeriodConsumed !== true"
+                      [class.active-view]="viewMode() === 'summary'"
+                      (click)="openLoanWithView(loan.loanId, 'summary'); $event.stopPropagation()">
+                      <ion-icon [name]="getAlertIcon(loan)" slot="start"></ion-icon>
+                      {{ getAlertLabel(loan) }}
+                    </ion-button>
+
+                    <ion-button 
+                      size="small" 
+                      [fill]="viewMode() === 'payments' ? 'solid' : 'outline'" 
+                      (click)="openLoanWithView(loan.loanId, 'payments'); $event.stopPropagation()">
+                      <ion-icon name="cash-outline" slot="start"></ion-icon>
+                      Collect Payment
+                    </ion-button>
+
                     @if (loan.dueDate) {
                       <div class="due-chip">
                         <ion-icon name="time-outline"></ion-icon>
@@ -455,40 +458,44 @@ interface CollectionStats {
                     }
                   </div>
 
-                  <!-- Expandable repayment panel (toggle by clicking the card) -->
+                  <!-- Expandable repayment panel (toggle by buttons) -->
                   @if (isExpanded(loan.loanId)) {
                     <div class="repayment-panel">
-                      <!-- Filter buttons -->
-                      <div class="filter-buttons">
-                        <ion-button 
-                          size="small" 
-                          [fill]="installmentFilter() === 'pending' ? 'solid' : 'outline'"
-                          (click)="installmentFilter.set('pending'); $event.stopPropagation()">
-                          <ion-icon name="time-outline" slot="start"></ion-icon>
-                          Pending
-                        </ion-button>
-                        <ion-button 
-                          size="small" 
-                          [fill]="installmentFilter() === 'paid' ? 'solid' : 'outline'"
-                          color="success"
-                          [disabled]="!hasPaidInstallments(loan)"
-                          (click)="installmentFilter.set('paid'); $event.stopPropagation()">
-                          <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
-                          Paid
-                        </ion-button>
-                        <ion-button 
-                          size="small" 
-                          [fill]="installmentFilter() === 'all' ? 'solid' : 'outline'"
-                          color="medium"
-                          (click)="installmentFilter.set('all'); $event.stopPropagation()">
-                          <ion-icon name="list-outline" slot="start"></ion-icon>
-                          All
-                        </ion-button>
-                      </div>
+                      <!-- Filter buttons - show only for payments or all view -->
+                      @if (viewMode() === 'payments' || viewMode() === 'all') {
+                        <div class="filter-buttons">
+                          <ion-button 
+                            size="small" 
+                            [fill]="installmentFilter() === 'pending' ? 'solid' : 'outline'"
+                            (click)="installmentFilter.set('pending'); $event.stopPropagation()">
+                            <ion-icon name="time-outline" slot="start"></ion-icon>
+                            Pending
+                          </ion-button>
+                          <ion-button 
+                            size="small" 
+                            [fill]="installmentFilter() === 'paid' ? 'solid' : 'outline'"
+                            color="success"
+                            [disabled]="!hasPaidInstallments(loan)"
+                            (click)="installmentFilter.set('paid'); $event.stopPropagation()">
+                            <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+                            Paid
+                          </ion-button>
+                          <ion-button 
+                            size="small" 
+                            [fill]="installmentFilter() === 'all' ? 'solid' : 'outline'"
+                            color="medium"
+                            (click)="installmentFilter.set('all'); $event.stopPropagation()">
+                            <ion-icon name="list-outline" slot="start"></ion-icon>
+                            All
+                          </ion-button>
+                        </div>
+                      }
 
                       @if (getLoanDetailsFromCache(loan.loanId) && getLoanDetailsFromCache(loan.loanId).schedule && getLoanDetailsFromCache(loan.loanId).schedule.length > 0) {
-                        <div class="repayment-list">
-                          @for (item of getFilteredInstallments(getLoanDetailsFromCache(loan.loanId).schedule); track item.installmentNumber) {
+                        <!-- Repayment list - show for payments or all view -->
+                        @if (viewMode() === 'payments' || viewMode() === 'all') {
+                          <div class="repayment-list">
+                            @for (item of getFilteredInstallments(getLoanDetailsFromCache(loan.loanId).schedule); track item.installmentNumber) {
                             <div class="repayment-row" 
                                  [class.paid]="item.status === 'paid'" 
                                  [class.partial]="item.status === 'partially_paid'"
@@ -528,8 +535,11 @@ interface CollectionStats {
                               </div>
                             </div>
                           }
-                          
-                          <!-- Penalty Summary Card -->
+                          </div>
+                        }
+                        
+                        <!-- Penalty Summary Card (Overdue Summary) - show for summary or all view -->
+                        @if ((viewMode() === 'summary' || viewMode() === 'all') && getLoanDetailsFromCache(loan.loanId)?.schedule) {
                           @if (getTotalOverdueInstallments(getLoanDetailsFromCache(loan.loanId).schedule) > 0) {
                             <div class="penalty-summary-card">
                               <div class="penalty-summary-header">
@@ -548,7 +558,7 @@ interface CollectionStats {
                                 </div>
                                 <div class="grace-info-row">
                                   <span class="grace-label">Penalty Rate:</span>
-                                  <span class="grace-value">{{ loan.latePenaltyPercent || 0 }}% per day</span>
+                                  <span class="grace-value">{{ formatPenaltyPercent(loan.latePenaltyPercent) }}% per day</span>
                                 </div>
                                 <div class="grace-info-row">
                                   <span class="grace-label">Total Days Late:</span>
@@ -597,8 +607,23 @@ interface CollectionStats {
                                 </ion-button>
                               </div>
                             </div>
+                          } @else {
+                            <div class="repayment-empty">
+                              <p class="text-sm">No overdue installments found.</p>
+                              <p class="text-xs">All payments are current.</p>
+                              <div class="grace-info-box" style="margin-top: 12px;">
+                                <div class="grace-info-row">
+                                  <span class="grace-label">Grace Period:</span>
+                                  <span class="grace-value">{{ loan.gracePeriodDays || 0 }} day(s)</span>
+                                </div>
+                                <div class="grace-info-row">
+                                  <span class="grace-label">Penalty Rate:</span>
+                                  <span class="grace-value">{{ formatPenaltyPercent(loan.latePenaltyPercent) }}% per day</span>
+                                </div>
+                              </div>
+                            </div>
                           }
-                        </div>
+                        }
                       } @else {
                         <div class="repayment-empty">
                           <p class="text-sm">No repayment schedule available for this loan.</p>
@@ -637,10 +662,14 @@ interface CollectionStats {
                 <span class="info-label">Customer</span>
                 <span class="info-value">{{ selectedLoan()?.customerName }}</span>
               </div>
-              <div class="info-row">
-                <span class="info-label">Installment</span>
-                <span class="info-value">#{{ selectedInstallment()!.installmentNumber }}</span>
-              </div>
+              
+              <!-- Hide installment number for penalty-only payments and pay-all -->
+              @if (selectedInstallment()!.installmentNumber > 0) {
+                <div class="info-row">
+                  <span class="info-label">Installment</span>
+                  <span class="info-value">#{{ selectedInstallment()!.installmentNumber }}</span>
+                </div>
+              }
               
               <!-- Hide installment amount for penalty-only payments -->
               @if (selectedInstallment()!.installmentNumber !== 0) {
@@ -670,7 +699,7 @@ interface CollectionStats {
                     <div class="warning-content">
                       <span class="warning-label">⚠️ Days Overdue: {{ selectedInstallment()!.daysOverdue || selectedInstallment()!.days_overdue }} day(s)</span>
                       @if (getInstallmentPenalty(selectedInstallment()!) > 0) {
-                        <span class="warning-note">Penalty: {{ selectedLoan()?.latePenaltyPercent || 0 }}%/week after {{ selectedLoan()?.gracePeriodDays || 0 }} day grace period</span>
+                        <span class="warning-note">Penalty: {{ formatPenaltyPercent(selectedLoan()?.latePenaltyPercent) }}%/day after {{ selectedLoan()?.gracePeriodDays || 0 }} day grace period</span>
                       } @else if (selectedLoan()?.gracePeriodDays && (selectedInstallment()!.daysOverdue || selectedInstallment()!.days_overdue) <= selectedLoan()!.gracePeriodDays!) {
                         <span class="success-note">✓ Still within grace period ({{ selectedLoan()!.gracePeriodDays }} days)</span>
                       }
@@ -1599,8 +1628,8 @@ interface CollectionStats {
     .card-actions {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 8px;
+      flex-wrap: wrap;
+      gap: 6px;
       padding-top: 8px;
       border-top: 1px solid var(--ion-border-color, #e5e7eb);
     }
@@ -1610,6 +1639,7 @@ interface CollectionStats {
       --padding-start: 8px;
       --padding-end: 8px;
       height: 32px;
+      font-size: 11px;
     }
 
     .card-actions ion-icon {
@@ -2525,6 +2555,36 @@ interface CollectionStats {
     .animate-spin {
       animation: spin 1s linear infinite;
     }
+
+    /* Pulse animation for grace expired (danger) */
+    @keyframes pulseDanger {
+      0%, 100% { 
+        box-shadow: 0 0 0 0 rgba(var(--ion-color-danger-rgb), 0.7);
+        transform: scale(1);
+      }
+      50% { 
+        box-shadow: 0 0 0 8px rgba(var(--ion-color-danger-rgb), 0);
+        transform: scale(1.02);
+      }
+    }
+
+    .pulse-animation {
+      animation: pulseDanger 2s ease-in-out infinite;
+    }
+
+    /* Warning pulse for within grace period */
+    @keyframes pulseWarning {
+      0%, 100% { 
+        box-shadow: 0 0 0 0 rgba(var(--ion-color-warning-rgb), 0.5);
+      }
+      50% { 
+        box-shadow: 0 0 0 6px rgba(var(--ion-color-warning-rgb), 0);
+      }
+    }
+
+    .warning-pulse {
+      animation: pulseWarning 2.5s ease-in-out infinite;
+    }
   `]
 })
 export class CollectorRoutePage implements OnInit, ViewWillEnter {
@@ -2555,6 +2615,9 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
   selectedLoan = signal<RouteCustomer | null>(null);
   selectedInstallment = signal<any>(null);
   paymentMethod: 'cash' | 'cheque' | 'gcash' | '' = 'cash'; // Default to cash
+  
+  // View mode toggle: 'all' | 'summary' | 'payments'
+  viewMode = signal<'all' | 'summary' | 'payments'>('all');
   paymentAmount: number = 0;
   paymentReference: string = '';
   paymentNotes: string = '';
@@ -2602,6 +2665,8 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
 
   async ionViewWillEnter() {
     this.currentUser.set(this.authService.currentUser());
+    // Clear cache to force fresh data load (important after loan disbursement)
+    this.loanDetailsCache = {};
     await this.loadRouteData();
   }
 
@@ -2619,12 +2684,30 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
       return;
     }
 
-    // expand
+    // expand and set to 'all' view mode
+    this.viewMode.set('all');
     arr.push(loanId);
     this.expandedLoanIds.set(arr);
 
     // fetch loan details if not cached
     await this.loadLoanDetails(loanId);
+  }
+
+  /**
+   * Open loan details panel with specific view mode (single click)
+   */
+  async openLoanWithView(loanId: number, mode: 'all' | 'summary' | 'payments') {
+    // Set view mode first
+    this.viewMode.set(mode);
+    
+    // Ensure panel is expanded (don't toggle, always open)
+    const arr = [...this.expandedLoanIds()];
+    if (!arr.includes(loanId)) {
+      arr.push(loanId);
+      this.expandedLoanIds.set(arr);
+      // fetch loan details if not cached
+      await this.loadLoanDetails(loanId);
+    }
   }
 
   async loadLoanDetails(loanId: number) {
@@ -3024,6 +3107,82 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
     }
   }
 
+  getAlertColor(loan: RouteCustomer): string {
+    // Check if loan has cached schedule data with overdue installments
+    const details = this.getLoanDetailsFromCache(loan.loanId);
+    if (details && details.schedule) {
+      const overdueCount = this.getTotalOverdueInstallments(details.schedule);
+      if (overdueCount > 0) {
+        // Check if any installment has penalties (grace period consumed)
+        const hasPenalties = details.schedule.some((inst: any) => 
+          (inst.penaltyAmount || inst.penalty_amount || 0) > 0
+        );
+        if (hasPenalties) {
+          return 'danger'; // Grace expired, penalties applying
+        }
+        return 'warning'; // Within grace period
+      }
+    }
+    
+    // Fallback to loan properties
+    if (loan.gracePeriodConsumed === true) {
+      return 'danger';
+    } else if ((loan.daysOverdue || 0) > 0) {
+      return 'warning';
+    }
+    return 'medium';
+  }
+
+  getAlertIcon(loan: RouteCustomer): string {
+    // Check schedule data first
+    const details = this.getLoanDetailsFromCache(loan.loanId);
+    if (details && details.schedule) {
+      const overdueCount = this.getTotalOverdueInstallments(details.schedule);
+      if (overdueCount > 0) {
+        const hasPenalties = details.schedule.some((inst: any) => 
+          (inst.penaltyAmount || inst.penalty_amount || 0) > 0
+        );
+        if (hasPenalties) {
+          return 'alert-circle';
+        }
+        return 'time-outline';
+      }
+    }
+    
+    // Fallback
+    if (loan.gracePeriodConsumed === true) {
+      return 'alert-circle';
+    } else if ((loan.daysOverdue || 0) > 0) {
+      return 'time-outline';
+    }
+    return 'information-circle-outline';
+  }
+
+  getAlertLabel(loan: RouteCustomer): string {
+    // Check schedule data first
+    const details = this.getLoanDetailsFromCache(loan.loanId);
+    if (details && details.schedule) {
+      const overdueCount = this.getTotalOverdueInstallments(details.schedule);
+      if (overdueCount > 0) {
+        const hasPenalties = details.schedule.some((inst: any) => 
+          (inst.penaltyAmount || inst.penalty_amount || 0) > 0
+        );
+        if (hasPenalties) {
+          return 'Grace Expired';
+        }
+        return 'Within Grace';
+      }
+    }
+    
+    // Fallback
+    if (loan.gracePeriodConsumed === true) {
+      return 'Grace Expired';
+    } else if ((loan.daysOverdue || 0) > 0) {
+      return 'Within Grace';
+    }
+    return 'Overdue Summary';
+  }
+
   getStatusLabel(status: string): string {
     switch (status) {
       // Loan status
@@ -3055,6 +3214,18 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
    */
   formatCurrency(amount: number): string {
     return amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  /**
+   * Format penalty percentage for display.
+   * Database stores penalty as percentage (e.g., 1.00 means 1%)
+   * Just format it with 2 decimals, no conversion needed.
+   */
+  formatPenaltyPercent(value: number | undefined | null): string {
+    const v = Number(value ?? 0);
+    if (isNaN(v) || v === 0) return '0.00';
+    // Database already stores as percentage, just format it
+    return v.toFixed(2);
   }
 
   /**
@@ -3469,11 +3640,25 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
     }
 
     const outstandingAmount = this.selectedInstallment()?.outstandingAmount || 0;
+    const penaltyAmount = this.selectedInstallment()?.penaltyAmount || 0;
+    const totalAmount = outstandingAmount + penaltyAmount;
 
-    // Validate payment amount
-    if (this.paymentAmount > outstandingAmount) {
+    // Validate payment amount (skip for pay-all which includes penalties)
+    if (this.paymentType !== 'full-with-penalty' && this.paymentAmount > outstandingAmount) {
       const toast = await this.toastController.create({
         message: `Payment amount cannot exceed ₱${this.formatCurrency(outstandingAmount)}`,
+        duration: 2000,
+        position: 'bottom',
+        color: 'warning'
+      });
+      await toast.present();
+      return;
+    }
+    
+    // For pay-all, validate against total (installments + penalties)
+    if (this.paymentType === 'full-with-penalty' && this.paymentAmount > totalAmount) {
+      const toast = await this.toastController.create({
+        message: `Payment amount cannot exceed ₱${this.formatCurrency(totalAmount)}`,
         duration: 2000,
         position: 'bottom',
         color: 'warning'
