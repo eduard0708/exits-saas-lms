@@ -1,8 +1,9 @@
 ﻿// Collector Route Page - Modern Ionic 8 + Tailwind Design
-import { Component, OnInit, signal, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, signal, ViewChild, ElementRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { lastValueFrom } from 'rxjs';
 import {
   IonContent,
   IonRefresher,
@@ -23,6 +24,9 @@ import {
   IonItem,
   IonLabel,
   IonList,
+  IonFab,
+  IonFabButton,
+  IonFabList,
   ToastController,
   AlertController,
   ModalController,
@@ -51,7 +55,11 @@ import {
   cardOutline,
   calendarOutline,
   closeOutline,
-  logoGoogle
+  logoGoogle,
+  rainyOutline,
+  ellipsisVertical,
+  hourglassOutline,
+  handRightOutline
 } from 'ionicons/icons';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -59,6 +67,13 @@ import { SyncService } from '../../core/services/sync.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { ConfirmationService } from '../../core/services/confirmation.service';
 import { CollectorTopBarComponent } from '../../shared/components/collector-top-bar.component';
+
+// API Response interface
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+}
 
 interface RouteCustomer {
   customerId: number;
@@ -107,6 +122,9 @@ interface CollectionStats {
     IonIcon,
     IonBadge,
     IonSkeletonText,
+    IonFab,
+    IonFabButton,
+    IonFabList,
     CurrencyMaskDirective,
     CollectorTopBarComponent
   ],
@@ -150,16 +168,17 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
   isPartialPayment: boolean = false;
   paymentType: 'installment' | 'penalty-only' | 'penalty-partial' | 'full-with-penalty' = 'installment'; // Track payment purpose
 
-  constructor(
-    private apiService: ApiService,
-    private authService: AuthService,
-    public syncService: SyncService,
-    private router: Router,
-    public themeService: ThemeService,
-    private confirmationService: ConfirmationService,
-    private toastController: ToastController,
-    private alertController: AlertController
-  ) {
+  // Angular 16+ inject() pattern - cleaner than constructor
+  private apiService = inject(ApiService);
+  private authService = inject(AuthService);
+  public syncService = inject(SyncService);
+  private router = inject(Router);
+  public themeService = inject(ThemeService);
+  private confirmationService = inject(ConfirmationService);
+  private toastController = inject(ToastController);
+  private alertController = inject(AlertController);
+
+  constructor() {
     addIcons({
       mapOutline,
       locationOutline,
@@ -181,7 +200,11 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
       cardOutline,
       calendarOutline,
       closeOutline,
-      logoGoogle
+      logoGoogle,
+      rainyOutline,
+      ellipsisVertical,
+      hourglassOutline,
+      handRightOutline
     });
   }
 
@@ -247,9 +270,9 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
       
       if (userRole === 'collector') {
         // For collectors, fetch loan details and schedule separately
-        const [loanRes, scheduleRes]: any[] = await Promise.all([
-          this.apiService.getLoanDetails(loanId).toPromise(),
-          this.apiService.getLoanSchedule(loanId).toPromise()
+        const [loanRes, scheduleRes] = await Promise.all([
+          lastValueFrom(this.apiService.getLoanDetails(loanId)),
+          lastValueFrom(this.apiService.getLoanSchedule(loanId))
         ]);
         
         console.log('âœ… Loan details API response:', loanRes);
@@ -271,7 +294,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
         return combinedData;
       } else {
         // For customers, use the existing endpoint which includes schedule
-        const res: any = await this.apiService.getLoanDetails(loanId).toPromise();
+        const res = await lastValueFrom(this.apiService.getLoanDetails(loanId));
         console.log('âœ… Loan details API response:', res);
         const data = res?.data || res;
         console.log('ðŸ“‹ Processed loan data:', data);
@@ -421,7 +444,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
       }
 
       console.log('ðŸ“¡ Fetching route data for collector ID:', collectorId);
-      const response: any = await this.apiService.getCollectorRoute(collectorId).toPromise();
+      const response = await lastValueFrom(this.apiService.getCollectorRoute(collectorId)) as ApiResponse<RouteCustomer[]> | RouteCustomer[];
       
       console.log('âœ… API Response received:', response);
       console.log('ðŸ“‹ Response type:', typeof response);
@@ -741,6 +764,13 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
   formatCurrency(amount: number): string {
     return amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
+
+  /**
+   * TrackBy function for installment ngFor - improves performance
+   */
+  trackByInstallmentId = (index: number, item: any): number | string => {
+    return item.installmentId || item.installmentNumber || index;
+  };
 
   /**
    * Format penalty percentage for display.
@@ -1300,7 +1330,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
 
       console.log('ðŸ“¤ Payment payload:', payload);
 
-      const response = await this.apiService.recordPayment(loanId, payload).toPromise();
+      const response = await lastValueFrom(this.apiService.recordPayment(loanId, payload));
       console.log('âœ… Payment recorded:', response);
 
       // Show success toast with payment details
@@ -1338,6 +1368,470 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
         color: 'danger'
       });
       await toast.present();
+    }
+  }
+
+  /**
+   * ========================================
+   * GRACE PERIOD EXTENSION METHODS
+   * ========================================
+   */
+
+  /**
+   * Check if grace can be extended for a loan
+   */
+  canExtendGrace(loan: RouteCustomer): boolean {
+    return loan.status !== 'collected' && 
+           loan.outstandingBalance > 0 &&
+           (loan.nextInstallment !== null || (loan.daysOverdue !== undefined && loan.daysOverdue > 0));
+  }
+
+  /**
+   * Open grace extension modal for single customer
+   */
+  async extendGracePeriod(loan: RouteCustomer, event: Event) {
+    event.stopPropagation();
+    
+    const details = this.getLoanDetailsFromCache(loan.loanId);
+    if (!details || !details.schedule) {
+      const toast = await this.toastController.create({
+        message: 'Please expand loan details first',
+        duration: 2000,
+        color: 'warning'
+      });
+      await toast.present();
+      return;
+    }
+
+    // Get eligible installments (overdue, pending, or partially paid)
+    const eligibleInstallments = details.schedule.filter((inst: any) => 
+      inst.status === 'overdue' || 
+      inst.status === 'pending' ||
+      inst.status === 'partially_paid'
+    );
+
+    if (eligibleInstallments.length === 0) {
+      const toast = await this.toastController.create({
+        message: 'No installments eligible for grace extension',
+        duration: 2000,
+        color: 'info'
+      });
+      await toast.present();
+      return;
+    }
+
+    await this.showGraceExtensionModal(loan, eligibleInstallments);
+  }
+
+  /**
+   * Show grace extension modal
+   */
+  async showGraceExtensionModal(loan: RouteCustomer, installments: any[]) {
+    const alert = await this.alertController.create({
+      header: '⏰ Extend Grace Period',
+      subHeader: loan.customerName,
+      message: `Current grace: ${loan.gracePeriodDays || 0} days<br>Eligible installments: ${installments.length}`,
+      inputs: [
+        {
+          name: 'extensionDays',
+          type: 'number',
+          placeholder: 'Additional days (1-7)',
+          min: 1,
+          max: 7,
+          value: 2
+        },
+        {
+          name: 'reason',
+          type: 'radio',
+          label: '🌧️ Heavy rain/flood',
+          value: 'weather',
+          checked: true
+        },
+        {
+          name: 'reason',
+          type: 'radio',
+          label: '🏖️ Holiday/weekend',
+          value: 'holiday'
+        },
+        {
+          name: 'reason',
+          type: 'radio',
+          label: '🚑 Customer emergency',
+          value: 'customer_emergency'
+        },
+        {
+          name: 'reason',
+          type: 'radio',
+          label: '🤒 Collector emergency',
+          value: 'collector_emergency'
+        },
+        {
+          name: 'reason',
+          type: 'radio',
+          label: '🚧 Road/infrastructure',
+          value: 'infrastructure'
+        },
+        {
+          name: 'reason',
+          type: 'radio',
+          label: '🤝 Goodwill',
+          value: 'goodwill'
+        },
+        {
+          name: 'reason',
+          type: 'radio',
+          label: '📝 Other',
+          value: 'other'
+        },
+        {
+          name: 'detailedReason',
+          type: 'textarea',
+          placeholder: 'Detailed explanation (required, min 10 chars)'
+        }
+      ],
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Select Installments',
+          handler: async (data) => {
+            if (!this.validateGraceExtensionInput(data)) {
+              return false;
+            }
+            await this.showInstallmentSelector(loan, installments, data);
+            return false;
+          }
+        },
+        {
+          text: 'Apply to All',
+          cssClass: 'alert-button-confirm',
+          handler: async (data) => {
+            if (!this.validateGraceExtensionInput(data)) {
+              return false;
+            }
+            return this.submitGraceExtension(loan, installments, data.extensionDays, data.reason, data.detailedReason);
+          }
+        }
+      ],
+      cssClass: 'grace-extension-alert'
+    });
+
+    await alert.present();
+  }
+
+  /**
+   * Validate grace extension input
+   */
+  validateGraceExtensionInput(data: any): boolean {
+    if (!data.extensionDays || data.extensionDays < 1 || data.extensionDays > 7) {
+      this.toastController.create({
+        message: 'Extension must be between 1-7 days',
+        duration: 2000,
+        color: 'danger'
+      }).then(toast => toast.present());
+      return false;
+    }
+
+    if (!data.detailedReason || data.detailedReason.trim().length < 10) {
+      this.toastController.create({
+        message: 'Please provide detailed reason (min 10 characters)',
+        duration: 2000,
+        color: 'danger'
+      }).then(toast => toast.present());
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Show installment selector
+   */
+  async showInstallmentSelector(loan: RouteCustomer, installments: any[], extensionData: any) {
+    const alert = await this.alertController.create({
+      header: 'Select Installments',
+      message: 'Choose which installments to extend',
+      inputs: installments.map(inst => ({
+        name: `inst_${inst.installmentId}`,
+        type: 'checkbox',
+        label: `#${inst.installmentNumber} - ₱${this.formatCurrency(inst.outstandingAmount || inst.outstanding_amount)}`,
+        value: inst.installmentId || inst.id,
+        checked: true
+      })),
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Extend Selected',
+          handler: async (selectedIds) => {
+            if (!selectedIds || selectedIds.length === 0) {
+              const toast = await this.toastController.create({
+                message: 'Please select at least one installment',
+                duration: 2000,
+                color: 'warning'
+              });
+              await toast.present();
+              return false;
+            }
+
+            const selectedInstallments = installments.filter(inst => 
+              selectedIds.includes(inst.installmentId || inst.id)
+            );
+
+            return this.submitGraceExtension(
+              loan,
+              selectedInstallments,
+              extensionData.extensionDays,
+              extensionData.reason,
+              extensionData.detailedReason
+            );
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  /**
+   * Submit grace extension to backend
+   */
+  async submitGraceExtension(
+    loan: RouteCustomer,
+    installments: any[],
+    extensionDays: number,
+    reasonCategory: string,
+    detailedReason: string
+  ) {
+    const loading = await this.toastController.create({
+      message: `Extending grace for ${installments.length} installment(s)...`,
+      duration: 0
+    });
+    await loading.present();
+
+    try {
+      const promises = installments.map(inst => 
+        lastValueFrom(this.apiService.grantGraceExtension({
+          loanId: loan.loanId,
+          installmentId: inst.installmentId || inst.id,
+          extensionDays: parseInt(extensionDays.toString()),
+          reasonCategory: reasonCategory,
+          detailedReason: detailedReason.trim()
+        }))
+      );
+
+      const results = await Promise.all(promises);
+      await loading.dismiss();
+
+      const needsApproval = results.some(r => r.data?.approvalStatus === 'pending');
+      
+      if (needsApproval) {
+        const toast = await this.toastController.create({
+          message: `Grace extension submitted for manager approval (${extensionDays} days)`,
+          duration: 4000,
+          color: 'warning',
+          icon: 'hourglass-outline'
+        });
+        await toast.present();
+      } else {
+        const toast = await this.toastController.create({
+          message: `✅ Grace extended by ${extensionDays} days for ${installments.length} installment(s)`,
+          duration: 4000,
+          color: 'success',
+          icon: 'checkmark-circle-outline'
+        });
+        await toast.present();
+      }
+
+      // Reload loan details
+      delete this.loanDetailsCache[loan.loanId];
+      await this.loadLoanDetails(loan.loanId);
+      
+      return true;
+    } catch (error: any) {
+      await loading.dismiss();
+      console.error('Grace extension error:', error);
+      
+      const toast = await this.toastController.create({
+        message: error.error?.message || 'Failed to extend grace period',
+        duration: 3000,
+        color: 'danger'
+      });
+      await toast.present();
+      
+      return false;
+    }
+  }
+
+  /**
+   * Quick "Can't Collect Today" action
+   */
+  async quickCantCollectToday() {
+    const eligibleLoans = this.filteredCustomers().filter(loan => 
+      loan.status !== 'collected' && 
+      loan.outstandingBalance > 0
+    );
+
+    if (eligibleLoans.length === 0) {
+      const toast = await this.toastController.create({
+        message: 'No customers to extend grace period',
+        duration: 2000,
+        color: 'info'
+      });
+      await toast.present();
+      return;
+    }
+
+    const alert = await this.alertController.create({
+      header: '⚠️ Cannot Collect Today',
+      message: `Extend grace period for ${eligibleLoans.length} customer(s)`,
+      inputs: [
+        {
+          type: 'radio',
+          label: '🌧️ Heavy rain/typhoon (2 days)',
+          value: JSON.stringify({ days: 2, reason: 'weather', detail: 'Heavy rain preventing collection' }),
+          checked: true
+        },
+        {
+          type: 'radio',
+          label: '🏖️ Holiday (1 day)',
+          value: JSON.stringify({ days: 1, reason: 'holiday', detail: 'National/local holiday' })
+        },
+        {
+          type: 'radio',
+          label: '🚧 Road closed (3 days)',
+          value: JSON.stringify({ days: 3, reason: 'infrastructure', detail: 'Road closed due to construction/repair' })
+        },
+        {
+          type: 'radio',
+          label: '🤒 Collector sick (2 days)',
+          value: JSON.stringify({ days: 2, reason: 'collector_emergency', detail: 'Collector unable to work due to illness' })
+        }
+      ],
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: `Apply to ${eligibleLoans.length} Customer(s)`,
+          handler: async (selectedOption) => {
+            const option = JSON.parse(selectedOption);
+            return this.submitBulkGraceExtension(eligibleLoans, option.days, option.reason, option.detail);
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  /**
+   * Submit bulk grace extension
+   */
+  async submitBulkGraceExtension(
+    loans: RouteCustomer[],
+    extensionDays: number,
+    reasonCategory: string,
+    detailedReason: string
+  ) {
+    const loading = await this.toastController.create({
+      message: `Processing 0 of ${loans.length} loans...`,
+      duration: 0
+    });
+    await loading.present();
+
+    let successCount = 0;
+    let failCount = 0;
+    let approvalNeededCount = 0;
+
+    try {
+      for (let i = 0; i < loans.length; i++) {
+        const loan = loans[i];
+        loading.message = `Processing ${i + 1} of ${loans.length} loans...`;
+
+        try {
+          let details = this.getLoanDetailsFromCache(loan.loanId);
+          if (!details) {
+            await this.loadLoanDetails(loan.loanId);
+            details = this.getLoanDetailsFromCache(loan.loanId);
+          }
+
+          if (!details) {
+            failCount++;
+            continue;
+          }
+
+          const eligibleInstallments = details.schedule?.filter((inst: any) => 
+            inst.status === 'overdue' || 
+            inst.status === 'pending' ||
+            inst.status === 'partially_paid'
+          ) || [];
+
+          if (eligibleInstallments.length === 0) {
+            failCount++;
+            continue;
+          }
+
+          const promises = eligibleInstallments.map((inst: any) => 
+            lastValueFrom(this.apiService.grantGraceExtension({
+              loanId: loan.loanId,
+              installmentId: inst.installmentId || inst.id,
+              extensionDays: parseInt(extensionDays.toString()),
+              reasonCategory: reasonCategory,
+              detailedReason: `BULK: ${detailedReason.trim()}`
+            }))
+          );
+
+          const results = await Promise.all(promises);
+          
+          if (results.some(r => r.data?.approvalStatus === 'pending')) {
+            approvalNeededCount++;
+          } else {
+            successCount++;
+          }
+
+          delete this.loanDetailsCache[loan.loanId];
+          await this.loadLoanDetails(loan.loanId);
+
+        } catch (error) {
+          console.error(`Failed to extend grace for loan ${loan.loanId}:`, error);
+          failCount++;
+        }
+      }
+
+      await loading.dismiss();
+
+      const alert = await this.alertController.create({
+        header: 'Bulk Grace Extension Complete',
+        message: `
+          ✅ Success: ${successCount}
+          ⏳ Pending Approval: ${approvalNeededCount}
+          ❌ Failed: ${failCount}
+        `,
+        buttons: ['OK']
+      });
+      await alert.present();
+
+      await this.loadRouteData();
+      return true;
+
+    } catch (error) {
+      await loading.dismiss();
+      console.error('Bulk grace extension error:', error);
+      
+      const toast = await this.toastController.create({
+        message: 'Failed to process bulk grace extension',
+        duration: 3000,
+        color: 'danger'
+      });
+      await toast.present();
+      
+      return false;
     }
   }
 }

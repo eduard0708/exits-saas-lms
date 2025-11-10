@@ -243,4 +243,33 @@ export class ApiService {
       });
     });
   }
+
+  /**
+   * Grace Period Extension APIs
+   */
+  grantGraceExtension(payload: {
+    loanId: number;
+    installmentId: number;
+    extensionDays: number;
+    reasonCategory: string;
+    detailedReason: string;
+    metadata?: any;
+  }): Observable<any> {
+    return this.post<any>('grace-extensions', payload);
+  }
+
+  getGraceExtensionHistory(loanId: number): Observable<any> {
+    return this.get<any>(`grace-extensions/loan/${loanId}`);
+  }
+
+  getCollectorGraceExtensionStats(collectorId: number): Observable<any> {
+    return this.get<any>(`collectors/${collectorId}/grace-extensions/stats`);
+  }
+
+  approveGraceExtension(extensionId: number, payload: {
+    action: 'approve' | 'reject';
+    notes?: string;
+  }): Observable<any> {
+    return this.patch<any>(`grace-extensions/${extensionId}/approve`, payload);
+  }
 }

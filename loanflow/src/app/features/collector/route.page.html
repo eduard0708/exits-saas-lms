@@ -382,7 +382,7 @@
                     <!-- Repayment list - show for payments or all view -->
                     @if (viewMode() === 'payments' || viewMode() === 'all') {
                       <div class="repayment-list">
-                        @for (item of getFilteredInstallments(getLoanDetailsFromCache(loan.loanId).schedule); track item.installmentNumber) {
+                        @for (item of getFilteredInstallments(getLoanDetailsFromCache(loan.loanId).schedule); track trackByInstallmentId($index, item)) {
                         <div class="repayment-row" 
                              [class.paid]="item.status === 'paid'" 
                              [class.partial]="item.status === 'partially_paid'"
@@ -516,6 +516,16 @@
                               <ion-icon name="hand-right-outline" slot="start"></ion-icon>
                               Request Penalty Waiver
                             </ion-button>
+                            @if (canExtendGrace(loan)) {
+                              <ion-button 
+                                expand="block" 
+                                color="primary"
+                                fill="outline"
+                                (click)="extendGracePeriod(loan, $event)">
+                                <ion-icon name="time-outline" slot="start"></ion-icon>
+                                Extend Grace Period
+                              </ion-button>
+                            }
                           </div>
                         </div>
                       } @else {
@@ -737,4 +747,21 @@
       </div>
     </div>
   </div>
+}
+
+<!-- Floating Action Button for Quick Actions -->
+@if (filteredCustomers().length > 0 && syncService.isOnline()) {
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button color="primary">
+      <ion-icon name="ellipsis-vertical"></ion-icon>
+    </ion-fab-button>
+    <ion-fab-list side="top">
+      <ion-fab-button 
+        color="tertiary"
+        (click)="quickCantCollectToday()"
+        title="Can't Collect Today">
+        <ion-icon name="rainy-outline"></ion-icon>
+      </ion-fab-button>
+    </ion-fab-list>
+  </ion-fab>
 }

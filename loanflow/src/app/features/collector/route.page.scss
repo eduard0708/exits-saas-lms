@@ -1792,3 +1792,78 @@ body.dark .customer-skeleton,
 .warning-pulse {
   animation: pulseWarning 2.5s ease-in-out infinite;
 }
+
+/* ===== GRACE EXTENSION STYLES ===== */
+.grace-extension-alert {
+  --max-width: 90%;
+  
+  .alert-input-group {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  
+  .alert-radio-label {
+    font-size: 14px;
+    white-space: normal;
+    line-height: 1.4;
+  }
+  
+  .alert-button-confirm {
+    font-weight: 700;
+    color: var(--ion-color-primary);
+  }
+}
+
+.bulk-selection-alert {
+  --max-width: 90%;
+  
+  .alert-checkbox-group {
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+}
+
+/* Floating Action Button */
+ion-fab {
+  margin-bottom: 20px;
+  margin-right: 20px;
+  
+  ion-fab-button {
+    --box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  }
+  
+  ion-fab-list {
+    ion-fab-button {
+      --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      margin: 8px 0;
+    }
+  }
+}
+
+/* Grace Extended Indicator */
+.grace-period-alert.grace-extended {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.10), rgba(99, 102, 241, 0.08));
+  border-color: rgba(59, 130, 246, 0.4);
+
+  .stat-value.grace {
+    color: #3b82f6;
+    font-weight: 700;
+  }
+
+  .extension-reason {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--ion-color-medium);
+    margin-top: 6px;
+    padding: 6px 8px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 6px;
+
+    ion-icon {
+      font-size: 14px;
+      color: #3b82f6;
+    }
+  }
+}
