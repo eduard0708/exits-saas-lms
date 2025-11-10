@@ -1,0 +1,740 @@
+<ion-content [fullscreen]="true" class="main-content">
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <app-collector-top-bar
+    icon="navigate-outline"
+    title="Route HQ"
+    [subtitle]="currentDate"
+  />
+
+  <!-- Content Container with Padding -->
+  <div class="route-container">
+    
+  <!-- Sync Status Banner -->
+  @if (!syncService.isOnline()) {
+    <div class="offline-banner">
+      <ion-icon name="cloud-offline-outline" class="offline-icon"></ion-icon>
+      <span>Offline Mode - {{ syncService.pendingSyncCount() }} pending sync</span>
+    </div>
+  }
+    
+    <!-- User Info Header -->
+    <div class="user-header">
+      <div class="user-info">
+        <p class="user-greeting">Hello, <strong>{{ currentUser()?.firstName || 'Collector' }}</strong></p>
+        <p class="user-subtitle">{{ currentDate }}</p>
+      </div>
+    </div>
+
+    <!-- Collection Stats -->
+    <div class="stats-grid">
+      <!-- Total Assigned -->
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon-wrapper stat-icon-purple">
+            <ion-icon class="stat-icon" name="list-outline"></ion-icon>
+          </div>
+        </div>
+        @if (loading()) {
+          <ion-skeleton-text animated class="stat-skeleton"></ion-skeleton-text>
+        } @else {
+          <h2 class="stat-value">{{ stats().totalAssigned }}</h2>
+        }
+        <p class="stat-label">Assigned</p>
+        <div class="stat-decoration stat-decoration-purple"></div>
+      </div>
+
+      <!-- Visited -->
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon-wrapper stat-icon-success">
+            <ion-icon class="stat-icon" name="checkmark-circle-outline"></ion-icon>
+          </div>
+        </div>
+        @if (loading()) {
+          <ion-skeleton-text animated class="stat-skeleton"></ion-skeleton-text>
+        } @else {
+          <h2 class="stat-value">{{ stats().visited }}</h2>
+        }
+        <p class="stat-label">Visited</p>
+        <div class="stat-decoration stat-decoration-success"></div>
+      </div>
+
+      <!-- Total Collected -->
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon-wrapper stat-icon-primary">
+            <ion-icon class="stat-icon" name="cash-outline"></ion-icon>
+          </div>
+        </div>
+        @if (loading()) {
+          <ion-skeleton-text animated class="stat-skeleton"></ion-skeleton-text>
+        } @else {
+          <h2 class="stat-value stat-value-sm">₱{{ formatCurrency(stats().totalCollected) }}</h2>
+        }
+        <p class="stat-label">Collected</p>
+        <div class="stat-decoration stat-decoration-primary"></div>
+      </div>
+
+      <!-- Pending -->
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon-wrapper stat-icon-warning">
+            <ion-icon class="stat-icon" name="time-outline"></ion-icon>
+          </div>
+        </div>
+        @if (loading()) {
+          <ion-skeleton-text animated class="stat-skeleton"></ion-skeleton-text>
+        } @else {
+          <h2 class="stat-value">{{ stats().pendingVisits }}</h2>
+        }
+        <p class="stat-label">Pending</p>
+        <div class="stat-decoration stat-decoration-warning"></div>
+      </div>
+    </div>
+
+    <!-- Progress Card -->
+    <div class="progress-card">
+      <div class="progress-header">
+        <span class="progress-title">Today's Progress</span>
+        <span class="progress-percentage">{{ progressPercentage() }}%</span>
+      </div>
+      <div class="progress-bar-container">
+        <div 
+          class="progress-bar-fill"
+          [style.width.%]="progressPercentage()"
+        ></div>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-container">
+      <div class="search-wrapper">
+        <span class="search-icon">🔍</span>
+        <input 
+          type="text" 
+          class="search-input"
+          [(ngModel)]="searchQuery"
+          (input)="onSearchChange()"
+          placeholder="Search by name, phone, or email..."
+        />
+        @if (searchQuery) {
+          <button class="search-clear" (click)="clearSearch()">
+            <ion-icon name="close-outline"></ion-icon>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Customer Route List -->
+    <div class="section-card">
+      <h3 class="section-title">
+        Today's Route
+        @if (searchQuery) {
+          <span class="search-results-count">({{ filteredCustomers().length }} results)</span>
+        }
+      </h3>
+
+      @if (loading()) {
+        <div class="customers-loading">
+          @for (i of [1,2,3,4]; track i) {
+            <div class="customer-skeleton">
+              <ion-skeleton-text animated class="skeleton-name"></ion-skeleton-text>
+              <ion-skeleton-text animated class="skeleton-address"></ion-skeleton-text>
+            </div>
+          }
+        </div>
+      } @else if (filteredCustomers().length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon-wrapper">
+            <ion-icon name="map-outline" class="empty-icon"></ion-icon>
+          </div>
+          @if (searchQuery) {
+            <p class="empty-title">No customers found</p>
+            <p class="empty-subtitle">No matches for "{{ searchQuery }}"</p>
+          } @else {
+            <p class="empty-title">No customers found</p>
+            <p class="empty-subtitle">Check back later for your route</p>
+          }
+        </div>
+      } @else {
+        <div class="customers-list">
+          @for (loan of filteredCustomers(); track loan.loanId) {
+            <div 
+              class="customer-card"
+              [class.card-pending]="loan.status === 'not-visited'"
+              [class.card-collected]="loan.status === 'collected'"
+              [class.card-visited]="loan.status === 'visited'"
+              [class.card-missed]="loan.status === 'missed'"
+              (click)="toggleLoanDetails(loan.loanId)"
+            >
+              <!-- Header: Avatar, Name, Status -->
+              <div class="card-header">
+                <div class="avatar-circle">
+                  {{ getInitials(loan.customerName) }}
+                </div>
+                <div class="customer-main">
+                  <h3 class="customer-name">{{ loan.customerName }}</h3>
+                  <div class="contact-chips">
+                    <span class="contact-chip loan-chip">
+                      <ion-icon name="document-text-outline"></ion-icon>
+                      {{ loan.loanNumber }}
+                    </span>
+                    @if (loan.nextInstallment) {
+                      <span class="contact-chip">
+                        <ion-icon name="calendar-outline"></ion-icon>
+                        #{{ loan.nextInstallment }}
+                      </span>
+                    }
+                  </div>
+                </div>
+                <ion-badge [color]="getStatusColor(loan.status)" class="status-badge">
+                  {{ getStatusLabel(loan.status) }}
+                </ion-badge>
+              </div>
+
+              <!-- Loan Product -->
+              @if (loan.productName) {
+                <div class="product-badge">
+                  <ion-icon name="card-outline"></ion-icon>
+                  <span>{{ loan.productName }}</span>
+                </div>
+              }
+
+              <!-- Contact Info -->
+              <div class="contact-info-compact">
+                @if (loan.phone && loan.phone !== 'N/A') {
+                  <span class="info-item">
+                    <ion-icon name="call-outline"></ion-icon>
+                    {{ loan.phone }}
+                  </span>
+                }
+                @if (loan.email) {
+                  <span class="info-item">
+                    <ion-icon name="mail-outline"></ion-icon>
+                    {{ loan.email }}
+                  </span>
+                }
+              </div>
+
+              <!-- Address -->
+              @if (loan.address && loan.address !== 'N/A') {
+                <div class="address-row">
+                  <ion-icon name="location-outline"></ion-icon>
+                  <span>{{ loan.address }}</span>
+                </div>
+              }
+
+              <!-- Financial Info -->
+              <div class="financial-info">
+                <div class="info-row">
+                  <span class="info-label">Loan Amount</span>
+                  <span class="info-value">₱{{ formatCurrency(loan.principalAmount) }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Total Repayment</span>
+                  <span class="info-value">₱{{ formatCurrency(getTotalRepayment(loan)) }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Balance</span>
+                  <span class="info-value">₱{{ formatCurrency(getOutstandingBalance(loan)) }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Installments</span>
+                  <span class="info-value">{{ getInstallmentsPaid(loan) }} / {{ getTotalInstallments(loan) }}</span>
+                </div>
+              </div>
+
+              <!-- Grace Period Information (Only show when overdue) -->
+              @if (loan.daysOverdue && loan.daysOverdue > 0) {
+                <div class="grace-period-alert" 
+                     [class.grace-consumed]="loan.gracePeriodConsumed"
+                     [class.grace-active]="!loan.gracePeriodConsumed">
+                  <div class="alert-header">
+                    <ion-icon [name]="loan.gracePeriodConsumed ? 'alert-circle' : 'time'"></ion-icon>
+                    <span class="alert-title">
+                      @if (loan.gracePeriodConsumed) {
+                        Grace Period Expired
+                      } @else {
+                        Within Grace Period
+                      }
+                    </span>
+                  </div>
+                  <div class="alert-body">
+                    <!-- Overdue: Show days overdue -->
+                    <div class="alert-stat">
+                      <span class="stat-label">Days Overdue:</span>
+                      <span class="stat-value overdue">{{ loan.daysOverdue }} day(s)</span>
+                    </div>
+                    @if (loan.gracePeriodConsumed) {
+                      <!-- Grace expired: Show penalties -->
+                      <div class="alert-stat">
+                        <span class="stat-label">Total Penalties:</span>
+                        <span class="stat-value penalty">₱{{ formatCurrency(loan.totalPenalties || 0) }}</span>
+                      </div>
+                      <div class="penalty-note">
+                        <ion-icon name="information-circle-outline"></ion-icon>
+                        Penalty: {{ formatPenaltyPercent(loan.latePenaltyPercent) }}%/day after {{ loan.gracePeriodDays }} day grace
+                      </div>
+                    } @else {
+                      <!-- Within grace: Show remaining days -->
+                      <div class="alert-stat">
+                        <span class="stat-label">Grace Remaining:</span>
+                        <span class="stat-value grace">{{ loan.gracePeriodRemaining }} day(s)</span>
+                      </div>
+                      <div class="grace-note">
+                        <ion-icon name="checkmark-circle-outline"></ion-icon>
+                        No penalty yet. {{ loan.gracePeriodDays }} day grace period.
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Actions -->
+              <div class="card-actions">
+                @if (loan.phone && loan.phone !== 'N/A') {
+                  <ion-button 
+                    size="small" 
+                    fill="clear"
+                    [href]="'tel:' + loan.phone"
+                    (click)="$event.stopPropagation()"
+                  >
+                    <ion-icon name="call-outline" slot="icon-only"></ion-icon>
+                  </ion-button>
+                }
+                <ion-button 
+                  size="small" 
+                  fill="clear"
+                  (click)="openMap(loan); $event.stopPropagation()"
+                >
+                  <ion-icon name="navigate-outline" slot="icon-only"></ion-icon>
+                </ion-button>
+
+                <ion-button size="small" fill="clear" (click)="goToVisit(loan.customerId); $event.stopPropagation()">
+                  Visit
+                </ion-button>
+
+                <ion-button 
+                  size="small" 
+                  fill="solid"
+                  [color]="getAlertColor(loan)"
+                  [class.pulse-animation]="loan.gracePeriodConsumed === true"
+                  [class.warning-pulse]="(loan.daysOverdue || 0) > 0 && loan.gracePeriodConsumed !== true"
+                  [class.active-view]="viewMode() === 'summary'"
+                  (click)="openLoanWithView(loan.loanId, 'summary'); $event.stopPropagation()">
+                  <ion-icon [name]="getAlertIcon(loan)" slot="start"></ion-icon>
+                  {{ getAlertLabel(loan) }}
+                </ion-button>
+
+                <ion-button 
+                  size="small" 
+                  [fill]="viewMode() === 'payments' ? 'solid' : 'outline'" 
+                  (click)="openLoanWithView(loan.loanId, 'payments'); $event.stopPropagation()">
+                  <ion-icon name="cash-outline" slot="start"></ion-icon>
+                  Collect Payment
+                </ion-button>
+
+                @if (loan.dueDate) {
+                  <div class="due-chip">
+                    <ion-icon name="time-outline"></ion-icon>
+                    {{ formatDueDate(loan.dueDate) }}
+                  </div>
+                }
+              </div>
+
+              <!-- Expandable repayment panel (toggle by buttons) -->
+              @if (isExpanded(loan.loanId)) {
+                <div class="repayment-panel">
+                  <!-- Filter buttons - show only for payments or all view -->
+                  @if (viewMode() === 'payments' || viewMode() === 'all') {
+                    <div class="filter-buttons">
+                      <ion-button 
+                        size="small" 
+                        [fill]="installmentFilter() === 'pending' ? 'solid' : 'outline'"
+                        (click)="installmentFilter.set('pending'); $event.stopPropagation()">
+                        <ion-icon name="time-outline" slot="start"></ion-icon>
+                        Pending
+                      </ion-button>
+                      <ion-button 
+                        size="small" 
+                        [fill]="installmentFilter() === 'paid' ? 'solid' : 'outline'"
+                        color="success"
+                        [disabled]="!hasPaidInstallments(loan)"
+                        (click)="installmentFilter.set('paid'); $event.stopPropagation()">
+                        <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+                        Paid
+                      </ion-button>
+                      <ion-button 
+                        size="small" 
+                        [fill]="installmentFilter() === 'all' ? 'solid' : 'outline'"
+                        color="medium"
+                        (click)="installmentFilter.set('all'); $event.stopPropagation()">
+                        <ion-icon name="list-outline" slot="start"></ion-icon>
+                        All
+                      </ion-button>
+                    </div>
+                  }
+
+                  @if (getLoanDetailsFromCache(loan.loanId) && getLoanDetailsFromCache(loan.loanId).schedule && getLoanDetailsFromCache(loan.loanId).schedule.length > 0) {
+                    <!-- Repayment list - show for payments or all view -->
+                    @if (viewMode() === 'payments' || viewMode() === 'all') {
+                      <div class="repayment-list">
+                        @for (item of getFilteredInstallments(getLoanDetailsFromCache(loan.loanId).schedule); track item.installmentNumber) {
+                        <div class="repayment-row" 
+                             [class.paid]="item.status === 'paid'" 
+                             [class.partial]="item.status === 'partially_paid'"
+                             [class.pending]="item.status === 'pending'"
+                             [class.overdue]="item.status === 'overdue'"
+                             [class.disabled]="item.status === 'paid'"
+                             [style.cursor]="item.status === 'paid' ? 'not-allowed' : 'pointer'"
+                             (click)="item.status !== 'paid' && openPaymentModal(loan, item)">
+                          <div>
+                            <div class="repayment-left">
+                              <div class="repayment-num">
+                                Installment {{ item.installmentNumber }}
+                                @if ((item.penaltyAmount || item.penalty_amount || 0) > 0) {
+                                  <span class="penalty-badge">+₱{{ formatCurrency(item.penaltyAmount || item.penalty_amount || 0) }} penalty</span>
+                                }
+                              </div>
+                              <div class="repayment-date">
+                                {{ formatDueDate(item.dueDate) }}
+                                @if (item.status === 'overdue' && (item.daysLate || item.days_late || 0) > 0) {
+                                  <span class="days-late-badge">{{ item.daysLate || item.days_late }} days late</span>
+                                }
+                              </div>
+                            </div>
+                            <div class="repayment-right">
+                              <div class="repayment-amount">
+                                ₱{{ formatCurrency(item.outstandingAmount + (item.penaltyAmount || item.penalty_amount || 0)) }}
+                                @if ((item.penaltyAmount || item.penalty_amount || 0) > 0) {
+                                  <span class="amount-breakdown">(₱{{ formatCurrency(item.outstandingAmount) }} + ₱{{ formatCurrency(item.penaltyAmount || item.penalty_amount || 0) }})</span>
+                                }
+                              </div>
+                              <div class="repayment-status" 
+                                   [class.status-paid]="item.status === 'paid'"
+                                   [class.status-partial]="item.status === 'partially_paid'"
+                                   [class.status-pending]="item.status === 'pending'"
+                                   [class.status-overdue]="item.status === 'overdue'">
+                                {{ getStatusLabel(item.status) }}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <!-- Penalty Actions (only show if installment has penalty) -->
+                          @if ((item.penaltyAmount || item.penalty_amount || 0) > 0 && item.status !== 'paid') {
+                            <div class="penalty-actions" (click)="$event.stopPropagation()">
+                              <ion-button 
+                                size="small" 
+                                fill="outline" 
+                                color="danger"
+                                (click)="payInstallmentPenaltyOnly(loan, item); $event.stopPropagation()">
+                                <ion-icon name="cash-outline" slot="start"></ion-icon>
+                                Pay Penalty
+                              </ion-button>
+                              <ion-button 
+                                size="small" 
+                                fill="outline" 
+                                color="warning"
+                                (click)="waiveInstallmentPenalty(loan, item); $event.stopPropagation()">
+                                <ion-icon name="hand-right-outline" slot="start"></ion-icon>
+                                Waive
+                              </ion-button>
+                            </div>
+                          }
+                        </div>
+                      }
+                      </div>
+                    }
+                    
+                    <!-- Penalty Summary Card (Overdue Summary) - show for summary or all view -->
+                    @if ((viewMode() === 'summary' || viewMode() === 'all') && getLoanDetailsFromCache(loan.loanId)?.schedule) {
+                      @if (getTotalOverdueInstallments(getLoanDetailsFromCache(loan.loanId).schedule) > 0) {
+                        <div class="penalty-summary-card">
+                          <div class="penalty-summary-header">
+                            <ion-icon name="alert-circle" class="penalty-icon"></ion-icon>
+                            <div class="penalty-summary-title">
+                              <h4>Overdue Summary</h4>
+                              <p>{{ getTotalOverdueInstallments(getLoanDetailsFromCache(loan.loanId).schedule) }} installment(s) overdue</p>
+                            </div>
+                          </div>
+                          
+                          <!-- Grace Period Info -->
+                          <div class="grace-info-box">
+                            <div class="grace-info-row">
+                              <span class="grace-label">Grace Period:</span>
+                              <span class="grace-value">{{ loan.gracePeriodDays || 0 }} day(s)</span>
+                            </div>
+                            <div class="grace-info-row">
+                              <span class="grace-label">Penalty Rate:</span>
+                              <span class="grace-value">{{ formatPenaltyPercent(loan.latePenaltyPercent) }}% per day</span>
+                            </div>
+                            <div class="grace-info-row">
+                              <span class="grace-label">Total Days Late:</span>
+                              <span class="grace-value warning">{{ getTotalDaysLate(getLoanDetailsFromCache(loan.loanId).schedule) }} day(s)</span>
+                            </div>
+                          </div>
+                          
+                          <div class="penalty-summary-body">
+                            <div class="penalty-stat-row">
+                              <span class="stat-label">Total Installments Due:</span>
+                              <span class="stat-value">₱{{ formatCurrency(getTotalInstallmentAmount(getLoanDetailsFromCache(loan.loanId).schedule)) }}</span>
+                            </div>
+                            <div class="penalty-stat-row">
+                              <span class="stat-label">Total Penalties:</span>
+                              <span class="stat-value penalty-amount">₱{{ formatCurrency(getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule)) }}</span>
+                            </div>
+                            <div class="penalty-stat-row highlighted">
+                              <span class="stat-label">Grand Total:</span>
+                              <span class="stat-value grand-total">₱{{ formatCurrency(getTotalInstallmentAmount(getLoanDetailsFromCache(loan.loanId).schedule) + getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule)) }}</span>
+                            </div>
+                          </div>
+                          
+                          <div class="penalty-summary-actions">
+                            <ion-button 
+                              expand="block" 
+                              color="success"
+                              (click)="payAllWithPenalties(loan); $event.stopPropagation()">
+                              <ion-icon name="cash-outline" slot="start"></ion-icon>
+                              Pay All (₱{{ formatCurrency(getTotalInstallmentAmount(getLoanDetailsFromCache(loan.loanId).schedule) + getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule)) }})
+                            </ion-button>
+                            <ion-button 
+                              expand="block" 
+                              color="danger"
+                              fill="outline"
+                              (click)="payPenaltyOnly(loan); $event.stopPropagation()">
+                              <ion-icon name="alert-circle-outline" slot="start"></ion-icon>
+                              Pay Penalty Only (₱{{ formatCurrency(getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule)) }})
+                            </ion-button>
+                            <ion-button 
+                              expand="block" 
+                              color="warning"
+                              fill="outline"
+                              (click)="requestPenaltyWaiver(loan); $event.stopPropagation()">
+                              <ion-icon name="hand-right-outline" slot="start"></ion-icon>
+                              Request Penalty Waiver
+                            </ion-button>
+                          </div>
+                        </div>
+                      } @else {
+                        <div class="repayment-empty">
+                          <p class="text-sm">No overdue installments found.</p>
+                          <p class="text-xs">All payments are current.</p>
+                          <div class="grace-info-box" style="margin-top: 12px;">
+                            <div class="grace-info-row">
+                              <span class="grace-label">Grace Period:</span>
+                              <span class="grace-value">{{ loan.gracePeriodDays || 0 }} day(s)</span>
+                            </div>
+                            <div class="grace-info-row">
+                              <span class="grace-label">Penalty Rate:</span>
+                              <span class="grace-value">{{ formatPenaltyPercent(loan.latePenaltyPercent) }}% per day</span>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    }
+                  } @else {
+                    <div class="repayment-empty">
+                      <p class="text-sm">No repayment schedule available for this loan.</p>
+                      <div class="loan-quick-info">
+                        <p class="text-xs">Principal: ₱{{ formatCurrency(loan.principalAmount) }}</p>
+                        <p class="text-xs">Outstanding: ₱{{ formatCurrency(loan.outstandingBalance) }}</p>
+                        <p class="text-xs">Product: {{ loan.productName }}</p>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</ion-content>
+
+<!-- Payment Modal -->
+@if (showPaymentModal() && selectedInstallment()) {
+  <div class="modal-backdrop" (click)="closePaymentModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h2 class="modal-title">💰 Record Payment</h2>
+        <button class="close-button" (click)="closePaymentModal()">✕</button>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="modal-content">
+        <!-- Customer Info Card -->
+        <div class="info-card">
+          <div class="info-row">
+            <span class="info-label">Customer</span>
+            <span class="info-value">{{ selectedLoan()?.customerName }}</span>
+          </div>
+          
+          <!-- Hide installment number for penalty-only payments and pay-all -->
+          @if (selectedInstallment()!.installmentNumber > 0) {
+            <div class="info-row">
+              <span class="info-label">Installment</span>
+              <span class="info-value">#{{ selectedInstallment()!.installmentNumber }}</span>
+            </div>
+          }
+          
+          <!-- Hide installment amount for penalty-only payments -->
+          @if (selectedInstallment()!.installmentNumber !== 0) {
+            <div class="info-row">
+              <span class="info-label">Installment Amount</span>
+              <span class="info-value">₱{{ formatCurrency(selectedInstallment()!.outstandingAmount || 0) }}</span>
+            </div>
+          }
+          
+          @if (getInstallmentPenalty(selectedInstallment()!) > 0) {
+            <div class="info-row penalty-row">
+              <span class="info-label">Penalty Amount</span>
+              <span class="info-value penalty-value">₱{{ formatCurrency(getInstallmentPenalty(selectedInstallment()!)) }}</span>
+            </div>
+          }
+          
+          <div class="info-row highlighted total-row">
+            <span class="info-label">Total to Collect</span>
+            <span class="info-value amount">₱{{ formatCurrency(getTotalAmountDue(selectedInstallment()!)) }}</span>
+          </div>
+          
+          <!-- Days Overdue & Penalty Warning -->
+          @if (selectedInstallment() && (selectedInstallment()!.daysOverdue || selectedInstallment()!.days_overdue)) {
+            <div class="penalty-warning-card">
+              <div class="info-row warning-row">
+                <ion-icon name="alert-circle-outline" class="warning-icon"></ion-icon>
+                <div class="warning-content">
+                  <span class="warning-label">⚠️ Days Overdue: {{ selectedInstallment()!.daysOverdue || selectedInstallment()!.days_overdue }} day(s)</span>
+                  @if (getInstallmentPenalty(selectedInstallment()!) > 0) {
+                    <span class="warning-note">Penalty: {{ formatPenaltyPercent(selectedLoan()?.latePenaltyPercent) }}%/day after {{ selectedLoan()?.gracePeriodDays || 0 }} day grace period</span>
+                  } @else if (selectedLoan()?.gracePeriodDays && (selectedInstallment()!.daysOverdue || selectedInstallment()!.days_overdue) <= selectedLoan()!.gracePeriodDays!) {
+                    <span class="success-note">✓ Still within grace period ({{ selectedLoan()!.gracePeriodDays }} days)</span>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Payment Form -->
+        <div class="payment-form-compact">
+          <!-- Payment Method -->
+          <div class="form-field">
+            <label class="field-label">Payment Method <span class="required">*</span></label>
+            <div class="select-wrapper">
+              <select [(ngModel)]="paymentMethod" class="custom-select">
+                <option value="cash">💵 Cash</option>
+                <option value="cheque">💳 Cheque</option>
+                <option value="gcash">📱 GCash</option>
+              </select>
+              <div class="select-arrow">▼</div>
+            </div>
+          </div>
+
+          <!-- Payment Amount Type -->
+          <div class="form-field">
+            <div class="amount-header">
+              <label class="field-label">Payment Amount</label>
+              @if (paymentType !== 'penalty-only') {
+                <button 
+                  type="button" 
+                  class="partial-btn"
+                  [class.active]="isPartialPayment"
+                  (click)="togglePartialPayment()"
+                >
+                  {{ isPartialPayment ? 'Full Payment' : 'Partial Payment' }}
+                </button>
+              } @else {
+                <span class="penalty-only-badge">Penalty Only</span>
+              }
+            </div>
+            
+            @if (!isPartialPayment) {
+              <!-- Full Payment Display -->
+              <div class="full-payment-display">
+                <span class="currency">₱</span>
+                <span class="amount-value">{{ formatCurrency(getTotalAmountDue(selectedInstallment()!)) }}</span>
+              </div>
+              @if (paymentType === 'penalty-only') {
+                <div class="payment-breakdown">
+                  <span class="breakdown-text">Penalty only for Installment #{{ selectedInstallment()!.originalInstallmentNumber }}</span>
+                </div>
+              } @else if (getInstallmentPenalty(selectedInstallment()!) > 0) {
+                <div class="payment-breakdown">
+                  <span class="breakdown-text">Installment: ₱{{ formatCurrency(selectedInstallment()!.outstandingAmount || 0) }} + Penalty: ₱{{ formatCurrency(getInstallmentPenalty(selectedInstallment()!)) }}</span>
+                </div>
+              }
+            } @else {
+              <!-- Partial Payment Input -->
+              <div class="amount-input-wrapper">
+                <span class="currency">₱</span>
+                <input 
+                  #partialAmountInput
+                  type="text" 
+                  class="custom-input amount-input"
+                  [(ngModel)]="paymentAmount" 
+                  appCurrencyMask
+                  placeholder="0.00"
+                />
+              </div>
+              @if (paymentAmount > 0 && paymentAmount < (selectedInstallment()!.outstandingAmount || 0)) {
+                <div class="remaining-balance">
+                  Remaining: ₱{{ formatCurrency((selectedInstallment()!.outstandingAmount || 0) - paymentAmount) }}
+                </div>
+              }
+              @if (paymentAmount <= 0 || paymentAmount >= (selectedInstallment()!.outstandingAmount || 0)) {
+                <div class="payment-error">
+                  @if (paymentAmount <= 0) {
+                    <ion-icon name="alert-circle-outline"></ion-icon>
+                    <span>Amount must be greater than ₱0</span>
+                  } @else if (paymentAmount >= (selectedInstallment()!.outstandingAmount || 0)) {
+                    <ion-icon name="alert-circle-outline"></ion-icon>
+                    <span>Use Full Payment instead</span>
+                  }
+                </div>
+              }
+            }
+          </div>
+
+          <!-- Reference Number (if not cash) -->
+          @if (paymentMethod !== 'cash') {
+            <div class="form-field">
+              <label class="field-label">Reference Number <span class="required">*</span></label>
+              <input 
+                type="text"
+                class="custom-input"
+                [(ngModel)]="paymentReference" 
+                placeholder="Enter reference/transaction number"
+              />
+            </div>
+          }
+
+          <!-- Notes -->
+          <div class="form-field">
+            <label class="field-label">Notes (Optional)</label>
+            <textarea 
+              class="custom-textarea"
+              [(ngModel)]="paymentNotes" 
+              placeholder="Add payment notes..."
+              rows="3"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button 
+          class="submit-payment-btn" 
+          (click)="submitPayment()"
+          [disabled]="!isPaymentValid()"
+        >
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          <span>Record ₱{{ formatCurrency(paymentAmount || 0) }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+}

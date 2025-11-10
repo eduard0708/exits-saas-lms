@@ -1,4 +1,4 @@
-// Collector Route Page - Modern Ionic 8 + Tailwind Design
+﻿// Collector Route Page - Modern Ionic 8 + Tailwind Design
 import { Component, OnInit, signal, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
@@ -110,2482 +110,8 @@ interface CollectionStats {
     CurrencyMaskDirective,
     CollectorTopBarComponent
   ],
-  template: `
-    <ion-content [fullscreen]="true" class="main-content">
-      <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
-        <ion-refresher-content></ion-refresher-content>
-      </ion-refresher>
-
-      <app-collector-top-bar
-        icon="navigate-outline"
-        title="Route HQ"
-        [subtitle]="currentDate"
-      />
-
-      <!-- Content Container with Padding -->
-      <div class="route-container">
-        
-      <!-- Sync Status Banner -->
-      @if (!syncService.isOnline()) {
-        <div class="offline-banner">
-          <ion-icon name="cloud-offline-outline" class="offline-icon"></ion-icon>
-          <span>Offline Mode - {{ syncService.pendingSyncCount() }} pending sync</span>
-        </div>
-      }
-        
-        <!-- User Info Header -->
-        <div class="user-header">
-          <div class="user-info">
-            <p class="user-greeting">Hello, <strong>{{ currentUser()?.firstName || 'Collector' }}</strong></p>
-            <p class="user-subtitle">{{ currentDate }}</p>
-          </div>
-        </div>
-
-        <!-- Collection Stats -->
-        <div class="stats-grid">
-          <!-- Total Assigned -->
-          <div class="stat-card">
-            <div class="stat-header">
-              <div class="stat-icon-wrapper stat-icon-purple">
-                <ion-icon class="stat-icon" name="list-outline"></ion-icon>
-              </div>
-            </div>
-            @if (loading()) {
-              <ion-skeleton-text animated class="stat-skeleton"></ion-skeleton-text>
-            } @else {
-              <h2 class="stat-value">{{ stats().totalAssigned }}</h2>
-            }
-            <p class="stat-label">Assigned</p>
-            <div class="stat-decoration stat-decoration-purple"></div>
-          </div>
-
-          <!-- Visited -->
-          <div class="stat-card">
-            <div class="stat-header">
-              <div class="stat-icon-wrapper stat-icon-success">
-                <ion-icon class="stat-icon" name="checkmark-circle-outline"></ion-icon>
-              </div>
-            </div>
-            @if (loading()) {
-              <ion-skeleton-text animated class="stat-skeleton"></ion-skeleton-text>
-            } @else {
-              <h2 class="stat-value">{{ stats().visited }}</h2>
-            }
-            <p class="stat-label">Visited</p>
-            <div class="stat-decoration stat-decoration-success"></div>
-          </div>
-
-          <!-- Total Collected -->
-          <div class="stat-card">
-            <div class="stat-header">
-              <div class="stat-icon-wrapper stat-icon-primary">
-                <ion-icon class="stat-icon" name="cash-outline"></ion-icon>
-              </div>
-            </div>
-            @if (loading()) {
-              <ion-skeleton-text animated class="stat-skeleton"></ion-skeleton-text>
-            } @else {
-              <h2 class="stat-value stat-value-sm">₱{{ formatCurrency(stats().totalCollected) }}</h2>
-            }
-            <p class="stat-label">Collected</p>
-            <div class="stat-decoration stat-decoration-primary"></div>
-          </div>
-
-          <!-- Pending -->
-          <div class="stat-card">
-            <div class="stat-header">
-              <div class="stat-icon-wrapper stat-icon-warning">
-                <ion-icon class="stat-icon" name="time-outline"></ion-icon>
-              </div>
-            </div>
-            @if (loading()) {
-              <ion-skeleton-text animated class="stat-skeleton"></ion-skeleton-text>
-            } @else {
-              <h2 class="stat-value">{{ stats().pendingVisits }}</h2>
-            }
-            <p class="stat-label">Pending</p>
-            <div class="stat-decoration stat-decoration-warning"></div>
-          </div>
-        </div>
-
-        <!-- Progress Card -->
-        <div class="progress-card">
-          <div class="progress-header">
-            <span class="progress-title">Today's Progress</span>
-            <span class="progress-percentage">{{ progressPercentage() }}%</span>
-          </div>
-          <div class="progress-bar-container">
-            <div 
-              class="progress-bar-fill"
-              [style.width.%]="progressPercentage()"
-            ></div>
-          </div>
-        </div>
-
-        <!-- Search Bar -->
-        <div class="search-container">
-          <div class="search-wrapper">
-            <span class="search-icon">🔍</span>
-            <input 
-              type="text" 
-              class="search-input"
-              [(ngModel)]="searchQuery"
-              (input)="onSearchChange()"
-              placeholder="Search by name, phone, or email..."
-            />
-            @if (searchQuery) {
-              <button class="search-clear" (click)="clearSearch()">
-                <ion-icon name="close-outline"></ion-icon>
-              </button>
-            }
-          </div>
-        </div>
-
-        <!-- Customer Route List -->
-        <div class="section-card">
-          <h3 class="section-title">
-            Today's Route
-            @if (searchQuery) {
-              <span class="search-results-count">({{ filteredCustomers().length }} results)</span>
-            }
-          </h3>
-
-          @if (loading()) {
-            <div class="customers-loading">
-              @for (i of [1,2,3,4]; track i) {
-                <div class="customer-skeleton">
-                  <ion-skeleton-text animated class="skeleton-name"></ion-skeleton-text>
-                  <ion-skeleton-text animated class="skeleton-address"></ion-skeleton-text>
-                </div>
-              }
-            </div>
-          } @else if (filteredCustomers().length === 0) {
-            <div class="empty-state">
-              <div class="empty-icon-wrapper">
-                <ion-icon name="map-outline" class="empty-icon"></ion-icon>
-              </div>
-              @if (searchQuery) {
-                <p class="empty-title">No customers found</p>
-                <p class="empty-subtitle">No matches for "{{ searchQuery }}"</p>
-              } @else {
-                <p class="empty-title">No customers found</p>
-                <p class="empty-subtitle">Check back later for your route</p>
-              }
-            </div>
-          } @else {
-            <div class="customers-list">
-              @for (loan of filteredCustomers(); track loan.loanId) {
-                <div 
-                  class="customer-card"
-                  [class.card-pending]="loan.status === 'not-visited'"
-                  [class.card-collected]="loan.status === 'collected'"
-                  [class.card-visited]="loan.status === 'visited'"
-                  [class.card-missed]="loan.status === 'missed'"
-                  (click)="toggleLoanDetails(loan.loanId)"
-                >
-                  <!-- Header: Avatar, Name, Status -->
-                  <div class="card-header">
-                    <div class="avatar-circle">
-                      {{ getInitials(loan.customerName) }}
-                    </div>
-                    <div class="customer-main">
-                      <h3 class="customer-name">{{ loan.customerName }}</h3>
-                      <div class="contact-chips">
-                        <span class="contact-chip loan-chip">
-                          <ion-icon name="document-text-outline"></ion-icon>
-                          {{ loan.loanNumber }}
-                        </span>
-                        @if (loan.nextInstallment) {
-                          <span class="contact-chip">
-                            <ion-icon name="calendar-outline"></ion-icon>
-                            #{{ loan.nextInstallment }}
-                          </span>
-                        }
-                      </div>
-                    </div>
-                    <ion-badge [color]="getStatusColor(loan.status)" class="status-badge">
-                      {{ getStatusLabel(loan.status) }}
-                    </ion-badge>
-                  </div>
-
-                  <!-- Loan Product -->
-                  @if (loan.productName) {
-                    <div class="product-badge">
-                      <ion-icon name="card-outline"></ion-icon>
-                      <span>{{ loan.productName }}</span>
-                    </div>
-                  }
-
-                  <!-- Contact Info -->
-                  <div class="contact-info-compact">
-                    @if (loan.phone && loan.phone !== 'N/A') {
-                      <span class="info-item">
-                        <ion-icon name="call-outline"></ion-icon>
-                        {{ loan.phone }}
-                      </span>
-                    }
-                    @if (loan.email) {
-                      <span class="info-item">
-                        <ion-icon name="mail-outline"></ion-icon>
-                        {{ loan.email }}
-                      </span>
-                    }
-                  </div>
-
-                  <!-- Address -->
-                  @if (loan.address && loan.address !== 'N/A') {
-                    <div class="address-row">
-                      <ion-icon name="location-outline"></ion-icon>
-                      <span>{{ loan.address }}</span>
-                    </div>
-                  }
-
-                  <!-- Financial Info -->
-                  <div class="financial-info">
-                    <div class="info-row">
-                      <span class="info-label">Loan Amount</span>
-                      <span class="info-value">₱{{ formatCurrency(loan.principalAmount) }}</span>
-                    </div>
-                    <div class="info-row">
-                      <span class="info-label">Total Repayment</span>
-                      <span class="info-value">₱{{ formatCurrency(getTotalRepayment(loan)) }}</span>
-                    </div>
-                    <div class="info-row">
-                      <span class="info-label">Balance</span>
-                      <span class="info-value">₱{{ formatCurrency(getOutstandingBalance(loan)) }}</span>
-                    </div>
-                    <div class="info-row">
-                      <span class="info-label">Installments</span>
-                      <span class="info-value">{{ getInstallmentsPaid(loan) }} / {{ getTotalInstallments(loan) }}</span>
-                    </div>
-                  </div>
-
-                  <!-- Grace Period Information (Only show when overdue) -->
-                  @if (loan.daysOverdue && loan.daysOverdue > 0) {
-                    <div class="grace-period-alert" 
-                         [class.grace-consumed]="loan.gracePeriodConsumed"
-                         [class.grace-active]="!loan.gracePeriodConsumed">
-                      <div class="alert-header">
-                        <ion-icon [name]="loan.gracePeriodConsumed ? 'alert-circle' : 'time'"></ion-icon>
-                        <span class="alert-title">
-                          @if (loan.gracePeriodConsumed) {
-                            Grace Period Expired
-                          } @else {
-                            Within Grace Period
-                          }
-                        </span>
-                      </div>
-                      <div class="alert-body">
-                        <!-- Overdue: Show days overdue -->
-                        <div class="alert-stat">
-                          <span class="stat-label">Days Overdue:</span>
-                          <span class="stat-value overdue">{{ loan.daysOverdue }} day(s)</span>
-                        </div>
-                        @if (loan.gracePeriodConsumed) {
-                          <!-- Grace expired: Show penalties -->
-                          <div class="alert-stat">
-                            <span class="stat-label">Total Penalties:</span>
-                            <span class="stat-value penalty">₱{{ formatCurrency(loan.totalPenalties || 0) }}</span>
-                          </div>
-                          <div class="penalty-note">
-                            <ion-icon name="information-circle-outline"></ion-icon>
-                            Penalty: {{ formatPenaltyPercent(loan.latePenaltyPercent) }}%/day after {{ loan.gracePeriodDays }} day grace
-                          </div>
-                        } @else {
-                          <!-- Within grace: Show remaining days -->
-                          <div class="alert-stat">
-                            <span class="stat-label">Grace Remaining:</span>
-                            <span class="stat-value grace">{{ loan.gracePeriodRemaining }} day(s)</span>
-                          </div>
-                          <div class="grace-note">
-                            <ion-icon name="checkmark-circle-outline"></ion-icon>
-                            No penalty yet. {{ loan.gracePeriodDays }} day grace period.
-                          </div>
-                        }
-                      </div>
-                    </div>
-                  }
-
-                  <!-- Actions -->
-                  <div class="card-actions">
-                    @if (loan.phone && loan.phone !== 'N/A') {
-                      <ion-button 
-                        size="small" 
-                        fill="clear"
-                        [href]="'tel:' + loan.phone"
-                        (click)="$event.stopPropagation()"
-                      >
-                        <ion-icon name="call-outline" slot="icon-only"></ion-icon>
-                      </ion-button>
-                    }
-                    <ion-button 
-                      size="small" 
-                      fill="clear"
-                      (click)="openMap(loan); $event.stopPropagation()"
-                    >
-                      <ion-icon name="navigate-outline" slot="icon-only"></ion-icon>
-                    </ion-button>
-
-                    <ion-button size="small" fill="clear" (click)="goToVisit(loan.customerId); $event.stopPropagation()">
-                      Visit
-                    </ion-button>
-
-                    <ion-button 
-                      size="small" 
-                      fill="solid"
-                      [color]="getAlertColor(loan)"
-                      [class.pulse-animation]="loan.gracePeriodConsumed === true"
-                      [class.warning-pulse]="(loan.daysOverdue || 0) > 0 && loan.gracePeriodConsumed !== true"
-                      [class.active-view]="viewMode() === 'summary'"
-                      (click)="openLoanWithView(loan.loanId, 'summary'); $event.stopPropagation()">
-                      <ion-icon [name]="getAlertIcon(loan)" slot="start"></ion-icon>
-                      {{ getAlertLabel(loan) }}
-                    </ion-button>
-
-                    <ion-button 
-                      size="small" 
-                      [fill]="viewMode() === 'payments' ? 'solid' : 'outline'" 
-                      (click)="openLoanWithView(loan.loanId, 'payments'); $event.stopPropagation()">
-                      <ion-icon name="cash-outline" slot="start"></ion-icon>
-                      Collect Payment
-                    </ion-button>
-
-                    @if (loan.dueDate) {
-                      <div class="due-chip">
-                        <ion-icon name="time-outline"></ion-icon>
-                        {{ formatDueDate(loan.dueDate) }}
-                      </div>
-                    }
-                  </div>
-
-                  <!-- Expandable repayment panel (toggle by buttons) -->
-                  @if (isExpanded(loan.loanId)) {
-                    <div class="repayment-panel">
-                      <!-- Filter buttons - show only for payments or all view -->
-                      @if (viewMode() === 'payments' || viewMode() === 'all') {
-                        <div class="filter-buttons">
-                          <ion-button 
-                            size="small" 
-                            [fill]="installmentFilter() === 'pending' ? 'solid' : 'outline'"
-                            (click)="installmentFilter.set('pending'); $event.stopPropagation()">
-                            <ion-icon name="time-outline" slot="start"></ion-icon>
-                            Pending
-                          </ion-button>
-                          <ion-button 
-                            size="small" 
-                            [fill]="installmentFilter() === 'paid' ? 'solid' : 'outline'"
-                            color="success"
-                            [disabled]="!hasPaidInstallments(loan)"
-                            (click)="installmentFilter.set('paid'); $event.stopPropagation()">
-                            <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
-                            Paid
-                          </ion-button>
-                          <ion-button 
-                            size="small" 
-                            [fill]="installmentFilter() === 'all' ? 'solid' : 'outline'"
-                            color="medium"
-                            (click)="installmentFilter.set('all'); $event.stopPropagation()">
-                            <ion-icon name="list-outline" slot="start"></ion-icon>
-                            All
-                          </ion-button>
-                        </div>
-                      }
-
-                      @if (getLoanDetailsFromCache(loan.loanId) && getLoanDetailsFromCache(loan.loanId).schedule && getLoanDetailsFromCache(loan.loanId).schedule.length > 0) {
-                        <!-- Repayment list - show for payments or all view -->
-                        @if (viewMode() === 'payments' || viewMode() === 'all') {
-                          <div class="repayment-list">
-                            @for (item of getFilteredInstallments(getLoanDetailsFromCache(loan.loanId).schedule); track item.installmentNumber) {
-                            <div class="repayment-row" 
-                                 [class.paid]="item.status === 'paid'" 
-                                 [class.partial]="item.status === 'partially_paid'"
-                                 [class.pending]="item.status === 'pending'"
-                                 [class.overdue]="item.status === 'overdue'"
-                                 [class.disabled]="item.status === 'paid'"
-                                 [style.cursor]="item.status === 'paid' ? 'not-allowed' : 'pointer'"
-                                 (click)="item.status !== 'paid' && openPaymentModal(loan, item)">
-                              <div class="repayment-left">
-                                <div class="repayment-num">
-                                  Installment {{ item.installmentNumber }}
-                                  @if ((item.penaltyAmount || item.penalty_amount || 0) > 0) {
-                                    <span class="penalty-badge">+₱{{ formatCurrency(item.penaltyAmount || item.penalty_amount || 0) }} penalty</span>
-                                  }
-                                </div>
-                                <div class="repayment-date">
-                                  {{ formatDueDate(item.dueDate) }}
-                                  @if (item.status === 'overdue' && (item.daysLate || item.days_late || 0) > 0) {
-                                    <span class="days-late-badge">{{ item.daysLate || item.days_late }} days late</span>
-                                  }
-                                </div>
-                              </div>
-                              <div class="repayment-right">
-                                <div class="repayment-amount">
-                                  ₱{{ formatCurrency(item.outstandingAmount + (item.penaltyAmount || item.penalty_amount || 0)) }}
-                                  @if ((item.penaltyAmount || item.penalty_amount || 0) > 0) {
-                                    <span class="amount-breakdown">(₱{{ formatCurrency(item.outstandingAmount) }} + ₱{{ formatCurrency(item.penaltyAmount || item.penalty_amount || 0) }})</span>
-                                  }
-                                </div>
-                                <div class="repayment-status" 
-                                     [class.status-paid]="item.status === 'paid'"
-                                     [class.status-partial]="item.status === 'partially_paid'"
-                                     [class.status-pending]="item.status === 'pending'"
-                                     [class.status-overdue]="item.status === 'overdue'">
-                                  {{ getStatusLabel(item.status) }}
-                                </div>
-                              </div>
-                            </div>
-                          }
-                          </div>
-                        }
-                        
-                        <!-- Penalty Summary Card (Overdue Summary) - show for summary or all view -->
-                        @if ((viewMode() === 'summary' || viewMode() === 'all') && getLoanDetailsFromCache(loan.loanId)?.schedule) {
-                          @if (getTotalOverdueInstallments(getLoanDetailsFromCache(loan.loanId).schedule) > 0) {
-                            <div class="penalty-summary-card">
-                              <div class="penalty-summary-header">
-                                <ion-icon name="alert-circle" class="penalty-icon"></ion-icon>
-                                <div class="penalty-summary-title">
-                                  <h4>Overdue Summary</h4>
-                                  <p>{{ getTotalOverdueInstallments(getLoanDetailsFromCache(loan.loanId).schedule) }} installment(s) overdue</p>
-                                </div>
-                              </div>
-                              
-                              <!-- Grace Period Info -->
-                              <div class="grace-info-box">
-                                <div class="grace-info-row">
-                                  <span class="grace-label">Grace Period:</span>
-                                  <span class="grace-value">{{ loan.gracePeriodDays || 0 }} day(s)</span>
-                                </div>
-                                <div class="grace-info-row">
-                                  <span class="grace-label">Penalty Rate:</span>
-                                  <span class="grace-value">{{ formatPenaltyPercent(loan.latePenaltyPercent) }}% per day</span>
-                                </div>
-                                <div class="grace-info-row">
-                                  <span class="grace-label">Total Days Late:</span>
-                                  <span class="grace-value warning">{{ getTotalDaysLate(getLoanDetailsFromCache(loan.loanId).schedule) }} day(s)</span>
-                                </div>
-                              </div>
-                              
-                              <div class="penalty-summary-body">
-                                <div class="penalty-stat-row">
-                                  <span class="stat-label">Total Installments Due:</span>
-                                  <span class="stat-value">₱{{ formatCurrency(getTotalInstallmentAmount(getLoanDetailsFromCache(loan.loanId).schedule)) }}</span>
-                                </div>
-                                <div class="penalty-stat-row">
-                                  <span class="stat-label">Total Penalties:</span>
-                                  <span class="stat-value penalty-amount">₱{{ formatCurrency(getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule)) }}</span>
-                                </div>
-                                <div class="penalty-stat-row highlighted">
-                                  <span class="stat-label">Grand Total:</span>
-                                  <span class="stat-value grand-total">₱{{ formatCurrency(getTotalInstallmentAmount(getLoanDetailsFromCache(loan.loanId).schedule) + getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule)) }}</span>
-                                </div>
-                              </div>
-                              
-                              <div class="penalty-summary-actions">
-                                <ion-button 
-                                  expand="block" 
-                                  color="success"
-                                  (click)="payAllWithPenalties(loan); $event.stopPropagation()">
-                                  <ion-icon name="cash-outline" slot="start"></ion-icon>
-                                  Pay All (₱{{ formatCurrency(getTotalInstallmentAmount(getLoanDetailsFromCache(loan.loanId).schedule) + getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule)) }})
-                                </ion-button>
-                                <ion-button 
-                                  expand="block" 
-                                  color="danger"
-                                  fill="outline"
-                                  (click)="payPenaltyOnly(loan); $event.stopPropagation()">
-                                  <ion-icon name="alert-circle-outline" slot="start"></ion-icon>
-                                  Pay Penalty Only (₱{{ formatCurrency(getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule)) }})
-                                </ion-button>
-                                <ion-button 
-                                  expand="block" 
-                                  color="warning"
-                                  fill="outline"
-                                  (click)="requestPenaltyWaiver(loan); $event.stopPropagation()">
-                                  <ion-icon name="hand-right-outline" slot="start"></ion-icon>
-                                  Request Penalty Waiver
-                                </ion-button>
-                              </div>
-                            </div>
-                          } @else {
-                            <div class="repayment-empty">
-                              <p class="text-sm">No overdue installments found.</p>
-                              <p class="text-xs">All payments are current.</p>
-                              <div class="grace-info-box" style="margin-top: 12px;">
-                                <div class="grace-info-row">
-                                  <span class="grace-label">Grace Period:</span>
-                                  <span class="grace-value">{{ loan.gracePeriodDays || 0 }} day(s)</span>
-                                </div>
-                                <div class="grace-info-row">
-                                  <span class="grace-label">Penalty Rate:</span>
-                                  <span class="grace-value">{{ formatPenaltyPercent(loan.latePenaltyPercent) }}% per day</span>
-                                </div>
-                              </div>
-                            </div>
-                          }
-                        }
-                      } @else {
-                        <div class="repayment-empty">
-                          <p class="text-sm">No repayment schedule available for this loan.</p>
-                          <div class="loan-quick-info">
-                            <p class="text-xs">Principal: ₱{{ formatCurrency(loan.principalAmount) }}</p>
-                            <p class="text-xs">Outstanding: ₱{{ formatCurrency(loan.outstandingBalance) }}</p>
-                            <p class="text-xs">Product: {{ loan.productName }}</p>
-                          </div>
-                        </div>
-                      }
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          }
-        </div>
-      </div>
-    </ion-content>
-
-    <!-- Payment Modal -->
-    @if (showPaymentModal() && selectedInstallment()) {
-      <div class="modal-backdrop" (click)="closePaymentModal()">
-        <div class="modal-container" (click)="$event.stopPropagation()">
-          <!-- Modal Header -->
-          <div class="modal-header">
-            <h2 class="modal-title">💰 Record Payment</h2>
-            <button class="close-button" (click)="closePaymentModal()">✕</button>
-          </div>
-
-          <!-- Modal Content -->
-          <div class="modal-content">
-            <!-- Customer Info Card -->
-            <div class="info-card">
-              <div class="info-row">
-                <span class="info-label">Customer</span>
-                <span class="info-value">{{ selectedLoan()?.customerName }}</span>
-              </div>
-              
-              <!-- Hide installment number for penalty-only payments and pay-all -->
-              @if (selectedInstallment()!.installmentNumber > 0) {
-                <div class="info-row">
-                  <span class="info-label">Installment</span>
-                  <span class="info-value">#{{ selectedInstallment()!.installmentNumber }}</span>
-                </div>
-              }
-              
-              <!-- Hide installment amount for penalty-only payments -->
-              @if (selectedInstallment()!.installmentNumber !== 0) {
-                <div class="info-row">
-                  <span class="info-label">Installment Amount</span>
-                  <span class="info-value">₱{{ formatCurrency(selectedInstallment()!.outstandingAmount || 0) }}</span>
-                </div>
-              }
-              
-              @if (getInstallmentPenalty(selectedInstallment()!) > 0) {
-                <div class="info-row penalty-row">
-                  <span class="info-label">Penalty Amount</span>
-                  <span class="info-value penalty-value">₱{{ formatCurrency(getInstallmentPenalty(selectedInstallment()!)) }}</span>
-                </div>
-              }
-              
-              <div class="info-row highlighted total-row">
-                <span class="info-label">Total to Collect</span>
-                <span class="info-value amount">₱{{ formatCurrency(getTotalAmountDue(selectedInstallment()!)) }}</span>
-              </div>
-              
-              <!-- Days Overdue & Penalty Warning -->
-              @if (selectedInstallment() && (selectedInstallment()!.daysOverdue || selectedInstallment()!.days_overdue)) {
-                <div class="penalty-warning-card">
-                  <div class="info-row warning-row">
-                    <ion-icon name="alert-circle-outline" class="warning-icon"></ion-icon>
-                    <div class="warning-content">
-                      <span class="warning-label">⚠️ Days Overdue: {{ selectedInstallment()!.daysOverdue || selectedInstallment()!.days_overdue }} day(s)</span>
-                      @if (getInstallmentPenalty(selectedInstallment()!) > 0) {
-                        <span class="warning-note">Penalty: {{ formatPenaltyPercent(selectedLoan()?.latePenaltyPercent) }}%/day after {{ selectedLoan()?.gracePeriodDays || 0 }} day grace period</span>
-                      } @else if (selectedLoan()?.gracePeriodDays && (selectedInstallment()!.daysOverdue || selectedInstallment()!.days_overdue) <= selectedLoan()!.gracePeriodDays!) {
-                        <span class="success-note">✓ Still within grace period ({{ selectedLoan()!.gracePeriodDays }} days)</span>
-                      }
-                    </div>
-                  </div>
-                </div>
-              }
-            </div>
-
-            <!-- Payment Form -->
-            <div class="payment-form-compact">
-              <!-- Payment Method -->
-              <div class="form-field">
-                <label class="field-label">Payment Method <span class="required">*</span></label>
-                <div class="select-wrapper">
-                  <select [(ngModel)]="paymentMethod" class="custom-select">
-                    <option value="cash">💵 Cash</option>
-                    <option value="cheque">💳 Cheque</option>
-                    <option value="gcash">📱 GCash</option>
-                  </select>
-                  <div class="select-arrow">▼</div>
-                </div>
-              </div>
-
-              <!-- Payment Amount Type -->
-              <div class="form-field">
-                <div class="amount-header">
-                  <label class="field-label">Payment Amount</label>
-                  <button 
-                    type="button" 
-                    class="partial-btn"
-                    [class.active]="isPartialPayment"
-                    (click)="togglePartialPayment()"
-                  >
-                    {{ isPartialPayment ? 'Full Payment' : 'Partial Payment' }}
-                  </button>
-                </div>
-                
-                @if (!isPartialPayment) {
-                  <!-- Full Payment Display -->
-                  <div class="full-payment-display">
-                    <span class="currency">₱</span>
-                    <span class="amount-value">{{ formatCurrency(getTotalAmountDue(selectedInstallment()!)) }}</span>
-                  </div>
-                  @if (getInstallmentPenalty(selectedInstallment()!) > 0) {
-                    <div class="payment-breakdown">
-                      <span class="breakdown-text">Installment: ₱{{ formatCurrency(selectedInstallment()!.outstandingAmount || 0) }} + Penalty: ₱{{ formatCurrency(getInstallmentPenalty(selectedInstallment()!)) }}</span>
-                    </div>
-                  }
-                } @else {
-                  <!-- Partial Payment Input -->
-                  <div class="amount-input-wrapper">
-                    <span class="currency">₱</span>
-                    <input 
-                      #partialAmountInput
-                      type="text" 
-                      class="custom-input amount-input"
-                      [(ngModel)]="paymentAmount" 
-                      appCurrencyMask
-                      placeholder="0.00"
-                    />
-                  </div>
-                  @if (paymentAmount > 0 && paymentAmount < (selectedInstallment()!.outstandingAmount || 0)) {
-                    <div class="remaining-balance">
-                      Remaining: ₱{{ formatCurrency((selectedInstallment()!.outstandingAmount || 0) - paymentAmount) }}
-                    </div>
-                  }
-                  @if (paymentAmount <= 0 || paymentAmount >= (selectedInstallment()!.outstandingAmount || 0)) {
-                    <div class="payment-error">
-                      @if (paymentAmount <= 0) {
-                        <ion-icon name="alert-circle-outline"></ion-icon>
-                        <span>Amount must be greater than ₱0</span>
-                      } @else if (paymentAmount >= (selectedInstallment()!.outstandingAmount || 0)) {
-                        <ion-icon name="alert-circle-outline"></ion-icon>
-                        <span>Use Full Payment instead</span>
-                      }
-                    </div>
-                  }
-                }
-              </div>
-
-              <!-- Reference Number (if not cash) -->
-              @if (paymentMethod !== 'cash') {
-                <div class="form-field">
-                  <label class="field-label">Reference Number <span class="required">*</span></label>
-                  <input 
-                    type="text"
-                    class="custom-input"
-                    [(ngModel)]="paymentReference" 
-                    placeholder="Enter reference/transaction number"
-                  />
-                </div>
-              }
-
-              <!-- Notes -->
-              <div class="form-field">
-                <label class="field-label">Notes (Optional)</label>
-                <textarea 
-                  class="custom-textarea"
-                  [(ngModel)]="paymentNotes" 
-                  placeholder="Add payment notes..."
-                  rows="3"
-                ></textarea>
-              </div>
-            </div>
-
-            <!-- Submit Button -->
-            <button 
-              class="submit-payment-btn" 
-              (click)="submitPayment()"
-              [disabled]="!isPaymentValid()"
-            >
-              <ion-icon name="checkmark-circle-outline"></ion-icon>
-              <span>Record ₱{{ formatCurrency(paymentAmount || 0) }}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    }
-  `,
-  styles: [`
-    /* Main Content Background */
-    .main-content {
-      --background: linear-gradient(to bottom, #f7f7f9 0%, #eeeef2 100%);
-    }
-
-    /* Container with safe area padding */
-    .route-container {
-      padding-top: calc(80px + env(safe-area-inset-top) + 0.85rem);
-      padding-bottom: calc(60px + env(safe-area-inset-bottom) + 0.85rem);
-      padding-left: 1rem;
-      padding-right: 1rem;
-    }
-
-    .topbar-pills {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-right: 0.15rem;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-      padding: 0.35rem 0.75rem;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.22);
-      color: rgba(255, 255, 255, 0.9);
-      font-size: 0.7rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      backdrop-filter: blur(4px);
-    }
-
-    .pill-finance {
-      background: rgba(16, 185, 129, 0.25);
-      color: #bbf7d0;
-    }
-
-    .pill-outline {
-      background: transparent;
-      border: 1px solid rgba(255, 255, 255, 0.35);
-    }
-
-    /* ===== HEADER STYLES ===== */
-    .custom-toolbar {
-      --background: linear-gradient(135deg, #a855f7, #6366f1);
-      --color: white;
-      --border-style: none;
-      --min-height: 60px;
-    }
-
-    .header-title {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      font-size: 1.125rem;
-      font-weight: 700;
-    }
-
-    .title-icon {
-      font-size: 1.5rem;
-    }
-
-    .title-text {
-      font-weight: 700;
-    }
-
-    .header-btn {
-      --background-hover: rgba(255, 255, 255, 0.15);
-      --border-radius: 50%;
-      --padding-start: 8px;
-      --padding-end: 8px;
-      position: relative;
-    }
-
-    .sync-badge {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      font-size: 0.65rem;
-      min-width: 16px;
-      height: 16px;
-    }
-
-    .offline-banner {
-      background: #f59e0b;
-      color: white;
-      padding: 0.75rem 1rem;
-      text-align: center;
-      font-size: 0.875rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-    }
-
-    .offline-icon {
-      font-size: 1.125rem;
-    }
-
-    /* ===== MAIN CONTENT ===== */
-    .main-content {
-      --background: var(--ion-background-color);
-    }
-
-    .dashboard-container {
-      padding: 1rem;
-      max-width: 600px;
-      margin: 0 auto;
-    }
-
-    /* ===== USER HEADER ===== */
-    .user-header {
-      margin-bottom: 1.5rem;
-      padding: 0 0.25rem;
-    }
-
-    .user-info {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-
-    .user-greeting {
-      font-size: 1.125rem;
-      color: var(--ion-text-color);
-      margin: 0;
-      font-weight: 400;
-    }
-
-    .user-greeting strong {
-      font-weight: 700;
-    }
-
-    .user-subtitle {
-      font-size: 0.875rem;
-      color: var(--ion-color-medium);
-      margin: 0;
-    }
-
-    /* ===== STATS GRID ===== */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
-      margin-bottom: 1.25rem;
-    }
-
-    .stat-card {
-      background: var(--ion-card-background);
-      border-radius: 16px;
-      padding: 1.25rem;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      border: 1px solid var(--ion-border-color, #e5e7eb);
-      transition: all 0.3s ease;
-    }
-
-    .stat-card:active {
-      transform: scale(0.98);
-    }
-
-    .stat-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 0.75rem;
-    }
-
-    .stat-icon-wrapper {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .stat-icon {
-      font-size: 1.5rem;
-    }
-
-    .stat-icon-purple {
-      background: linear-gradient(135deg, #a855f7, #6366f1);
-    }
-
-    .stat-icon-purple .stat-icon {
-      color: white;
-    }
-
-    .stat-icon-primary {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-    }
-
-    .stat-icon-primary .stat-icon {
-      color: white;
-    }
-
-    .stat-icon-success {
-      background: linear-gradient(135deg, #4facfe, #00f2fe);
-    }
-
-    .stat-icon-success .stat-icon {
-      color: white;
-    }
-
-    .stat-icon-warning {
-      background: linear-gradient(135deg, #f093fb, #f5576c);
-    }
-
-    .stat-icon-warning .stat-icon {
-      color: white;
-    }
-
-    .stat-value {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--ion-text-color);
-      margin: 0 0 0.25rem 0;
-      line-height: 1.2;
-    }
-
-    .stat-value-sm {
-      font-size: 1.25rem;
-    }
-
-    .stat-label {
-      font-size: 0.75rem;
-      color: var(--ion-color-medium);
-      margin: 0;
-      font-weight: 500;
-    }
-
-    .stat-skeleton {
-      width: 70%;
-      height: 24px;
-      border-radius: 6px;
-      margin-bottom: 0.5rem;
-    }
-
-    .stat-decoration {
-      position: absolute;
-      bottom: -10px;
-      right: -10px;
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      opacity: 0.1;
-    }
-
-    .stat-decoration-purple {
-      background: #a855f7;
-    }
-
-    .stat-decoration-primary {
-      background: #667eea;
-    }
-
-    .stat-decoration-success {
-      background: #00f2fe;
-    }
-
-    .stat-decoration-warning {
-      background: #f5576c;
-    }
-
-    /* ===== PROGRESS CARD ===== */
-    .progress-card {
-      background: var(--ion-card-background);
-      border-radius: 16px;
-      padding: 1.25rem;
-      margin-bottom: 1.25rem;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      border: 1px solid var(--ion-border-color, #e5e7eb);
-    }
-
-    .progress-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 0.75rem;
-    }
-
-    .progress-title {
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: var(--ion-text-color);
-    }
-
-    .progress-percentage {
-      font-size: 0.875rem;
-      font-weight: 700;
-      color: #a855f7;
-    }
-
-    .progress-bar-container {
-      width: 100%;
-      height: 12px;
-      background: var(--ion-color-light);
-      border-radius: 9999px;
-      overflow: hidden;
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #a855f7, #6366f1);
-      border-radius: 9999px;
-      transition: width 0.5s ease;
-    }
-
-    /* ===== SEARCH BAR ===== */
-    .search-container {
-      margin-bottom: 1.25rem;
-    }
-
-    .search-wrapper {
-      position: relative;
-      display: flex;
-      align-items: center;
-      background: var(--ion-card-background);
-      border: 2px solid var(--ion-border-color, #e5e7eb);
-      border-radius: 16px;
-      padding: 0.75rem 1rem;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    .search-wrapper:focus-within {
-      border-color: #a855f7;
-      box-shadow: 0 4px 16px rgba(168, 85, 247, 0.15);
-      transform: translateY(-2px);
-    }
-
-    .search-icon {
-      font-size: 1.25rem;
-      margin-right: 0.75rem;
-      flex-shrink: 0;
-    }
-
-    .search-input {
-      flex: 1;
-      border: none;
-      background: transparent;
-      font-size: 0.9375rem;
-      color: var(--ion-text-color);
-      outline: none;
-      font-weight: 500;
-    }
-
-    .search-input::placeholder {
-      color: var(--ion-color-medium);
-      font-weight: 400;
-    }
-
-    .search-clear {
-      background: rgba(168, 85, 247, 0.1);
-      border: none;
-      border-radius: 50%;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      flex-shrink: 0;
-      margin-left: 0.5rem;
-    }
-
-    .search-clear:hover {
-      background: rgba(168, 85, 247, 0.2);
-      transform: scale(1.1);
-    }
-
-    .search-clear:active {
-      transform: scale(0.95);
-    }
-
-    .search-clear ion-icon {
-      font-size: 1rem;
-      color: #a855f7;
-    }
-
-    .search-results-count {
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: var(--ion-color-medium);
-      margin-left: 0.5rem;
-    }
-
-    /* ===== SECTION CARD ===== */
-    .section-card {
-      background: var(--ion-card-background);
-      border-radius: 18px;
-      padding: 1.25rem;
-      margin-bottom: 1.25rem;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      border: 1px solid var(--ion-border-color, #e5e7eb);
-    }
-
-    .section-title {
-      font-size: 1.125rem;
-      font-weight: 700;
-      color: var(--ion-text-color);
-      margin: 0 0 1rem 0;
-    }
-
-    /* ===== CUSTOMERS LIST ===== */
-    .customers-loading {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .customer-skeleton {
-      background: var(--ion-item-background);
-      border-radius: 12px;
-      padding: 1rem;
-    }
-
-    .skeleton-name {
-      width: 50%;
-      height: 16px;
-      border-radius: 4px;
-      margin-bottom: 0.5rem;
-    }
-
-    .skeleton-address {
-      width: 40%;
-      height: 12px;
-      border-radius: 4px;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 2.5rem 1rem;
-    }
-
-    .empty-icon-wrapper {
-      width: 80px;
-      height: 80px;
-      background: var(--ion-color-light);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 1rem;
-    }
-
-    .empty-icon {
-      font-size: 2.5rem;
-      color: var(--ion-color-medium);
-    }
-
-    .empty-title {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--ion-text-color);
-      margin: 0 0 0.5rem 0;
-    }
-
-    .empty-subtitle {
-      font-size: 0.875rem;
-      color: var(--ion-color-medium);
-      margin: 0;
-    }
-
-    .customers-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    /* ===== COMPACT CUSTOMER CARD ===== */
-    .customer-card {
-      background: var(--ion-card-background, #ffffff);
-      border-radius: 12px;
-      padding: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      cursor: pointer;
-      border-left: 4px solid transparent;
-      overflow: hidden;
-    }
-
-    .customer-card:active {
-      transform: scale(0.98);
-    }
-
-    .customer-card:hover {
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-      transform: translateY(-2px);
-    }
-
-    .card-pending {
-      border-left-color: #f97316;
-      background: linear-gradient(to right, rgba(249, 115, 22, 0.05), transparent);
-    }
-
-    .card-collected {
-      border-left-color: #10b981;
-      background: linear-gradient(to right, rgba(16, 185, 129, 0.05), transparent);
-    }
-
-    .card-visited {
-      border-left-color: #3b82f6;
-      background: linear-gradient(to right, rgba(59, 130, 246, 0.05), transparent);
-    }
-
-    .card-missed {
-      border-left-color: #6b7280;
-      background: linear-gradient(to right, rgba(107, 114, 128, 0.05), transparent);
-    }
-
-    .card-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .avatar-circle {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #a855f7, #6366f1);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      font-weight: 700;
-      flex-shrink: 0;
-    }
-
-    .customer-main {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .customer-name {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--ion-text-color);
-      margin: 0 0 4px 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .contact-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      align-items: center;
-    }
-
-    .contact-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 11px;
-      color: var(--ion-color-medium);
-      background: var(--ion-color-light);
-      padding: 2px 8px;
-      border-radius: 12px;
-      max-width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .contact-chip ion-icon {
-      font-size: 12px;
-      flex-shrink: 0;
-    }
-
-    .loan-chip {
-      background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(99, 102, 241, 0.1));
-      color: #a855f7;
-      font-weight: 600;
-    }
-
-    .status-badge {
-      font-size: 10px;
-      padding: 4px 8px;
-      flex-shrink: 0;
-    }
-
-    .product-badge {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      color: #6366f1;
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.05));
-      padding: 6px 10px;
-      border-radius: 8px;
-      margin-bottom: 8px;
-      border: 1px solid rgba(99, 102, 241, 0.2);
-    }
-
-    .product-badge ion-icon {
-      font-size: 14px;
-    }
-
-    .contact-info-compact {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    .info-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 11px;
-      color: var(--ion-color-medium);
-      background: var(--ion-color-light);
-      padding: 4px 8px;
-      border-radius: 12px;
-    }
-
-    .info-item ion-icon {
-      font-size: 12px;
-    }
-
-    /* Grace Period Alert */
-    .grace-period-alert {
-      margin-top: 12px;
-      padding: 12px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(99, 102, 241, 0.05));
-      border: 1.5px solid rgba(59, 130, 246, 0.25);
-    }
-
-    .grace-period-alert.grace-consumed {
-      background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(220, 38, 38, 0.05));
-      border-color: rgba(239, 68, 68, 0.3);
-    }
-
-    .grace-period-alert.grace-active {
-      background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(251, 191, 36, 0.05));
-      border-color: rgba(245, 158, 11, 0.25);
-    }
-
-    .grace-period-alert.grace-info {
-      background: linear-gradient(135deg, rgba(107, 114, 128, 0.06), rgba(156, 163, 175, 0.04));
-      border-color: rgba(107, 114, 128, 0.2);
-    }
-
-    .alert-header {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 8px;
-    }
-
-    .alert-header ion-icon {
-      font-size: 18px;
-      color: #3b82f6;
-    }
-
-    .grace-period-alert.grace-consumed .alert-header ion-icon {
-      color: #ef4444;
-    }
-
-    .grace-period-alert.grace-active .alert-header ion-icon {
-      color: #f59e0b;
-    }
-
-    .grace-period-alert.grace-info .alert-header ion-icon {
-      color: #6b7280;
-    }
-
-    .alert-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--ion-text-color);
-    }
-
-    .alert-body {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .alert-stat {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-    }
-
-    .alert-stat .stat-label {
-      color: var(--ion-color-medium);
-      font-weight: 500;
-    }
-
-    .alert-stat .stat-value {
-      font-weight: 700;
-    }
-
-    .alert-stat .stat-value.overdue {
-      color: #f59e0b;
-    }
-
-    .alert-stat .stat-value.penalty {
-      color: #ef4444;
-    }
-
-    .alert-stat .stat-value.grace {
-      color: #10b981;
-    }
-
-    .alert-stat .stat-value.info {
-      color: #6b7280;
-      font-weight: 600;
-    }
-
-    .penalty-note, .grace-note {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 11px;
-      color: var(--ion-color-medium);
-      margin-top: 4px;
-      padding: 6px 8px;
-      background: rgba(255, 255, 255, 0.5);
-      border-radius: 6px;
-    }
-
-    .penalty-note ion-icon, .grace-note ion-icon {
-      font-size: 14px;
-      flex-shrink: 0;
-    }
-
-    .penalty-note ion-icon {
-      color: #ef4444;
-    }
-
-    .grace-note ion-icon {
-      color: #10b981;
-    }
-
-    .address-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 6px;
-      font-size: 12px;
-      color: var(--ion-color-medium);
-      margin-bottom: 10px;
-      padding: 8px;
-      background: var(--ion-color-light);
-      border-radius: 8px;
-    }
-
-    .address-row ion-icon {
-      font-size: 14px;
-      margin-top: 1px;
-      flex-shrink: 0;
-    }
-
-    .address-row span {
-      flex: 1;
-      line-height: 1.4;
-    }
-
-    .financial-info {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 10px;
-      padding: 12px;
-      background: var(--ion-color-light);
-      border-radius: 8px;
-    }
-
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .info-label {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--ion-color-medium);
-    }
-
-    .info-value {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--ion-text-color);
-    }
-
-    .card-actions {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 6px;
-      padding-top: 8px;
-      border-top: 1px solid var(--ion-border-color, #e5e7eb);
-    }
-
-    .card-actions ion-button {
-      margin: 0;
-      --padding-start: 8px;
-      --padding-end: 8px;
-      height: 32px;
-      font-size: 11px;
-    }
-
-    .card-actions ion-icon {
-      font-size: 18px;
-    }
-
-    .due-chip {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--ion-color-medium);
-      background: var(--ion-color-light);
-      padding: 4px 10px;
-      border-radius: 12px;
-      margin-left: auto;
-    }
-
-    .due-chip ion-icon {
-      font-size: 12px;
-    }
-
-    /* ===== Repayment panel ===== */
-    .repayment-panel {
-      padding: 10px 12px 12px 12px;
-      border-top: 1px solid var(--ion-border-color, #e5e7eb);
-      margin-top: 8px;
-      background: rgba(0,0,0,0.02);
-      border-radius: 0 0 12px 12px;
-      animation: expandPanel 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      transform-origin: top;
-      overflow: hidden;
-    }
-
-    @keyframes expandPanel {
-      from {
-        opacity: 0;
-        max-height: 0;
-        padding-top: 0;
-        padding-bottom: 0;
-        margin-top: 0;
-      }
-      to {
-        opacity: 1;
-        max-height: 2000px;
-        padding-top: 10px;
-        padding-bottom: 12px;
-        margin-top: 8px;
-      }
-    }
-
-    .filter-buttons {
-      display: flex;
-      gap: 8px;
-      padding: 8px;
-      margin-bottom: 8px;
-      border-bottom: 1px solid var(--ion-border-color, #e5e7eb);
-      animation: fadeInSlideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.1s backwards;
-    }
-
-    @keyframes fadeInSlideDown {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .filter-buttons ion-button {
-      flex: 1;
-      margin: 0;
-      --padding-start: 8px;
-      --padding-end: 8px;
-      height: 32px;
-      font-size: 13px;
-      text-transform: none;
-      transition: all 0.2s ease;
-    }
-
-    .filter-buttons ion-button:hover {
-      transform: translateY(-1px);
-    }
-
-    .repayment-list { 
-      display: flex; 
-      flex-direction: column; 
-      gap: 8px; 
-    }
-
-    .repayment-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 8px;
-      background: var(--ion-background-color);
-      border-radius: 8px;
-      border: 1px solid rgba(0,0,0,0.04);
-      animation: fadeInSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) backwards;
-      transition: all 0.2s ease;
-    }
-
-    /* Staggered animation for each row */
-    .repayment-row:nth-child(1) { animation-delay: 0.15s; }
-    .repayment-row:nth-child(2) { animation-delay: 0.2s; }
-    .repayment-row:nth-child(3) { animation-delay: 0.25s; }
-    .repayment-row:nth-child(4) { animation-delay: 0.3s; }
-    .repayment-row:nth-child(5) { animation-delay: 0.35s; }
-    .repayment-row:nth-child(n+6) { animation-delay: 0.4s; }
-
-    @keyframes fadeInSlideUp {
-      from {
-        opacity: 0;
-        transform: translateY(15px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .repayment-row.disabled {
-      opacity: 0.6;
-      pointer-events: none;
-    }
-
-    .repayment-left { display: flex; flex-direction: column; gap: 2px; }
-    .repayment-num { 
-      font-weight: 700; 
-      font-size: 13px; 
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .repayment-date { 
-      font-size: 12px; 
-      color: var(--ion-color-medium);
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .penalty-badge {
-      display: inline-block;
-      font-size: 10px;
-      font-weight: 600;
-      color: #dc2626;
-      background: rgba(220, 38, 38, 0.1);
-      padding: 2px 6px;
-      border-radius: 6px;
-      margin-top: 2px;
-    }
-
-    .days-late-badge {
-      display: inline-block;
-      font-size: 10px;
-      font-weight: 600;
-      color: #f59e0b;
-      background: rgba(245, 158, 11, 0.1);
-      padding: 2px 6px;
-      border-radius: 6px;
-      margin-top: 2px;
-    }
-
-    .repayment-right { 
-      text-align: right;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 4px;
-    }
-    .repayment-amount { 
-      font-weight: 700; 
-      color: var(--ion-text-color);
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 2px;
-    }
-    
-    .amount-breakdown {
-      font-size: 10px;
-      font-weight: 500;
-      color: var(--ion-color-medium);
-    }
-    .repayment-status { 
-      font-size: 12px; 
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 10px;
-      display: inline-block;
-    }
-
-    /* Status colors */
-    .repayment-status.status-paid {
-      color: #10b981;
-      background: rgba(16, 185, 129, 0.1);
-    }
-
-    .repayment-status.status-partial {
-      color: #f59e0b;
-      background: rgba(245, 158, 11, 0.1);
-    }
-
-    .repayment-status.status-pending {
-      color: #6b7280;
-      background: rgba(107, 114, 128, 0.1);
-    }
-
-    .repayment-status.status-overdue {
-      color: #ef4444;
-      background: rgba(239, 68, 68, 0.1);
-    }
-
-    /* Row background colors based on status */
-    .repayment-row.paid {
-      background: rgba(16, 185, 129, 0.05);
-      border-left: 3px solid #10b981;
-    }
-
-    .repayment-row.partial {
-      background: rgba(245, 158, 11, 0.05);
-      border-left: 3px solid #f59e0b;
-    }
-
-    .repayment-row.overdue {
-      background: rgba(239, 68, 68, 0.05);
-      border-left: 3px solid #ef4444;
-    }
-
-    /* Penalty Summary Card */
-    .penalty-summary-card {
-      margin-top: 12px;
-      padding: 16px;
-      background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(220, 38, 38, 0.05));
-      border: 2px solid rgba(239, 68, 68, 0.3);
-      border-radius: 12px;
-      animation: fadeInSlideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.5s backwards;
-    }
-
-    .penalty-summary-header {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 16px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid rgba(239, 68, 68, 0.2);
-    }
-
-    .penalty-icon {
-      font-size: 28px;
-      color: #dc2626;
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
-
-    .penalty-summary-title h4 {
-      margin: 0;
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--ion-text-color);
-    }
-
-    .penalty-summary-title p {
-      margin: 4px 0 0 0;
-      font-size: 12px;
-      color: var(--ion-color-medium);
-    }
-
-    .grace-info-box {
-      margin: 12px 0;
-      padding: 12px;
-      background: rgba(59, 130, 246, 0.08);
-      border: 1px solid rgba(59, 130, 246, 0.2);
-      border-radius: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .grace-info-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13px;
-    }
-
-    .grace-label {
-      color: var(--ion-color-medium);
-      font-weight: 500;
-    }
-
-    .grace-value {
-      font-weight: 700;
-      color: var(--ion-text-color);
-    }
-
-    .grace-value.warning {
-      color: #dc2626;
-    }
-
-    .penalty-summary-body {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-
-    .penalty-stat-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
-    }
-
-    .penalty-stat-row.highlighted {
-      padding-top: 12px;
-      margin-top: 8px;
-      border-top: 2px solid rgba(239, 68, 68, 0.3);
-    }
-
-    .penalty-stat-row .stat-label {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--ion-text-color);
-    }
-
-    .penalty-stat-row .stat-value {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--ion-text-color);
-    }
-
-    .penalty-stat-row .penalty-amount {
-      color: #dc2626;
-    }
-
-    .penalty-stat-row .grand-total {
-      font-size: 18px;
-      color: #dc2626;
-    }
-
-    .penalty-summary-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .penalty-summary-actions ion-button {
-      margin: 0;
-      --border-radius: 10px;
-      font-weight: 600;
-      font-size: 14px;
-    }
-
-    .repayment-empty { padding: 8px; }
-    .loan-quick-info { display:flex; gap:12px; flex-wrap:wrap; margin-top:6px; }
-
-    /* Dark mode adjustments for cards */
-    body.dark .customer-card,
-    .dark .customer-card {
-      background: rgba(255, 255, 255, 0.05);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    }
-
-    body.dark .address-row,
-    .dark .address-row {
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    body.dark .contact-chip,
-    .dark .contact-chip {
-      background: rgba(255, 255, 255, 0.08);
-    }
-
-    body.dark .due-chip,
-    .dark .due-chip {
-      background: rgba(255, 255, 255, 0.08);
-    }
-
-    /* ===== DARK MODE ADJUSTMENTS ===== */
-    body.dark .stat-card,
-    .dark .stat-card {
-      background: rgba(255, 255, 255, 0.05);
-      border-color: rgba(255, 255, 255, 0.1);
-    }
-
-    body.dark .progress-card,
-    .dark .progress-card {
-      background: rgba(255, 255, 255, 0.05);
-      border-color: rgba(255, 255, 255, 0.1);
-    }
-
-    body.dark .section-card,
-    .dark .section-card {
-      background: rgba(255, 255, 255, 0.05);
-      border-color: rgba(255, 255, 255, 0.1);
-    }
-
-    body.dark .empty-icon-wrapper,
-    .dark .empty-icon-wrapper {
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    body.dark .progress-bar-container,
-    .dark .progress-bar-container {
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    body.dark .customer-skeleton,
-    .dark .customer-skeleton {
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    /* ===== PAYMENT MODAL STYLES ===== */
-    .modal-backdrop {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 1000;
-      display: flex;
-      align-items: flex-end;
-      animation: fadeIn 0.2s;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    .modal-container {
-      background: var(--ion-card-background, #fff);
-      border-radius: 20px 20px 0 0;
-      width: 100%;
-      max-height: 85vh;
-      overflow-y: auto;
-      animation: slideUp 0.3s;
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1.25rem 1.25rem 1rem 1.25rem;
-      border-bottom: 1px solid var(--ion-border-color, rgba(0,0,0,0.08));
-      position: sticky;
-      top: 0;
-      background: var(--ion-card-background, #fff);
-      z-index: 1;
-    }
-
-    .modal-title {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--ion-text-color, #1e293b);
-      margin: 0;
-    }
-
-    .close-button {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      background: var(--ion-color-light, #f4f5f8);
-      border: none;
-      color: var(--ion-text-color, #1e293b);
-      font-size: 1.25rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-
-    .close-button:active {
-      background: var(--ion-color-step-200, #e2e8f0);
-    }
-
-    .modal-content {
-      padding: 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-    }
-
-    /* Info Card */
-    .info-card {
-      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-      border-radius: 12px;
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.65rem;
-    }
-
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .info-row.highlighted {
-      border-top: 2px solid #10b981;
-      padding-top: 0.65rem;
-      margin-top: 0.35rem;
-    }
-
-    .info-label {
-      font-size: 0.8125rem;
-      color: #047857;
-    }
-
-    .info-value {
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: #065f46;
-    }
-
-    .info-value.amount {
-      font-size: 1.0625rem;
-      font-weight: 700;
-      color: #059669;
-    }
-
-    .info-value.overdue-value {
-      font-weight: 700;
-      color: #f59e0b;
-    }
-
-    .info-value.penalty-value {
-      font-weight: 700;
-      color: #ef4444;
-    }
-
-    .info-value.grace-value {
-      font-weight: 700;
-      color: #10b981;
-    }
-
-    .info-row.warning-row {
-      background: rgba(245, 158, 11, 0.08);
-      padding: 0.5rem;
-      border-radius: 6px;
-    }
-
-    .info-row.danger-row {
-      background: rgba(239, 68, 68, 0.08);
-      padding: 0.5rem;
-      border-radius: 6px;
-    }
-
-    .info-row.success-row {
-      background: rgba(16, 185, 129, 0.08);
-      padding: 0.5rem;
-      border-radius: 6px;
-    }
-
-    .penalty-info-note, .grace-info-note {
-      display: flex;
-      align-items: flex-start;
-      gap: 6px;
-      font-size: 0.75rem;
-      padding: 0.5rem;
-      border-radius: 6px;
-      margin-top: 0.5rem;
-      line-height: 1.4;
-    }
-
-    .penalty-info-note {
-      background: rgba(239, 68, 68, 0.08);
-      color: #991b1b;
-    }
-
-    .grace-info-note {
-      background: rgba(16, 185, 129, 0.08);
-      color: #065f46;
-    }
-
-    .penalty-info-note ion-icon,
-    .grace-info-note ion-icon {
-      font-size: 1rem;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
-
-    .penalty-info-note ion-icon {
-      color: #ef4444;
-    }
-
-    .grace-info-note ion-icon {
-      color: #10b981;
-    }
-
-    /* Penalty Warning Card */
-    .penalty-warning-card {
-      background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(239, 68, 68, 0.1) 100%);
-      border: 1px solid rgba(239, 68, 68, 0.2);
-      border-radius: 8px;
-      padding: 0.75rem;
-      margin-top: 0.5rem;
-    }
-
-    .penalty-warning-card .warning-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.75rem;
-      margin: 0;
-      padding: 0;
-      background: none;
-    }
-
-    .penalty-warning-card .warning-icon {
-      font-size: 1.25rem;
-      color: #dc2626;
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
-
-    .penalty-warning-card .warning-content {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      flex: 1;
-    }
-
-    .penalty-warning-card .warning-label {
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: #991b1b;
-    }
-
-    .penalty-warning-card .warning-note {
-      font-size: 0.75rem;
-      color: #dc2626;
-      line-height: 1.4;
-    }
-
-    .penalty-warning-card .success-note {
-      font-size: 0.75rem;
-      color: #059669;
-      line-height: 1.4;
-    }
-
-    /* Form Fields */
-    .form-field {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .field-label {
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: var(--ion-text-color, #1e293b);
-    }
-
-    .field-label .required {
-      color: #dc2626;
-      margin-left: 0.15rem;
-    }
-
-    .select-wrapper {
-      position: relative;
-    }
-
-    .custom-select {
-      width: 100%;
-      padding: 0.75rem 2.5rem 0.75rem 0.85rem;
-      border: 1.5px solid var(--ion-border-color, rgba(0,0,0,0.15));
-      border-radius: 10px;
-      font-size: 0.9375rem;
-      color: var(--ion-text-color, #1e293b);
-      background: var(--ion-card-background, #fff);
-      appearance: none;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .custom-select:focus {
-      outline: none;
-      border-color: #10b981;
-      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-    }
-
-    .select-arrow {
-      position: absolute;
-      right: 0.85rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--ion-color-step-600, #64748b);
-      pointer-events: none;
-      font-size: 0.75rem;
-    }
-
-    .custom-input {
-      width: 100%;
-      padding: 0.75rem 0.85rem;
-      border: 1.5px solid var(--ion-border-color, rgba(0,0,0,0.15));
-      border-radius: 10px;
-      font-size: 0.9375rem;
-      color: var(--ion-text-color, #1e293b);
-      background: var(--ion-card-background, #fff);
-      transition: all 0.2s;
-    }
-
-    .custom-input:focus {
-      outline: none;
-      border-color: #10b981;
-      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-    }
-
-    .custom-input::placeholder {
-      color: var(--ion-color-step-400, #94a3b8);
-    }
-
-    .custom-textarea {
-      width: 100%;
-      padding: 0.75rem 0.85rem;
-      border: 1.5px solid var(--ion-border-color, rgba(0,0,0,0.15));
-      border-radius: 10px;
-      font-size: 0.9375rem;
-      color: var(--ion-text-color, #1e293b);
-      background: var(--ion-card-background, #fff);
-      font-family: inherit;
-      resize: vertical;
-      transition: all 0.2s;
-    }
-
-    .custom-textarea:focus {
-      outline: none;
-      border-color: #10b981;
-      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-    }
-
-    .custom-textarea::placeholder {
-      color: var(--ion-color-step-400, #94a3b8);
-    }
-
-    /* Payment Form Compact - for partial payment */
-    .payment-form-compact {
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-    }
-
-    .amount-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.5rem;
-    }
-
-    .partial-btn {
-      padding: 0.35rem 0.75rem;
-      background: var(--ion-color-light, #f4f5f8);
-      color: var(--ion-text-color, #1e293b);
-      border: 1.5px solid var(--ion-border-color, rgba(0,0,0,0.15));
-      border-radius: 8px;
-      font-size: 0.8125rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .partial-btn:active {
-      background: var(--ion-color-step-200, #e2e8f0);
-    }
-
-    .partial-btn.active {
-      background: linear-gradient(135deg, #10b981, #059669);
-      color: white;
-      border-color: #10b981;
-    }
-
-    .full-payment-display {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem 0.85rem;
-      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-      border-radius: 10px;
-    }
-
-    .full-payment-display .currency {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #047857;
-    }
-
-    .full-payment-display .amount-value {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #059669;
-    }
-
-    .payment-breakdown {
-      margin-top: 0.5rem;
-      text-align: center;
-    }
-
-    .payment-breakdown .breakdown-text {
-      font-size: 0.75rem;
-      color: var(--ion-color-medium);
-      font-style: italic;
-    }
-
-    .amount-input-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      position: relative;
-    }
-
-    .amount-input-wrapper .currency {
-      position: absolute;
-      left: 0.85rem;
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--ion-text-color, #1e293b);
-    }
-
-    .amount-input {
-      padding-left: 2rem !important;
-    }
-
-    .remaining-balance {
-      font-size: 0.8125rem;
-      color: #047857;
-      padding: 0.5rem 0.85rem;
-      background: #ecfdf5;
-      border-radius: 8px;
-      margin-top: 0.5rem;
-    }
-
-    .payment-error {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.8125rem;
-      color: #dc2626;
-      padding: 0.5rem 0.85rem;
-      background: #fee;
-      border-radius: 8px;
-      margin-top: 0.5rem;
-    }
-
-    .payment-error ion-icon {
-      font-size: 1rem;
-    }
-
-    .submit-payment-btn {
-      padding: 1rem;
-      background: linear-gradient(135deg, #10b981, #059669);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 1rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      margin-top: 0.5rem;
-    }
-
-    .submit-payment-btn:active:not(:disabled) {
-      transform: scale(0.98);
-    }
-
-    .submit-payment-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .submit-payment-btn ion-icon {
-      font-size: 1.5rem;
-    }
-
-    .repayment-row {
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .repayment-row:hover {
-      transform: translateX(4px);
-      background: rgba(168, 85, 247, 0.05);
-    }
-
-    .repayment-row:active {
-      transform: scale(0.98);
-    }
-
-    /* ===== ANIMATION ===== */
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    .animate-spin {
-      animation: spin 1s linear infinite;
-    }
-
-    /* Pulse animation for grace expired (danger) */
-    @keyframes pulseDanger {
-      0%, 100% { 
-        box-shadow: 0 0 0 0 rgba(var(--ion-color-danger-rgb), 0.7);
-        transform: scale(1);
-      }
-      50% { 
-        box-shadow: 0 0 0 8px rgba(var(--ion-color-danger-rgb), 0);
-        transform: scale(1.02);
-      }
-    }
-
-    .pulse-animation {
-      animation: pulseDanger 2s ease-in-out infinite;
-    }
-
-    /* Warning pulse for within grace period */
-    @keyframes pulseWarning {
-      0%, 100% { 
-        box-shadow: 0 0 0 0 rgba(var(--ion-color-warning-rgb), 0.5);
-      }
-      50% { 
-        box-shadow: 0 0 0 6px rgba(var(--ion-color-warning-rgb), 0);
-      }
-    }
-
-    .warning-pulse {
-      animation: pulseWarning 2.5s ease-in-out infinite;
-    }
-  `]
+  templateUrl: './route.page.html',
+  styleUrls: ['./route.page.scss']
 })
 export class CollectorRoutePage implements OnInit, ViewWillEnter {
   @ViewChild('partialAmountInput') partialAmountInput?: ElementRef<HTMLInputElement>;
@@ -2714,7 +240,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
     if (!loanId) return null;
     if (this.loanDetailsCache[loanId]) return this.loanDetailsCache[loanId];
     try {
-      console.log('📡 Fetching loan details for loan ID:', loanId);
+      console.log('ðŸ“¡ Fetching loan details for loan ID:', loanId);
       
       // Check if user is a collector (employee)
       const userRole = this.authService.userRole();
@@ -2726,8 +252,8 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
           this.apiService.getLoanSchedule(loanId).toPromise()
         ]);
         
-        console.log('✅ Loan details API response:', loanRes);
-        console.log('✅ Schedule API response:', scheduleRes);
+        console.log('âœ… Loan details API response:', loanRes);
+        console.log('âœ… Schedule API response:', scheduleRes);
         
         // Combine the responses
         const loanData = loanRes?.data || loanRes;
@@ -2738,23 +264,23 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
           schedule: scheduleData
         };
         
-        console.log('📋 Combined loan data:', combinedData);
-        console.log('📋 Schedule length:', combinedData?.schedule?.length);
+        console.log('ðŸ“‹ Combined loan data:', combinedData);
+        console.log('ðŸ“‹ Schedule length:', combinedData?.schedule?.length);
         
         this.loanDetailsCache[loanId] = combinedData;
         return combinedData;
       } else {
         // For customers, use the existing endpoint which includes schedule
         const res: any = await this.apiService.getLoanDetails(loanId).toPromise();
-        console.log('✅ Loan details API response:', res);
+        console.log('âœ… Loan details API response:', res);
         const data = res?.data || res;
-        console.log('📋 Processed loan data:', data);
-        console.log('📋 Schedule length:', data?.schedule?.length);
+        console.log('ðŸ“‹ Processed loan data:', data);
+        console.log('ðŸ“‹ Schedule length:', data?.schedule?.length);
         this.loanDetailsCache[loanId] = data;
         return data;
       }
     } catch (err) {
-      console.error('❌ Failed to load loan details for', loanId, err);
+      console.error('âŒ Failed to load loan details for', loanId, err);
       return null;
     }
   }
@@ -2769,7 +295,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
       // Try to get totalAmount from loan details (supports both snake_case and camelCase)
       const totalAmount = details.totalAmount || details.total_amount;
       if (totalAmount) {
-        console.log('💰 Total Repayment from cache:', totalAmount);
+        console.log('ðŸ’° Total Repayment from cache:', totalAmount);
         return Number(totalAmount);
       }
     }
@@ -2782,7 +308,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
     const platformFee = 50; // Fixed platform fee
     const total = principal + interest + serviceCharge + platformFee;
     
-    console.log('💰 Calculated Total Repayment:', {
+    console.log('ðŸ’° Calculated Total Repayment:', {
       principal,
       interest,
       serviceCharge,
@@ -2802,7 +328,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
         return total + Number(outstanding);
       }, 0);
       
-      console.log('💰 Outstanding Balance calculated from schedule:', balance);
+      console.log('ðŸ’° Outstanding Balance calculated from schedule:', balance);
       return balance;
     }
     
@@ -2810,13 +336,13 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
       // Try to get outstandingBalance from loan details (supports both snake_case and camelCase)
       const balance = details.outstandingBalance ?? details.outstanding_balance;
       if (balance !== undefined && balance !== null) {
-        console.log('💰 Outstanding Balance from cache:', balance);
+        console.log('ðŸ’° Outstanding Balance from cache:', balance);
         return Number(balance);
       }
     }
     
     // Fallback to route data
-    console.log('💰 Outstanding Balance from route data:', loan.outstandingBalance);
+    console.log('ðŸ’° Outstanding Balance from route data:', loan.outstandingBalance);
     return loan.outstandingBalance;
   }
 
@@ -2837,7 +363,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
         return status === 'paid' || status === 'partially_paid';
       }).length;
       
-      console.log('📊 Installments paid:', paidCount, 'out of', details.schedule.length);
+      console.log('ðŸ“Š Installments paid:', paidCount, 'out of', details.schedule.length);
       return paidCount;
     }
     return 0;
@@ -2881,7 +407,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
       const collectorId = this.authService.getCurrentUserId();
       
       if (!collectorId) {
-        console.error('❌ No collector ID found in auth service');
+        console.error('âŒ No collector ID found in auth service');
         const toast = await this.toastController.create({
           message: 'Unable to identify collector. Please log in again.',
           duration: 3000,
@@ -2894,26 +420,26 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
         return;
       }
 
-      console.log('📡 Fetching route data for collector ID:', collectorId);
+      console.log('ðŸ“¡ Fetching route data for collector ID:', collectorId);
       const response: any = await this.apiService.getCollectorRoute(collectorId).toPromise();
       
-      console.log('✅ API Response received:', response);
-      console.log('📋 Response type:', typeof response);
-      console.log('📋 Is array:', Array.isArray(response));
+      console.log('âœ… API Response received:', response);
+      console.log('ðŸ“‹ Response type:', typeof response);
+      console.log('ðŸ“‹ Is array:', Array.isArray(response));
       
       // Handle both wrapped ({ success: true, data: [...] }) and unwrapped ([...]) responses
       const routeData = Array.isArray(response) ? response : (response?.data || []);
       
-      console.log('📋 Route data after unwrapping:', routeData);
-      console.log('📋 Route data length:', routeData?.length);
+      console.log('ðŸ“‹ Route data after unwrapping:', routeData);
+      console.log('ðŸ“‹ Route data length:', routeData?.length);
       if (routeData && routeData.length > 0) {
-        console.log('📋 First item structure:', routeData[0]);
+        console.log('ðŸ“‹ First item structure:', routeData[0]);
       }
       
       if (routeData && Array.isArray(routeData) && routeData.length > 0) {
         // Map API response to our loan interface
         const mappedLoans: RouteCustomer[] = routeData.map((loan: any) => {
-          console.log('🔍 Raw loan data from API:', loan);
+          console.log('ðŸ” Raw loan data from API:', loan);
           
           // Handle both snake_case and camelCase field names from API
           const loanId = loan.loanId || loan.loan_id;
@@ -2935,7 +461,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
           const gracePeriodConsumed = loan.gracePeriodConsumed || loan.grace_period_consumed || false;
           const totalPenalties = loan.totalPenalties || loan.total_penalties || 0;
           
-          console.log('🔍 Mapped loan:', {
+          console.log('ðŸ” Mapped loan:', {
             loanId,
             loanNumber,
             customerName,
@@ -2976,28 +502,28 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
           };
         });
         
-        console.log('📊 Successfully mapped', mappedLoans.length, 'loans to route');
+        console.log('ðŸ“Š Successfully mapped', mappedLoans.length, 'loans to route');
         this.customers.set(mappedLoans);
         
         // Preload loan details for all loans to show balance and installments immediately
-        console.log('🔄 Preloading loan details for all loans...');
+        console.log('ðŸ”„ Preloading loan details for all loans...');
         for (const loan of mappedLoans) {
           try {
             await this.loadLoanDetails(loan.loanId);
-            console.log(`✅ Preloaded details for loan ${loan.loanId}`);
+            console.log(`âœ… Preloaded details for loan ${loan.loanId}`);
           } catch (err) {
-            console.error(`❌ Failed to preload details for loan ${loan.loanId}:`, err);
+            console.error(`âŒ Failed to preload details for loan ${loan.loanId}:`, err);
           }
         }
-        console.log('✅ All loan details preloaded');
+        console.log('âœ… All loan details preloaded');
       } else {
-        console.warn('⚠️ No customers assigned to this collector');
+        console.warn('âš ï¸ No customers assigned to this collector');
         this.customers.set([]);
       }
       
       this.calculateStats();
     } catch (error: any) {
-      console.error('❌ Error loading route data:', error);
+      console.error('âŒ Error loading route data:', error);
       console.error('Error details:', {
         message: error?.message,
         status: error?.status,
@@ -3210,7 +736,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
 
   /**
    * Format currency with comma thousands separator and 2 decimal places
-   * Example: 10000 → "10,000.00"
+   * Example: 10000 â†’ "10,000.00"
    */
   formatCurrency(amount: number): string {
     return amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -3251,11 +777,11 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
    */
   getTotalPenaltiesForLoan(schedule: any[]): number {
     if (!schedule || !Array.isArray(schedule)) {
-      console.log('⚠️ No schedule data available');
+      console.log('âš ï¸ No schedule data available');
       return 0;
     }
     
-    console.log('📋 Full schedule data:', schedule.map(item => ({
+    console.log('ðŸ“‹ Full schedule data:', schedule.map(item => ({
       num: item.installmentNumber || item.installment_number,
       status: item.status,
       daysLate: item.daysLate || item.days_late,
@@ -3267,13 +793,13 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
     const totalPenalty = schedule.reduce((total, item) => {
       if (item.status === 'overdue' || item.status === 'partially_paid') {
         const penalty = Number(item.penaltyAmount || item.penalty_amount || 0);
-        console.log(`💰 Penalty for installment ${item.installmentNumber || item.installment_number}: ₱${penalty}`);
+        console.log(`ðŸ’° Penalty for installment ${item.installmentNumber || item.installment_number}: â‚±${penalty}`);
         return total + penalty;
       }
       return total;
     }, 0);
     
-    console.log('💵 Total penalties calculated:', totalPenalty);
+    console.log('ðŸ’µ Total penalties calculated:', totalPenalty);
     return totalPenalty;
   }
 
@@ -3320,8 +846,8 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
       Number(item.daysLate || item.days_late || 0)
     ));
     
-    console.log('📊 Total days late:', maxDaysLate);
-    console.log('📊 Overdue installments:', overdue.map(i => ({
+    console.log('ðŸ“Š Total days late:', maxDaysLate);
+    console.log('ðŸ“Š Overdue installments:', overdue.map(i => ({
       num: i.installmentNumber,
       status: i.status,
       daysLate: i.daysLate || i.days_late,
@@ -3376,11 +902,83 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
     this.paymentAmount = grandTotal;
     this.paymentMethod = 'cash';
     this.paymentReference = '';
-    this.paymentNotes = `Full payment: ${overdueCount} overdue installment(s) (₱${this.formatCurrency(totalInstallment)}) + penalties (₱${this.formatCurrency(totalPenalty)})`;
+    this.paymentNotes = `Full payment: ${overdueCount} overdue installment(s) (â‚±${this.formatCurrency(totalInstallment)}) + penalties (â‚±${this.formatCurrency(totalPenalty)})`;
     this.isPartialPayment = false;
     this.paymentType = 'full-with-penalty'; // Tag as full payment with penalties
     
     this.showPaymentModal.set(true);
+  }
+
+  /**
+   * Pay penalty only for a specific installment (must be full, no partial)
+   */
+  async payInstallmentPenaltyOnly(loan: RouteCustomer, installment: any) {
+    const penaltyAmount = installment.penaltyAmount || installment.penalty_amount || 0;
+    
+    if (penaltyAmount <= 0) {
+      const toast = await this.toastController.create({
+        message: 'No penalty to pay for this installment',
+        duration: 2000,
+        position: 'bottom',
+        color: 'warning'
+      });
+      await toast.present();
+      return;
+    }
+
+    // Open payment modal for penalty only (no installment amount)
+    this.selectedLoan.set(loan);
+    this.selectedInstallment.set({
+      installmentNumber: 0, // 0 indicates penalty-only payment
+      outstandingAmount: penaltyAmount, // Only penalty amount, no installment
+      penaltyAmount: 0, // Set to 0 so it doesn't add again in modal display
+      status: 'penalty-only',
+      dueDate: installment.dueDate,
+      originalInstallmentNumber: installment.installmentNumber // Store for reference
+    } as any);
+    
+    // Pre-fill with penalty amount (locked, no partial allowed)
+    this.paymentAmount = penaltyAmount;
+    this.paymentMethod = 'cash';
+    this.paymentReference = '';
+    this.paymentNotes = `Penalty payment only for Installment ${installment.installmentNumber}`;
+    this.isPartialPayment = false;
+    this.paymentType = 'penalty-only';
+    
+    this.showPaymentModal.set(true);
+  }
+
+  /**
+   * Request waiver for a specific installment penalty
+   */
+  async waiveInstallmentPenalty(loan: RouteCustomer, installment: any) {
+    const penaltyAmount = installment.penaltyAmount || installment.penalty_amount || 0;
+    
+    if (penaltyAmount <= 0) {
+      const toast = await this.toastController.create({
+        message: 'No penalty to waive for this installment',
+        duration: 2000,
+        position: 'bottom',
+        color: 'warning'
+      });
+      await toast.present();
+      return;
+    }
+
+    // Navigate to waivers page with prefilled data for this specific installment
+    this.router.navigate(['/collector/waivers'], {
+      state: {
+        prefillLoan: {
+          loanId: loan.loanId,
+          loanNumber: loan.loanNumber,
+          customerName: loan.customerName,
+          installmentNumber: installment.installmentNumber,
+          totalPenalty: penaltyAmount,
+          overdueInstallments: 1,
+          outstandingAmount: installment.outstandingAmount
+        }
+      }
+    });
   }
 
   /**
@@ -3646,7 +1244,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
     // Validate payment amount (skip for pay-all which includes penalties)
     if (this.paymentType !== 'full-with-penalty' && this.paymentAmount > outstandingAmount) {
       const toast = await this.toastController.create({
-        message: `Payment amount cannot exceed ₱${this.formatCurrency(outstandingAmount)}`,
+        message: `Payment amount cannot exceed â‚±${this.formatCurrency(outstandingAmount)}`,
         duration: 2000,
         position: 'bottom',
         color: 'warning'
@@ -3658,7 +1256,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
     // For pay-all, validate against total (installments + penalties)
     if (this.paymentType === 'full-with-penalty' && this.paymentAmount > totalAmount) {
       const toast = await this.toastController.create({
-        message: `Payment amount cannot exceed ₱${this.formatCurrency(totalAmount)}`,
+        message: `Payment amount cannot exceed â‚±${this.formatCurrency(totalAmount)}`,
         duration: 2000,
         position: 'bottom',
         color: 'warning'
@@ -3682,7 +1280,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
       notes: this.paymentNotes
     };
 
-    console.log('💰 Recording payment:', paymentData);
+    console.log('ðŸ’° Recording payment:', paymentData);
 
     try {
       // Call API to record payment
@@ -3700,15 +1298,15 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
         notes: this.paymentNotes
       };
 
-      console.log('📤 Payment payload:', payload);
+      console.log('ðŸ“¤ Payment payload:', payload);
 
       const response = await this.apiService.recordPayment(loanId, payload).toPromise();
-      console.log('✅ Payment recorded:', response);
+      console.log('âœ… Payment recorded:', response);
 
       // Show success toast with payment details
       const message = isPartial 
-        ? `Partial payment ₱${this.formatCurrency(this.paymentAmount)} recorded! Remaining: ₱${this.formatCurrency(remainingBalance)}`
-        : `Full payment ₱${this.formatCurrency(this.paymentAmount)} recorded!`;
+        ? `Partial payment â‚±${this.formatCurrency(this.paymentAmount)} recorded! Remaining: â‚±${this.formatCurrency(remainingBalance)}`
+        : `Full payment â‚±${this.formatCurrency(this.paymentAmount)} recorded!`;
 
       const toast = await this.toastController.create({
         message: `${message}\nRef: ${reference}`,
@@ -3724,15 +1322,15 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
       
       // Clear cache and reload the specific loan details to refresh schedule and balance
       if (loanId) {
-        console.log('🔄 Clearing cache and reloading loan details for loan', loanId);
+        console.log('ðŸ”„ Clearing cache and reloading loan details for loan', loanId);
         // Clear the cached loan details to force a fresh fetch
         delete this.loanDetailsCache[loanId];
         await this.loadLoanDetails(loanId);
-        console.log('✅ Loan details refreshed');
+        console.log('âœ… Loan details refreshed');
       }
 
     } catch (error) {
-      console.error('❌ Failed to record payment:', error);
+      console.error('âŒ Failed to record payment:', error);
       const toast = await this.toastController.create({
         message: 'Failed to record payment. Please try again.',
         duration: 3000,
