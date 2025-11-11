@@ -1,0 +1,269 @@
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1rem;
+
+  p {
+    color: var(--ion-color-medium);
+  }
+}
+
+.summary-card {
+  background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-primary-shade));
+  color: white;
+
+  ion-card-header {
+    padding-bottom: 0.5rem;
+
+    ion-card-title {
+      color: white;
+      font-size: 1.3rem;
+    }
+  }
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+
+  .summary-item {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+
+    .label {
+      font-size: 0.85rem;
+      opacity: 0.9;
+      margin-bottom: 0.5rem;
+    }
+
+    .value {
+      font-size: 1.3rem;
+      font-weight: bold;
+    }
+
+    &.success .value {
+      color: #90ee90;
+    }
+
+    &.danger .value {
+      color: #ffcccb;
+    }
+
+    &.total {
+      grid-column: 1 / -1;
+      background: rgba(255, 255, 255, 0.25);
+
+      .value {
+        font-size: 1.8rem;
+        color: #ffd700;
+      }
+    }
+  }
+}
+
+.calculation-box {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+
+  ion-icon {
+    font-size: 2.5rem;
+    flex-shrink: 0;
+    opacity: 0.8;
+  }
+
+  .calculation {
+    flex: 1;
+
+    .calc-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.4rem 0;
+      font-size: 1rem;
+
+      .label {
+        font-size: 0.8rem;
+        opacity: 0.8;
+      }
+
+      &.plus span:first-child {
+        color: #90ee90;
+      }
+
+      &.minus span:first-child {
+        color: #ffcccb;
+      }
+
+      &.total {
+        border-top: 2px solid rgba(255, 255, 255, 0.3);
+        margin-top: 0.5rem;
+        padding-top: 0.8rem;
+        font-weight: bold;
+        font-size: 1.1rem;
+
+        span:first-child {
+          color: #ffd700;
+        }
+      }
+    }
+  }
+}
+
+.handover-card {
+  .amount-input {
+    --background: var(--ion-color-light);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+
+    ion-input {
+      font-size: 2rem;
+      font-weight: bold;
+      text-align: center;
+      --padding-start: 1rem;
+      --padding-end: 1rem;
+    }
+  }
+}
+
+.variance-box {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border-left: 4px solid;
+
+  &.success {
+    background: var(--ion-color-success-tint);
+    border-color: var(--ion-color-success);
+
+    .variance-amount {
+      color: var(--ion-color-success-shade);
+    }
+  }
+
+  &.warning {
+    background: var(--ion-color-warning-tint);
+    border-color: var(--ion-color-warning);
+
+    .variance-amount {
+      color: var(--ion-color-warning-shade);
+    }
+  }
+
+  &.danger {
+    background: rgba(255, 59, 48, 0.1);
+    border-color: var(--ion-color-danger);
+
+    .variance-amount {
+      color: var(--ion-color-danger-shade);
+    }
+  }
+
+  .variance-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: bold;
+    margin-bottom: 0.75rem;
+
+    ion-icon {
+      font-size: 1.5rem;
+    }
+  }
+
+  .variance-amount {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+  }
+
+  .variance-warning,
+  .variance-success {
+    p {
+      margin: 0.5rem 0;
+      font-size: 0.9rem;
+
+      &.small {
+        font-size: 0.8rem;
+        opacity: 0.8;
+      }
+    }
+  }
+}
+
+.location-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: var(--ion-color-success-tint);
+  border-radius: 8px;
+  color: var(--ion-color-success-shade);
+  font-size: 0.9rem;
+
+  ion-icon {
+    font-size: 1.2rem;
+  }
+}
+
+.guidelines-card {
+  ol {
+    margin: 0;
+    padding-left: 1.25rem;
+
+    li {
+      margin: 0.75rem 0;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+  }
+}
+
+.action-buttons {
+  margin: 2rem 0;
+
+  .closed-badge {
+    display: block;
+    text-align: center;
+    padding: 1rem;
+    font-size: 1rem;
+  }
+
+  ion-button {
+    --border-radius: 12px;
+    height: 56px;
+    font-size: 1.1rem;
+    font-weight: bold;
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+
+  ion-icon {
+    font-size: 4rem;
+    color: var(--ion-color-warning);
+    margin-bottom: 1rem;
+  }
+
+  h3 {
+    margin: 1rem 0 0.5rem;
+    color: var(--ion-color-dark);
+  }
+
+  p {
+    color: var(--ion-color-medium);
+    margin-bottom: 1.5rem;
+  }
+}

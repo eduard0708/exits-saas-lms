@@ -496,6 +496,7 @@
                             <ion-button 
                               expand="block" 
                               color="success"
+                              [disabled]="getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule) === 0"
                               (click)="payAllWithPenalties(loan); $event.stopPropagation()">
                               <ion-icon name="cash-outline" slot="start"></ion-icon>
                               Pay All (₱{{ formatCurrency(getTotalInstallmentAmount(getLoanDetailsFromCache(loan.loanId).schedule) + getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule)) }})
@@ -504,6 +505,7 @@
                               expand="block" 
                               color="danger"
                               fill="outline"
+                              [disabled]="getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule) === 0"
                               (click)="payPenaltyOnly(loan); $event.stopPropagation()">
                               <ion-icon name="alert-circle-outline" slot="start"></ion-icon>
                               Pay Penalty Only (₱{{ formatCurrency(getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule)) }})
@@ -512,6 +514,7 @@
                               expand="block" 
                               color="warning"
                               fill="outline"
+                              [disabled]="getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule) === 0"
                               (click)="requestPenaltyWaiver(loan); $event.stopPropagation()">
                               <ion-icon name="hand-right-outline" slot="start"></ion-icon>
                               Request Penalty Waiver

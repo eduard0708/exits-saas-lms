@@ -680,13 +680,36 @@ export class LoanApplicationFormPage implements OnInit, OnDestroy {
     this.submitting.set(true);
 
     try {
-      // Get tenant ID
-      const userStr = localStorage.getItem('user');
-      let tenantId = '1';
+      // Get tenant ID from currentUser
+      const userStr = localStorage.getItem('currentUser');
+      let tenantId: string | undefined;
       
       if (userStr) {
         const user = JSON.parse(userStr);
-        tenantId = user.tenant?.id || '1';
+        // Try multiple possible tenant ID locations
+        tenantId = user.tenant?.id || user.tenantId || user.tenant_id;
+        console.log('🏢 Found tenant ID from currentUser:', tenantId);
+        console.log('🏢 User object:', user);
+      }
+      
+      // Fallback: try customer object
+      if (!tenantId) {
+        const customerStr = localStorage.getItem('customer');
+        if (customerStr) {
+          const customer = JSON.parse(customerStr);
+          tenantId = customer.tenant_id || customer.tenantId;
+          console.log('🏢 Found tenant ID from customer:', tenantId);
+        }
+      }
+      
+      if (!tenantId) {
+        console.error('❌ Tenant ID not found in localStorage!');
+        await loading.dismiss();
+        await this.showToast('Tenant information not found. Please login again.', 'danger');
+        this.router.navigate(['/auth/login'], { 
+          queryParams: { returnUrl: '/customer/apply-loan' }
+        });
+        return;
       }
       
       // Verify token exists
@@ -703,7 +726,7 @@ export class LoanApplicationFormPage implements OnInit, OnDestroy {
       }
       
       console.log('🔑 Token exists:', token.substring(0, 20) + '...');
-      console.log('🏢 Tenant ID:', tenantId);
+      console.log('🏢 Using Tenant ID:', tenantId);
       
       // Convert months to days (30 days per month)
       const requestedTermDays = this.requestedTermMonths() * 30;

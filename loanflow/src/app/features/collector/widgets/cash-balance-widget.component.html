@@ -1,0 +1,96 @@
+<ion-card class="cash-balance-widget" [class.has-pending]="pendingFloatsCount() > 0"></ion-card>
+  <!-- Pending Float Alert -->
+  @if (pendingFloatsCount() > 0) {
+    <div class="pending-alert" (click)="navigateToFloatPage()">
+      <ion-icon name="alert-circle-outline"></ion-icon>
+      <div class="alert-text">
+        <strong>Action Required!</strong>
+        <span>{{ pendingFloatsCount() }} pending float confirmation(s)</span>
+      </div>
+      <ion-badge color="danger">{{ pendingFloatsCount() }}</ion-badge>
+    </div>
+  }
+
+  <ion-card-header>
+    <div class="header-row">
+      <div>
+        <ion-card-title>
+          <ion-icon name="cash-outline"></ion-icon>
+          Cash Balance
+        </ion-card-title>
+        <ion-card-subtitle>On-Hand Cash</ion-card-subtitle>
+      </div>
+      @if (balance() && balance()!.isFloatConfirmed) {
+        <ion-badge color="success">
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          Confirmed
+        </ion-badge>
+      }
+    </div>
+  </ion-card-header>
+
+  <ion-card-content>
+    @if (loading()) {
+      <div class="loading-state">
+        <ion-spinner></ion-spinner>
+        <p>Loading cash balance...</p>
+      </div>
+    } @else if (balance()) {
+      <div class="balance-display">
+        <div class="main-balance">
+          <span class="currency">₱</span>
+          <span class="amount">{{ formatAmount(balance()!.currentBalance) }}</span>
+        </div>
+        
+        <div class="balance-bar">
+          <div class="bar-fill" 
+               [style.width.%]="balancePercentage" 
+               [class]="balanceStatusColor()">
+          </div>
+        </div>
+
+        <div class="balance-stats">
+          <div class="stat-item">
+            <span class="stat-label">Available</span>
+            <span class="stat-value success">₱{{ formatAmount(balance()!.availableForDisbursement) }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Daily Cap</span>
+            <span class="stat-value">₱{{ formatAmount(balance()!.dailyCap) }}</span>
+          </div>
+        </div>
+
+        <div class="transaction-summary">
+          <div class="summary-item">
+            <span class="label">Opening:</span>
+            <span class="value">₱{{ formatAmount(balance()!.openingFloat) }}</span>
+          </div>
+          <div class="summary-item success">
+            <span class="label">+Collections:</span>
+            <span class="value">₱{{ formatAmount(balance()!.totalCollections) }}</span>
+          </div>
+          <div class="summary-item danger">
+            <span class="label">−Disbursed:</span>
+            <span class="value">₱{{ formatAmount(balance()!.totalDisbursements) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <ion-button 
+        expand="block" 
+        fill="outline" 
+        size="small"
+        (click)="navigateToFloatPage()">
+        View Details
+      </ion-button>
+    } @else {
+      <div class="empty-state">
+        <ion-icon name="cash-outline"></ion-icon>
+        <p>No float issued today</p>
+        <ion-text color="medium">
+          <small>Wait for cashier to issue your float</small>
+        </ion-text>
+      </div>
+    }
+  </ion-card-content>
+</ion-card>

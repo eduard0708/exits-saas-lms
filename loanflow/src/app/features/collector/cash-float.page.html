@@ -1,0 +1,167 @@
+<ion-header></ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/collector/dashboard"></ion-back-button>
+    </ion-buttons>
+    <ion-title>💵 Cash Float</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Current Balance Card -->
+  @if (currentBalance()) {
+    <ion-card class="balance-card">
+      <ion-card-header>
+        <ion-card-title>Today's Cash Balance</ion-card-title>
+        <ion-card-subtitle>{{ formatDate(currentBalance()!.balanceDate) }}</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="balance-grid">
+          <div class="balance-item">
+            <div class="balance-label">On-Hand Cash</div>
+            <div class="balance-value primary">₱{{ formatAmount(currentBalance()!.currentBalance) }}</div>
+          </div>
+          <div class="balance-item">
+            <div class="balance-label">Daily Cap</div>
+            <div class="balance-value">₱{{ formatAmount(currentBalance()!.dailyCap) }}</div>
+          </div>
+          <div class="balance-item">
+            <div class="balance-label">Available for Disbursement</div>
+            <div class="balance-value success">₱{{ formatAmount(currentBalance()!.availableForDisbursement) }}</div>
+          </div>
+        </div>
+
+        <div class="balance-summary">
+          <div class="summary-row">
+            <span>Opening Float:</span>
+            <span>₱{{ formatAmount(currentBalance()!.openingFloat) }}</span>
+          </div>
+          <div class="summary-row success">
+            <span>+ Collections:</span>
+            <span>₱{{ formatAmount(currentBalance()!.totalCollections) }}</span>
+          </div>
+          <div class="summary-row danger">
+            <span>− Disbursements:</span>
+            <span>₱{{ formatAmount(currentBalance()!.totalDisbursements) }}</span>
+          </div>
+          <div class="summary-row total">
+            <span><strong>Current Balance:</strong></span>
+            <span><strong>₱{{ formatAmount(currentBalance()!.currentBalance) }}</strong></span>
+          </div>
+        </div>
+
+        @if (currentBalance()!.isFloatConfirmed) {
+          <ion-chip color="success">
+            <ion-icon name="checkmark-circle"></ion-icon>
+            <ion-text>Float Confirmed</ion-text>
+          </ion-chip>
+        }
+        
+        @if (currentBalance()!.isDayClosed) {
+          <ion-chip color="medium">
+            <ion-icon name="warning-outline"></ion-icon>
+            <ion-text>Day Closed</ion-text>
+          </ion-chip>
+        }
+      </ion-card-content>
+    </ion-card>
+  }
+
+  <!-- Pending Floats Section -->
+  <div class="section-header">
+    <h2>
+      <ion-icon name="cash-outline"></ion-icon>
+      Pending Float Confirmations
+    </h2>
+    @if (pendingFloats().length > 0) {
+      <ion-badge color="danger">{{ pendingFloats().length }}</ion-badge>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="loading-container">
+      <ion-spinner></ion-spinner>
+      <p>Loading pending floats...</p>
+    </div>
+  } @else if (pendingFloats().length === 0) {
+    <ion-card class="empty-state">
+      <ion-card-content>
+        <div class="empty-icon">✅</div>
+        <h3>No Pending Floats</h3>
+        <p>All float confirmations are up to date</p>
+      </ion-card-content>
+    </ion-card>
+  } @else {
+    @for (float of pendingFloats(); track float.id) {
+      <ion-card class="float-card">
+        <ion-card-header>
+          <div class="float-header">
+            <div>
+              <ion-card-title>₱{{ formatAmount(float.amount) }}</ion-card-title>
+              <ion-card-subtitle>
+                <ion-icon name="time-outline"></ion-icon>
+                {{ formatDate(float.floatDate) }} at {{ formatTime(float.createdAt) }}
+              </ion-card-subtitle>
+            </div>
+            <ion-badge color="warning">Pending</ion-badge>
+          </div>
+        </ion-card-header>
+        
+        <ion-card-content>
+          <div class="float-details">
+            <div class="detail-row">
+              <span class="label">Issued By:</span>
+              <span class="value">{{ getCashierName(float) }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Daily Cap:</span>
+              <span class="value">₱{{ formatAmount(float.dailyCap) }}</span>
+            </div>
+            @if (float.notes) {
+              <div class="detail-row">
+                <span class="label">Notes:</span>
+                <span class="value">{{ float.notes }}</span>
+              </div>
+            }
+            @if (currentLocation()) {
+              <div class="detail-row">
+                <ion-icon name="location-outline"></ion-icon>
+                <span class="value small">Location confirmed</span>
+              </div>
+            }
+          </div>
+
+          <ion-button
+            expand="block"
+            (click)="confirmFloat(float)"
+            [disabled]="confirming()"
+            color="success">
+            @if (confirming()) {
+              <ion-spinner name="crescent"></ion-spinner>
+              <span>&nbsp;Confirming...</span>
+            } @else {
+              <ion-icon name="checkmark-circle" slot="start"></ion-icon>
+              Confirm Receipt of ₱{{ formatAmount(float.amount) }}
+            }
+          </ion-button>
+
+          <div class="warning-box">
+            <ion-icon name="warning-outline"></ion-icon>
+            <p>By confirming, you acknowledge receiving exactly <strong>₱{{ formatAmount(float.amount) }}</strong> in cash. 
+            Make sure to count the money before confirming.</p>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    }
+  }
+
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <ion-button
+      expand="block"
+      fill="outline"
+      routerLink="/collector/cash-history">
+      View Cash History
+    </ion-button>
+  </div>
+</ion-content>

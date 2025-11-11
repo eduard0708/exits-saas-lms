@@ -210,13 +210,14 @@ export class CollectorManagementController {
     }
 
     // Get all collectors with their performance metrics
+    // Note: Knex auto-converts snake_case to camelCase
     const collectors = await knex('users as u')
       .select(
         'u.id',
         'u.email',
-        'u.first_name as firstName',
-        'u.last_name as lastName',
-        'ep.employee_code as employeeCode',
+        'u.first_name',  // Will be converted to firstName by Knex
+        'u.last_name',   // Will be converted to lastName by Knex
+        'ep.employee_code',  // Will be converted to employeeCode by Knex
         'ep.position'
       )
       .leftJoin('employee_profiles as ep', 'ep.user_id', 'u.id')
@@ -288,17 +289,34 @@ export class CollectorManagementController {
       const visits: any = visitsRaw || {};
       const assignments: any = assignmentsRaw || {};
 
+      const visitTarget = parseInt(assignments.count || '0'); // Use active assignments as visit target
+      const customersVisited = parseInt(visits.count || '0');
+      const paymentsCollected = parseInt((collections as any)?.count || '0');
+      const amountCollected = parseFloat((collections as any)?.total || '0');
+      const collectionTarget = amountCollected > 0 ? amountCollected * 1.2 : 50000; // Target is 120% of collected or 50k default
+      const disbursementsMade = parseInt((disbursements as any)?.count || '0');
+      const disbursementAmount = parseFloat((disbursements as any)?.total || '0');
+      
+      // Calculate metrics
+      const routeEfficiency = visitTarget > 0 ? Math.round((customersVisited / visitTarget) * 100) : 0;
+      const successRate = paymentsCollected > 0 && customersVisited > 0 
+        ? Math.round((paymentsCollected / customersVisited) * 100)
+        : 0;
+      
       return {
-        ...collector,
+        employeeId: collector.id,
         employeeName: `${collector.firstName} ${collector.lastName}`,
-        approvalsCount: parseInt((approvals as any)?.count || '0'),
-        approvalsAmount: parseFloat((approvals as any)?.total || '0'),
-        disbursementsCount: parseInt((disbursements as any)?.count || '0'),
-        disbursementsAmount: parseFloat((disbursements as any)?.total || '0'),
-        collectionsCount: parseInt((collections as any)?.count || '0'),
-        collectionsAmount: parseFloat((collections as any)?.total || '0'),
-        visitsCount: parseInt(visits.count || '0'),
-        activeAssignments: parseInt(assignments.count || '0'),
+        date: new Date().toISOString().split('T')[0],
+        customersVisited,
+        visitTarget,
+        paymentsCollected,
+        amountCollected,
+        collectionTarget,
+        disbursementsMade,
+        disbursementAmount,
+        routeEfficiency,
+        averageTimePerVisit: 15, // Default 15 minutes
+        successRate,
       };
     }));
 

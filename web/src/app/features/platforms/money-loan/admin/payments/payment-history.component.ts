@@ -15,6 +15,7 @@ interface Payment {
   paymentDate: string;
   status: string;
   paymentReference: string;
+  receivedBy?: string;  // Name of employee who received payment
   notes?: string;
 }
 
@@ -38,7 +39,7 @@ interface PaymentStats {
             <h1 class="text-xl font-bold text-gray-900 dark:text-white">Payment History</h1>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Track all loan payments</p>
           </div>
-          <button 
+          <button
             (click)="loadPayments()"
             class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors">
             🔄 Refresh
@@ -145,6 +146,7 @@ interface PaymentStats {
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Reference</th>
                     <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Amount</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Method</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Received By</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Status</th>
                     <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -177,7 +179,7 @@ interface PaymentStats {
                       <td class="px-4 py-3 text-sm text-right">
                         <div class="font-bold text-gray-900 dark:text-white">₱{{ formatAmount(payment.amount) }}</div>
                         <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                          P: ₱{{ formatAmount(payment.principalAmount) }} | 
+                          P: ₱{{ formatAmount(payment.principalAmount) }} |
                           I: ₱{{ formatAmount(payment.interestAmount) }}
                           @if (payment.penaltyAmount > 0) {
                             <span class="text-orange-600"> | Pen: ₱{{ formatAmount(payment.penaltyAmount) }}</span>
@@ -191,6 +193,11 @@ interface PaymentStats {
                               [ngClass]="getMethodClass(payment.paymentMethod)">
                           {{ getMethodIcon(payment.paymentMethod) }} {{ formatMethod(payment.paymentMethod) }}
                         </span>
+                      </td>
+
+                      <!-- Received By -->
+                      <td class="px-4 py-3 text-sm">
+                        <div class="text-gray-900 dark:text-white">{{ payment.receivedBy || 'System' }}</div>
                       </td>
 
                       <!-- Status -->
@@ -229,7 +236,7 @@ interface PaymentStats {
 })
 export class PaymentHistoryComponent implements OnInit {
   private http = inject(HttpClient);
-  
+
   loading = signal(false);
   payments = signal<Payment[]>([]);
   searchQuery = '';
@@ -303,6 +310,9 @@ export class PaymentHistoryComponent implements OnInit {
             paymentDate: p.paymentDate || p.payment_date || p.createdAt || p.created_at,
             status: p.status || 'completed',
             paymentReference: p.paymentReference || p.payment_reference || `PAY-${p.id}`,
+            receivedBy: (p.receiverFirstName || p.receiver_first_name)
+              ? `${p.receiverFirstName || p.receiver_first_name} ${p.receiverLastName || p.receiver_last_name}`.trim()
+              : null,
             notes: p.notes
           }));
           this.payments.set(payments);

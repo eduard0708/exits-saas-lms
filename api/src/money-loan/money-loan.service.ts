@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException, Inject, forwardRef } from '@nestjs/common';
 import { KnexService } from '../database/knex.service';
 import {
   CreateLoanApplicationDto,
@@ -11,10 +11,15 @@ import {
   LoanCalculationRequestDto,
   PenaltyCalculationRequestDto,
 } from './dto/money-loan.dto';
+import { CollectorCashService } from './services/collector-cash.service';
 
 @Injectable()
 export class MoneyLoanService {
-  constructor(private knexService: KnexService) {
+  constructor(
+    private knexService: KnexService,
+    @Inject(forwardRef(() => CollectorCashService))
+    private collectorCashService: CollectorCashService,
+  ) {
     // Clean implementation - no more manual fixes needed
   }
 
@@ -1536,6 +1541,26 @@ export class MoneyLoanService {
           status: newBalance <= 0 ? 'paid_off' : loan.status,
         });
 
+      // Record cash collection if payment method is cash
+      if (createPaymentDto.paymentMethod === 'cash' && createdBy) {
+        try {
+          await this.collectorCashService.recordCollection(
+            tenantId,
+            createdBy,
+            {
+              amount: createPaymentDto.amount,
+              loanId: createPaymentDto.loanId,
+              paymentId: payment.id,
+              notes: `Payment collection. Ref: ${createPaymentDto.reference || 'N/A'}`,
+            }
+          );
+          console.log(`💰 Cash collection recorded: ₱${createPaymentDto.amount} for loan ${createPaymentDto.loanId}`);
+        } catch (error) {
+          // Log error but don't fail the payment transaction
+          console.error('Failed to record cash collection:', error);
+        }
+      }
+
       return payment;
     });
   }
@@ -1556,10 +1581,13 @@ export class MoneyLoanService {
         'money_loan_payments.*',
         'money_loan_loans.loan_number',
         'customers.first_name as customer_first_name',
-        'customers.last_name as customer_last_name'
+        'customers.last_name as customer_last_name',
+        'users.first_name as receiver_first_name',
+        'users.last_name as receiver_last_name'
       )
       .leftJoin('money_loan_loans', 'money_loan_payments.loan_id', 'money_loan_loans.id')
       .leftJoin('customers', 'money_loan_payments.customer_id', 'customers.id')
+      .leftJoin('users', 'money_loan_payments.received_by', 'users.id')
       .where({ 'money_loan_payments.tenant_id': tenantId })
       .orderBy('money_loan_payments.created_at', 'desc');
   }
@@ -1602,14 +1630,15 @@ export class MoneyLoanService {
       .orderBy('mlp.created_at', 'desc');
 
     // Calculate summary statistics
+    // Note: Knex auto-converts snake_case to camelCase via postProcessResponse
     const completedPayments = payments.filter(p => p.status === 'completed');
     const summary = {
       date: today.toISOString().split('T')[0],
       totalPayments: completedPayments.length,
       totalAmount: completedPayments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0),
-      principalCollected: completedPayments.reduce((sum, p) => sum + parseFloat(p.principal_amount || 0), 0),
-      interestCollected: completedPayments.reduce((sum, p) => sum + parseFloat(p.interest_amount || 0), 0),
-      penaltyCollected: completedPayments.reduce((sum, p) => sum + parseFloat(p.penalty_amount || 0), 0),
+      principalCollected: completedPayments.reduce((sum, p) => sum + parseFloat(p.principalAmount || 0), 0),  // camelCase
+      interestCollected: completedPayments.reduce((sum, p) => sum + parseFloat(p.interestAmount || 0), 0),  // camelCase
+      penaltyCollected: completedPayments.reduce((sum, p) => sum + parseFloat(p.penaltyAmount || 0), 0),  // camelCase
     };
 
     // Get today's expected payments from repayment schedules
@@ -1624,19 +1653,20 @@ export class MoneyLoanService {
     const collectionRate = expectedAmount > 0 ? Math.min(100, Math.round((summary.totalAmount / expectedAmount) * 100)) : 0;
 
     // Format payment details with customer names
+    // Note: Knex auto-converts snake_case to camelCase via postProcessResponse
     const formattedPayments = payments.map(p => ({
       id: p.id,
-      paymentReference: p.payment_reference,
-      loanNumber: p.loan_number,
-      customerName: `${p.customer_first_name || ''} ${p.customer_last_name || ''}`.trim() || 'Unknown',
+      paymentReference: p.paymentReference,  // Already camelCase from Knex
+      loanNumber: p.loanNumber,  // Already camelCase from Knex
+      customerName: `${p.customerFirstName || ''} ${p.customerLastName || ''}`.trim() || 'Unknown',  // Already camelCase from Knex
       amount: parseFloat(p.amount || 0),
-      principalAmount: parseFloat(p.principal_amount || 0),
-      interestAmount: parseFloat(p.interest_amount || 0),
-      penaltyAmount: parseFloat(p.penalty_amount || 0),
-      paymentMethod: p.payment_method,
-      paymentDate: p.payment_date,
+      principalAmount: parseFloat(p.principalAmount || 0),  // Already camelCase from Knex
+      interestAmount: parseFloat(p.interestAmount || 0),  // Already camelCase from Knex
+      penaltyAmount: parseFloat(p.penaltyAmount || 0),  // Already camelCase from Knex
+      paymentMethod: p.paymentMethod,  // Already camelCase from Knex
+      paymentDate: p.paymentDate,  // Already camelCase from Knex
       status: p.status,
-      createdAt: p.created_at,
+      createdAt: p.createdAt,  // Already camelCase from Knex
     }));
 
     return {

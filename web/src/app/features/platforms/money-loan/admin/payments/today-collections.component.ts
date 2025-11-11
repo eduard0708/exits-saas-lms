@@ -325,27 +325,27 @@ export class TodayCollectionsComponent implements OnInit {
         if (response.success && response.data) {
           // Backend returns { summary: {...}, payments: [...] }
           const { summary, payments } = response.data;
-          
+
           // Update summary with backend data
           if (summary) {
             this.expectedAmount = summary.expectedAmount || 0;
           }
-          
-          // Map payments data
+
+          // Map payments data (handle both camelCase and snake_case from backend)
           if (Array.isArray(payments)) {
             this.payments.set(payments.map(p => ({
               id: p.id,
-              paymentReference: p.paymentReference,
-              customerName: p.customerName,
-              loanNumber: p.loanNumber,
-              amount: p.amount,
-              principalAmount: p.principalAmount,
-              interestAmount: p.interestAmount,
-              penaltyAmount: p.penaltyAmount,
-              paymentMethod: p.paymentMethod,
-              paymentDate: p.paymentDate,
-              status: p.status,
-              time: this.extractTime(p.createdAt || p.paymentDate)
+              paymentReference: p.paymentReference || p.payment_reference || 'N/A',
+              customerName: p.customerName || p.customer_name || 'Unknown',
+              loanNumber: p.loanNumber || p.loan_number || 'N/A',
+              amount: parseFloat(p.amount || 0),
+              principalAmount: parseFloat(p.principalAmount || p.principal_amount || 0),
+              interestAmount: parseFloat(p.interestAmount || p.interest_amount || 0),
+              penaltyAmount: parseFloat(p.penaltyAmount || p.penalty_amount || 0),
+              paymentMethod: p.paymentMethod || p.payment_method || 'cash',
+              paymentDate: p.paymentDate || p.payment_date || new Date().toISOString(),
+              status: (p.status || 'completed') as 'pending' | 'completed' | 'failed',
+              time: this.extractTime(p.createdAt || p.created_at || p.paymentDate || p.payment_date)
             })));
           }
         }

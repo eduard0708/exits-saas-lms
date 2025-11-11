@@ -1,12 +1,15 @@
-import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
 import { KnexService } from '../../database/knex.service';
 import { CollectorAssignmentService } from './collector-assignment.service';
+import { CollectorCashService } from './collector-cash.service';
 
 @Injectable()
 export class CollectorDisbursementsService {
   constructor(
     private knexService: KnexService,
     private collectorAssignmentService: CollectorAssignmentService,
+    @Inject(forwardRef(() => CollectorCashService))
+    private collectorCashService: CollectorCashService,
   ) {}
 
   /**
@@ -58,6 +61,37 @@ export class CollectorDisbursementsService {
     // Calculate net disbursement amount
     const netDisbursementAmount = loan.principal_amount - loan.processing_fee - loan.platform_fee;
 
+    // CASH FLOAT VALIDATION (if cash disbursement)
+    if (disburseDto.disbursementMethod === 'cash') {
+      const cashBalance = await this.collectorCashService.getCurrentBalance(
+        tenantId,
+        collectorId,
+      );
+
+      // Check 1: Collector has enough cash on hand
+      if (netDisbursementAmount > cashBalance.currentBalance) {
+        throw new ForbiddenException(
+          `Insufficient cash on hand. Available: ₱${cashBalance.currentBalance}, Required: ₱${netDisbursementAmount}`
+        );
+      }
+
+      // Check 2: Disbursement within daily cap
+      if (cashBalance.totalDisbursements + netDisbursementAmount > cashBalance.dailyCap) {
+        throw new ForbiddenException(
+          `Daily disbursement cap exceeded. Cap: ₱${cashBalance.dailyCap}, Already disbursed: ₱${cashBalance.totalDisbursements}, Requested: ₱${netDisbursementAmount}`
+        );
+      }
+
+      // Check 3: Float must be confirmed before disbursing
+      if (!cashBalance.isFloatConfirmed) {
+        throw new ForbiddenException(
+          'Float not confirmed. Please confirm receipt of your cash float before disbursing loans.'
+        );
+      }
+
+      console.log(`✅ Cash validation passed. Disbursing ₱${netDisbursementAmount} from balance of ₱${cashBalance.currentBalance}`);
+    }
+
     // Update loan status to 'active'
     const [updatedLoan] = await knex('money_loan_loans')
       .where({ id: loanId })
@@ -99,6 +133,20 @@ export class CollectorDisbursementsService {
         payment_date: knex.fn.now(),
         notes: `Processing fee: ${loan.processing_fee}, Platform fee: ${loan.platform_fee}`,
       });
+    }
+
+    // Record cash disbursement in cash float system (if cash method)
+    if (disburseDto.disbursementMethod === 'cash') {
+      await this.collectorCashService.recordDisbursement(
+        tenantId,
+        collectorId,
+        {
+          amount: netDisbursementAmount,
+          loanId: loanId,
+          notes: `Loan disbursement to ${loan.customer_id}. Ref: ${disburseDto.referenceNumber || 'N/A'}`,
+        }
+      );
+      console.log(`💰 Cash disbursement recorded: ₱${netDisbursementAmount} for loan ${loanId}`);
     }
 
     // Log action

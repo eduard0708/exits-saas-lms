@@ -1,0 +1,199 @@
+<ion-header></ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/collector/dashboard"></ion-back-button>
+    </ion-buttons>
+    <ion-title>🏦 End of Day Handover</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  @if (loading()) {
+    <div class="loading-container">
+      <ion-spinner></ion-spinner>
+      <p>Loading cash balance...</p>
+    </div>
+  } @else if (balance()) {
+    <!-- Balance Summary Card -->
+    <ion-card class="summary-card">
+      <ion-card-header>
+        <ion-card-title>Today's Summary</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="label">Opening Float</div>
+            <div class="value">₱{{ formatAmount(balance()!.openingFloat) }}</div>
+          </div>
+          <div class="summary-item success">
+            <div class="label">+ Collections</div>
+            <div class="value">₱{{ formatAmount(balance()!.totalCollections) }}</div>
+          </div>
+          <div class="summary-item danger">
+            <div class="label">− Disbursements</div>
+            <div class="value">₱{{ formatAmount(balance()!.totalDisbursements) }}</div>
+          </div>
+          <div class="summary-item total">
+            <div class="label"><strong>Expected Handover</strong></div>
+            <div class="value"><strong>₱{{ formatAmount(expectedHandover()) }}</strong></div>
+          </div>
+        </div>
+
+        <!-- Calculation Breakdown -->
+        <div class="calculation-box">
+          <ion-icon name="calculator-outline"></ion-icon>
+          <div class="calculation">
+            <div class="calc-row">
+              <span>{{ formatAmount(balance()!.openingFloat) }}</span>
+              <span class="label">(Opening)</span>
+            </div>
+            <div class="calc-row plus">
+              <span>+ {{ formatAmount(balance()!.totalCollections) }}</span>
+              <span class="label">(Collections)</span>
+            </div>
+            <div class="calc-row minus">
+              <span>− {{ formatAmount(balance()!.totalDisbursements) }}</span>
+              <span class="label">(Disbursements)</span>
+            </div>
+            <div class="calc-row total">
+              <span>= {{ formatAmount(expectedHandover()) }}</span>
+              <span class="label">(Expected)</span>
+            </div>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Actual Handover Input -->
+    <ion-card class="handover-card">
+      <ion-card-header>
+        <ion-card-title>Count Your Cash</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-item lines="none" class="amount-input">
+          <ion-label position="stacked">Actual Handover Amount</ion-label>
+          <ion-input
+            type="number"
+            [(ngModel)]="actualHandover"
+            placeholder="0.00"
+            [disabled]="balance()!.isDayClosed"
+            inputmode="decimal">
+          </ion-input>
+          <ion-note slot="helper">
+            Count all cash and enter the exact amount
+          </ion-note>
+        </ion-item>
+
+        <ion-button 
+          expand="block" 
+          fill="outline" 
+          size="small"
+          (click)="setExpectedAmount()"
+          [disabled]="balance()!.isDayClosed">
+          <ion-icon name="calculator-outline" slot="start"></ion-icon>
+          Use Expected Amount
+        </ion-button>
+
+        <!-- Variance Display -->
+        @if (actualHandover() > 0) {
+          <div class="variance-box" [class]="varianceColor()">
+            <div class="variance-header">
+              <ion-icon [name]="hasVariance() ? 'warning-outline' : 'checkmark-circle'"></ion-icon>
+              <span>Variance Check</span>
+            </div>
+            <div class="variance-amount" [class]="varianceColor()">
+              {{ variance() >= 0 ? '+' : '' }}₱{{ formatAmount(variance()) }}
+            </div>
+            @if (hasVariance()) {
+              <div class="variance-warning">
+                @if (variance() > 0) {
+                  <p><strong>Overage:</strong> You're handing over MORE than expected.</p>
+                  <p class="small">Possible reasons: Extra collections not recorded, counting error</p>
+                } @else {
+                  <p><strong>Shortage:</strong> You're handing over LESS than expected.</p>
+                  <p class="small">Possible reasons: Missing cash, disbursements not recorded, counting error</p>
+                }
+              </div>
+            } @else {
+              <div class="variance-success">
+                <p>✅ Perfect match! Amount matches expected handover.</p>
+              </div>
+            }
+          </div>
+        }
+
+        @if (currentLocation()) {
+          <div class="location-info">
+            <ion-icon name="location-outline"></ion-icon>
+            <span>Location confirmed for handover</span>
+          </div>
+        }
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Safety Guidelines -->
+    <ion-card class="guidelines-card">
+      <ion-card-header>
+        <ion-card-title>⚠️ Before You Hand Over</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ol>
+          <li>Count all cash twice to ensure accuracy</li>
+          <li>Separate bills by denomination</li>
+          <li>Verify the amount matches your count</li>
+          <li>Hand over cash directly to authorized cashier</li>
+          <li>Wait for cashier confirmation before leaving</li>
+        </ol>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Submit Button -->
+    <div class="action-buttons">
+      @if (balance()!.isDayClosed) {
+        <ion-badge color="medium" class="closed-badge">
+          Day Already Closed
+        </ion-badge>
+      } @else {
+        <ion-button
+          expand="block"
+          size="large"
+          color="primary"
+          (click)="initiateHandover()"
+          [disabled]="submitting() || actualHandover() <= 0">
+          @if (submitting()) {
+            <ion-spinner name="crescent"></ion-spinner>
+            <span>&nbsp;Submitting...</span>
+          } @else {
+            <ion-icon name="checkmark-circle" slot="start"></ion-icon>
+            Submit Handover of ₱{{ formatAmount(actualHandover()) }}
+          }
+        </ion-button>
+      }
+    </div>
+
+    <!-- Confirmation Alert -->
+    @if (showConfirmAlert()) {
+      <ion-alert
+        [isOpen]="true"
+        header="⚠️ Variance Detected"
+        [message]="'There is a variance of ₱' + formatAmount(Math.abs(variance())) + ' (' + (variance() > 0 ? 'Overage' : 'Shortage') + '). Are you sure you want to proceed?'"
+        [buttons]="[
+          { text: 'Cancel', role: 'cancel', handler: () => cancelHandover() },
+          { text: 'Proceed Anyway', role: 'confirm', handler: () => submitHandover() }
+        ]">
+      </ion-alert>
+    }
+
+  } @else {
+    <ion-card>
+      <ion-card-content class="empty-state">
+        <ion-icon name="warning-outline"></ion-icon>
+        <h3>No Active Balance</h3>
+        <p>No cash float found for today. Please confirm your float receipt first.</p>
+        <ion-button routerLink="/collector/cash-float">
+          Go to Cash Float
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+  }
+</ion-content>
