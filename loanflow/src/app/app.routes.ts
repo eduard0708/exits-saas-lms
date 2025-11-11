@@ -112,6 +112,10 @@ export const routes: Routes = [
       },
       // Detail pages outside tabs
       {
+        path: 'grace-extension',
+        loadComponent: () => import('./features/collector/grace-extension.page').then((m) => m.GraceExtensionPage),
+      },
+      {
         path: 'visits',
         loadComponent: () => import('./features/collector/visits.page').then((m) => m.CollectorVisitsPage),
       },

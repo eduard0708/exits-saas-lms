@@ -196,6 +196,7 @@ exports.seed = async function(knex) {
     { permission_key: 'money-loan:update', resource: 'money-loan', action: 'update', description: 'Update loan details', space: 'tenant' },
     { permission_key: 'money-loan:approve', resource: 'money-loan', action: 'approve', description: 'Approve/reject loans', space: 'tenant' },
     { permission_key: 'money-loan:payments', resource: 'money-loan', action: 'payments', description: 'Manage loan payments', space: 'tenant' },
+    { permission_key: 'money-loan:collector:grace-extension', resource: 'money-loan', action: 'collector:grace-extension', description: 'Allow collector to extend grace periods for customers', space: 'tenant' },
     
     // BNPL permissions (Tenant Level)
     { permission_key: 'bnpl:read', resource: 'bnpl', action: 'read', description: 'View BNPL information', space: 'tenant' },
@@ -268,6 +269,7 @@ exports.seed = async function(knex) {
   const tenantAdminRoles = [];
   const customerRoles = [];
   const employeeRoles = [];
+  const collectorRoles = [];
   for (const tenant of tenants) {
     const [tenantAdminRole] = await knex('roles').insert({
       tenant_id: tenant.id,
@@ -288,6 +290,17 @@ exports.seed = async function(knex) {
     }).returning(['id', 'name', 'tenant_id']);
     employeeRoles.push(employeeRole);
     
+    // Create Collector role for each tenant (SYSTEM PROTECTED - cannot change name)
+    const [collectorRole] = await knex('roles').insert({
+      tenant_id: tenant.id,
+      name: 'Collector',
+      description: 'Field collector for money loan collections',
+      space: 'tenant',
+      is_system_role: true, // Protected role - name cannot be changed
+      status: 'active'
+    }).returning(['id', 'name', 'tenant_id']);
+    collectorRoles.push(collectorRole);
+    
     // Create Customer role for each tenant
     const [customerRole] = await knex('roles').insert({
       tenant_id: tenant.id,
@@ -298,7 +311,7 @@ exports.seed = async function(knex) {
     }).returning(['id', 'name', 'tenant_id']);
     customerRoles.push(customerRole);
   }
-  console.log(`✅ 1 system role + ${tenantAdminRoles.length} tenant roles + ${employeeRoles.length} employee roles + ${customerRoles.length} customer roles created`);
+  console.log(`✅ 1 system role + ${tenantAdminRoles.length} tenant roles + ${employeeRoles.length} employee roles + ${collectorRoles.length} collector roles + ${customerRoles.length} customer roles created`);
 
   // 5. Create users
   console.log('5. Creating users...');
@@ -756,6 +769,20 @@ exports.seed = async function(knex) {
   
   console.log(`✅ Employees and customers created for all tenants`);
   
+  // 5c. Assign customers to collector (employee1) for ACME
+  console.log('5c. Assigning customers to collector for testing...');
+  const acmeCollector = await knex('users')
+    .where({ tenant_id: acmeTenant.id, email: 'employee1@acme.com' })
+    .first();
+  
+  if (acmeCollector) {
+    // Assign all ACME customers to employee1 (collector)
+    const updatedCount = await knex('customers')
+      .where({ tenant_id: acmeTenant.id })
+      .update({ assigned_employee_id: acmeCollector.id });
+    console.log(`   ✅ Assigned ${updatedCount} customers to collector ${acmeCollector.firstName} ${acmeCollector.lastName}`);
+  }
+  
   console.log(`✅ 1 system user + ${tenantAdmins.length} tenant users created`);
 
   // 6. Assign roles to users
@@ -826,8 +853,10 @@ exports.seed = async function(knex) {
     // Get customer permissions
     const customerPerms = allPermissions.filter(p => p.resource === 'tenant-customers');
     
-    // Get all money-loan permissions
-    const moneyLoanPerms = allPermissions.filter(p => p.resource === 'money-loan' || p.permissionKey.startsWith('money-loan:'));
+    // Get all money-loan permissions (ONLY from tenant space)
+    const moneyLoanPerms = allPermissions.filter(p => 
+      p.space === 'tenant' && (p.resource === 'money-loan' || p.permissionKey.startsWith('money-loan:'))
+    );
     
     const employeePermissions = [];
     if (dashboardPerm) employeePermissions.push(dashboardPerm);
@@ -842,14 +871,53 @@ exports.seed = async function(knex) {
         permission_id: perm.id
       }));
       await knex('role_permissions').insert(employeeRolePermissions);
-      console.log(`   ✅ Granted ${employeeRolePermissions.length} permissions to Employee role (tenant_id: ${employeeRole.tenant_id})`);
+      console.log(`   ✅ Granted ${employeeRolePermissions.length} permissions to Employee role (tenant_id: ${employeeRole.tenantId})`);
       console.log(`      • Dashboard: 1, Customers: ${customerPerms.length}, Money Loan: ${moneyLoanPerms.length}`);
+    }
+  }
+  
+  // Grant Collector permissions (dashboard + route management + grace extensions)
+  console.log(`\n7c. Assigning collector permissions to Collector roles...`);
+  for (const collectorRole of collectorRoles) {
+    // Get dashboard permission
+    const dashboardPerm = allPermissions.find(p => p.permissionKey === 'tenant-dashboard:view');
+    
+    // Get customer read permissions
+    const customerReadPerms = allPermissions.filter(p => 
+      p.resource === 'tenant-customers' && (p.action === 'read' || p.action === 'update')
+    );
+    
+    // Get all money-loan collector-specific permissions (ONLY from tenant space)
+    const collectorPerms = allPermissions.filter(p => 
+      p.space === 'tenant' && (
+        p.permissionKey.startsWith('money-loan:collector') || 
+        p.permissionKey === 'money-loan:payments:create' ||
+        p.permissionKey === 'money-loan:payments:read' ||
+        p.permissionKey === 'money-loan:read'
+      )
+    );
+    
+    const collectorPermissions = [];
+    if (dashboardPerm) collectorPermissions.push(dashboardPerm);
+    collectorPermissions.push(...customerReadPerms);
+    collectorPermissions.push(...collectorPerms);
+    
+    if (collectorPermissions.length > 0) {
+      await knex('role_permissions').where('role_id', collectorRole.id).del();
+      
+      const collectorRolePermissions = collectorPermissions.map(perm => ({
+        role_id: collectorRole.id,
+        permission_id: perm.id
+      }));
+      await knex('role_permissions').insert(collectorRolePermissions);
+      console.log(`   ✅ Granted ${collectorRolePermissions.length} permissions to Collector role (tenant_id: ${collectorRole.tenantId})`);
+      console.log(`      • Dashboard: 1, Customers: ${customerReadPerms.length}, Collector: ${collectorPerms.length}`);
     }
   }
   
   // Grant customer permissions to Customer roles
   const customerPermissions = allPermissions.filter(p => p.permissionKey.startsWith('customer-'));
-  console.log(`\n7c. Assigning customer permissions to Customer roles...`);
+  console.log(`\n7d. Assigning customer permissions to Customer roles...`);
   for (const customerRole of customerRoles) {
     if (customerPermissions.length > 0) {
       // Clear existing permissions for this role to avoid duplicates
@@ -870,7 +938,7 @@ exports.seed = async function(knex) {
   console.log(`   • ${tenants.length} tenants`);
   console.log(`   • ${modules.length} modules`);
   console.log(`   • ${allPermissions.length} comprehensive permissions`);
-  console.log(`   • ${1 + tenantAdminRoles.length + customerRoles.length} roles (1 system + ${tenantAdminRoles.length} tenant + ${customerRoles.length} customer)`);
+  console.log(`   • ${1 + tenantAdminRoles.length + employeeRoles.length + collectorRoles.length + customerRoles.length} roles (1 system + ${tenantAdminRoles.length} tenant admin + ${employeeRoles.length} employee + ${collectorRoles.length} collector + ${customerRoles.length} customer)`);
   console.log(`   • ${1 + tenantAdmins.length} users (1 system + ${tenantAdmins.length} tenant)`);
   
   console.log('\n🔐 Permission Assignments:');

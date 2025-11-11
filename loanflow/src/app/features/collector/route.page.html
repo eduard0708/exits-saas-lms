@@ -112,7 +112,7 @@
     <!-- Search Bar -->
     <div class="search-container">
       <div class="search-wrapper">
-        <span class="search-icon">🔍</span>
+        <ion-icon name="search-outline" class="search-icon"></ion-icon>
         <input 
           type="text" 
           class="search-input"
@@ -571,8 +571,10 @@
     <div class="modal-container" (click)="$event.stopPropagation()">
       <!-- Modal Header -->
       <div class="modal-header">
-        <h2 class="modal-title">💰 Record Payment</h2>
-        <button class="close-button" (click)="closePaymentModal()">✕</button>
+        <h2 class="modal-title">Record Payment</h2>
+        <button class="close-button" (click)="closePaymentModal()" aria-label="Close modal">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
       </div>
 
       <!-- Modal Content -->
@@ -618,11 +620,11 @@
               <div class="info-row warning-row">
                 <ion-icon name="alert-circle-outline" class="warning-icon"></ion-icon>
                 <div class="warning-content">
-                  <span class="warning-label">⚠️ Days Overdue: {{ selectedInstallment()!.daysOverdue || selectedInstallment()!.days_overdue }} day(s)</span>
+                  <span class="warning-label">Days Overdue: {{ selectedInstallment()!.daysOverdue || selectedInstallment()!.days_overdue }} day(s)</span>
                   @if (getInstallmentPenalty(selectedInstallment()!) > 0) {
                     <span class="warning-note">Penalty: {{ formatPenaltyPercent(selectedLoan()?.latePenaltyPercent) }}%/day after {{ selectedLoan()?.gracePeriodDays || 0 }} day grace period</span>
                   } @else if (selectedLoan()?.gracePeriodDays && (selectedInstallment()!.daysOverdue || selectedInstallment()!.days_overdue) <= selectedLoan()!.gracePeriodDays!) {
-                    <span class="success-note">✓ Still within grace period ({{ selectedLoan()!.gracePeriodDays }} days)</span>
+                    <span class="success-note">Still within grace period ({{ selectedLoan()!.gracePeriodDays }} days)</span>
                   }
                 </div>
               </div>
@@ -636,10 +638,10 @@
           <div class="form-field">
             <label class="field-label">Payment Method <span class="required">*</span></label>
             <div class="select-wrapper">
-              <select [(ngModel)]="paymentMethod" class="custom-select">
-                <option value="cash">💵 Cash</option>
-                <option value="cheque">💳 Cheque</option>
-                <option value="gcash">📱 GCash</option>
+              <select [(ngModel)]="paymentMethod" class="custom-select" aria-label="Payment method">
+                <option value="cash">Cash</option>
+                <option value="cheque">Cheque</option>
+                <option value="gcash">GCash</option>
               </select>
               <div class="select-arrow">▼</div>
             </div>
@@ -758,9 +760,9 @@
     <ion-fab-list side="top">
       <ion-fab-button 
         color="tertiary"
-        (click)="quickCantCollectToday()"
-        title="Can't Collect Today">
-        <ion-icon name="rainy-outline"></ion-icon>
+        (click)="navigateToGraceExtension()"
+        title="Grace Period Extension">
+        <ion-icon name="time-outline"></ion-icon>
       </ion-fab-button>
     </ion-fab-list>
   </ion-fab>

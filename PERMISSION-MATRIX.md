@@ -4,8 +4,8 @@
 
 This document provides a complete reference of all permissions in the system, organized by resource and scope (System vs Tenant).
 
-**Last Updated:** November 5, 2025  
-**Total Permissions:** 179+
+**Last Updated:** November 11, 2025  
+**Total Permissions:** 175 (active keys)
 
 ---
 
@@ -381,6 +381,13 @@ Each permission follows the format: `{resource}:{action}`
 | `money-loan:collector-notifications:view` | money-loan-collector-notifications | view | View collector notifications |
 | `money-loan:collector-notifications:send-reminder` | money-loan-collector-notifications | send-reminder | Send payment reminders to customers |
 
+### **Collector: Grace Period Extensions (1)**
+| Permission Key | Resource | Action | Description |
+|----------------|----------|--------|-------------|
+| `money-loan:collector:grace-extension` | money-loan | collector:grace-extension | Extend grace periods for customers (bulk or individual) |
+
+> **Note:** This permission allows collectors to extend grace periods when they are unable to collect on scheduled days or for special circumstances. Supports bulk operations (all customers, selected customers, or date-based).
+
 > **Removed Legacy Keys:** The broad tenant permissions `loans:*` and `payments:*` (including `money-loan:read/create/update/approve/payments`) were retired in November 2025. They are no longer present in the database and should not be assigned going forward.
 
 ---
@@ -431,7 +438,7 @@ Each permission follows the format: `{resource}:{action}`
 | • Billing | 5 |
 | • Reports | 6 |
 | • Recycle Bin | 3 |
-| **Money Loan Product** | 113 permissions |
+| **Money Loan Product** | 114 permissions |
 | • Overview | 6 |
 | • Customers | 5 |
 | • Loans | 9 |
@@ -453,9 +460,10 @@ Each permission follows the format: `{resource}:{action}`
 | • Collector: Collection Activities | 4 |
 | • Collector: Management (Admin/Manager) | 8 |
 | • Collector: Notifications | 2 |
+| • Collector: Grace Extensions | 1 |
 | **BNPL Product** | 4 permissions |
 | **Pawnshop Product** | 4 permissions |
-| **TOTAL** | **174 permissions** *(active keys)* |
+| **TOTAL** | **175 permissions** *(active keys)* |
 
 ---
 

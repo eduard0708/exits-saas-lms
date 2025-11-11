@@ -1,0 +1,218 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/collector/route"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Grace Period Extension</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Extension Mode Selection -->
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Extension Scope</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-radio-group [(ngModel)]="extensionMode" (ionChange)="onExtensionModeChange()">
+        <ion-item>
+          <ion-radio slot="start" value="all"></ion-radio>
+          <ion-label>
+            <h3>All Customers</h3>
+            <p>Apply to all customers with outstanding balance</p>
+          </ion-label>
+          <ion-icon name="people-outline" slot="end" color="primary"></ion-icon>
+        </ion-item>
+
+        <ion-item>
+          <ion-radio slot="start" value="select"></ion-radio>
+          <ion-label>
+            <h3>Select Customers</h3>
+            <p>Choose specific customers from the list</p>
+          </ion-label>
+          <ion-icon name="person-outline" slot="end" color="primary"></ion-icon>
+        </ion-item>
+
+        <ion-item>
+          <ion-radio slot="start" value="date"></ion-radio>
+          <ion-label>
+            <h3>By Due Date</h3>
+            <p>Filter by installment due date</p>
+          </ion-label>
+          <ion-icon name="calendar-outline" slot="end" color="primary"></ion-icon>
+        </ion-item>
+      </ion-radio-group>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Customer Selection (only show when mode is 'select') -->
+  @if (extensionMode === 'select') {
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>
+          Select Customers ({{ getSelectedCount() }} selected)
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-button expand="block" fill="outline" size="small" (click)="selectAllCustomers()">
+          Toggle All
+        </ion-button>
+        
+        <ion-list>
+          @for (customer of customers(); track customer.loanId) {
+            <ion-item>
+              <ion-checkbox 
+                slot="start" 
+                [(ngModel)]="customer.selected"
+                (ionChange)="toggleCustomerSelection(customer)">
+              </ion-checkbox>
+              <ion-label>
+                <h3>{{ customer.customerName }}</h3>
+                <p>{{ customer.loanNumber }}</p>
+                <p>Balance: ₱{{ formatCurrency(customer.outstandingBalance) }}</p>
+              </ion-label>
+            </ion-item>
+          }
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+  }
+
+  <!-- Date Selection (only show when mode is 'date') -->
+  @if (extensionMode === 'date') {
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Due Date Filter</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-radio-group [(ngModel)]="dateMode">
+          <ion-item>
+            <ion-radio slot="start" value="single"></ion-radio>
+            <ion-label>Single Date</ion-label>
+          </ion-item>
+          <ion-item>
+            <ion-radio slot="start" value="range"></ion-radio>
+            <ion-label>Date Range</ion-label>
+          </ion-item>
+        </ion-radio-group>
+
+        @if (dateMode === 'single') {
+          <div class="date-picker-container">
+            <ion-label>Due Date</ion-label>
+            <ion-datetime 
+              [(ngModel)]="singleDate"
+              presentation="date"
+              [showDefaultButtons]="true">
+            </ion-datetime>
+          </div>
+        } @else {
+          <div class="date-picker-container">
+            <ion-label>Start Date</ion-label>
+            <ion-datetime 
+              [(ngModel)]="startDate"
+              presentation="date"
+              [showDefaultButtons]="true">
+            </ion-datetime>
+            
+            <ion-label class="ion-margin-top">End Date</ion-label>
+            <ion-datetime 
+              [(ngModel)]="endDate"
+              presentation="date"
+              [showDefaultButtons]="true">
+            </ion-datetime>
+          </div>
+        }
+      </ion-card-content>
+    </ion-card>
+  }
+
+  <!-- Extension Details -->
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Extension Details</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <!-- Extension Days -->
+      <ion-item>
+        <ion-label position="stacked">Extension Days (1-7)</ion-label>
+        <ion-input 
+          type="number" 
+          [(ngModel)]="extensionDays"
+          min="1"
+          max="7"
+          placeholder="Enter days (1-7)">
+        </ion-input>
+      </ion-item>
+
+      <!-- Reason Selection -->
+      <ion-item>
+        <ion-label position="stacked">Reason Category</ion-label>
+        <ion-radio-group [(ngModel)]="reason">
+          @for (option of reasonOptions; track option.value) {
+            <ion-item>
+              <ion-radio slot="start" [value]="option.value"></ion-radio>
+              <ion-label>{{ option.label }}</ion-label>
+            </ion-item>
+          }
+        </ion-radio-group>
+      </ion-item>
+
+      <!-- Detailed Reason -->
+      <ion-item>
+        <ion-label position="stacked">Detailed Reason (required, min 10 characters)</ion-label>
+        <ion-textarea 
+          [(ngModel)]="detailedReason"
+          rows="4"
+          placeholder="Provide detailed explanation for the grace extension...">
+        </ion-textarea>
+      </ion-item>
+
+      @if (detailedReason.length > 0 && detailedReason.length < 10) {
+        <ion-note color="danger" class="ion-margin-top">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          Please provide at least 10 characters
+        </ion-note>
+      }
+
+      @if (extensionDays > 3) {
+        <ion-note color="warning" class="ion-margin-top">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          Extensions over 3 days require manager approval
+        </ion-note>
+      }
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Summary Card -->
+  <ion-card color="light">
+    <ion-card-header>
+      <ion-card-title>Summary</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      @if (extensionMode === 'all') {
+        <p><strong>Scope:</strong> All {{ customers().length }} customers</p>
+      } @else if (extensionMode === 'select') {
+        <p><strong>Scope:</strong> {{ getSelectedCount() }} selected customer(s)</p>
+      } @else {
+        @if (dateMode === 'single') {
+          <p><strong>Scope:</strong> Customers with due date on {{ singleDate | date:'mediumDate' }}</p>
+        } @else {
+          <p><strong>Scope:</strong> Customers with due dates from {{ startDate | date:'mediumDate' }} to {{ endDate | date:'mediumDate' }}</p>
+        }
+      }
+      <p><strong>Extension:</strong> {{ extensionDays }} day(s)</p>
+      <p><strong>Reason:</strong> {{ getReasonLabel(reason) }}</p>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Submit Button -->
+  <ion-button 
+    expand="block" 
+    color="primary" 
+    size="large"
+    (click)="submitExtension()"
+    [disabled]="detailedReason.length < 10">
+    <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+    Apply Grace Extension
+  </ion-button>
+</ion-content>

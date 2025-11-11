@@ -2,37 +2,103 @@
 
 ## Overview
 
-The grace period extension system allows collectors to add extra days to the grace period for individual installments when they cannot collect payments due to external circumstances like weather, holidays, or emergencies.
+The grace period extension system allows collectors to add extra days to the grace period when they cannot collect payments due to external circumstances like weather, holidays, or emergencies. The system operates differently based on payment frequency to ensure fairness.
+
+## Grace Period Behavior by Payment Frequency
+
+### **Daily Loans - Loan-Wide Grace**
+
+For daily payment loans, grace period is **shared across the entire loan term** (not per-installment):
+
+```
+Example: Daily loan with 2-day grace period for entire month
+
+Day 5:  Customer misses payment → Grace: 1 day remaining (customer fault)
+Day 10: Collector can't come (rain) → Grace: 1 day remaining (extension added, grace not consumed)
+Day 15: Customer misses payment → Grace: 0 days remaining (customer fault)
+Day 22: Collector can't come (holiday) → Grace: 0 days, NO penalty (extension added, collector didn't visit)
+Day 25: Customer misses payment → Grace: 0 days, PENALTY charged (customer fault, grace exhausted)
+```
+
+**Key Points:**
+- Grace is consumed only by **customer misses**, not collector unavailability
+- Collector unavailability = grace extension (doesn't consume grace)
+- Even with 0 grace remaining, no penalty if collector doesn't visit
+- Penalties apply only when: (grace exhausted) AND (collector visited) AND (customer didn't pay)
+
+### **Weekly/Monthly Loans - Per-Installment Grace**
+
+For weekly and monthly loans, grace period **resets for each installment**:
+
+```
+Example: Weekly loan with 2-day grace period
+
+Week 1: Due Jan 7 → Customer pays Jan 9 (2 days late) → Uses grace, NO penalty
+Week 2: Due Jan 14 → Customer pays Jan 16 (2 days late) → Fresh 2-day grace, NO penalty  
+Week 3: Due Jan 21 → Customer pays Jan 24 (3 days late) → Exceeds grace, 1 day PENALTY
+Week 4: Due Jan 28 → Collector can't come (3 days) → Extension added, customer has full 2-day grace available
+```
+
+**Key Points:**
+- Each installment gets **independent grace period**
+- Week 1's grace usage doesn't affect Week 2
+- Collector extensions apply to that specific installment only
+- Extensions don't carry over to next installment
 
 ## Key Concepts
 
-### 1. **Per-Installment Extensions**
+### 1. **Payment Frequency Determines Grace Scope**
 
-Extensions are applied to individual installments, NOT to the entire loan:
+- **Daily**: Grace is loan-wide, consumed across all payment days
+- **Weekly/Monthly**: Grace resets per installment, independent periods
 
 ```
-Example: Weekly Loan with 2-day grace period
+Weekly Loan Examples:
 ├─ Week 1: Due Jan 7 → Grace until Jan 9 → Collector extends 3 days → New grace until Jan 12
-├─ Week 2: Due Jan 14 → Grace until Jan 16 → NO EXTENSION (independent of week 1)
+├─ Week 2: Due Jan 14 → Grace until Jan 16 → NO EXTENSION (independent, fresh 2-day grace)
 ├─ Week 3: Due Jan 21 → Grace until Jan 23 → Collector extends 2 days → New grace until Jan 25
-└─ Week 4: Due Jan 28 → Grace until Jan 30 → NO EXTENSION
+└─ Week 4: Due Jan 28 → Grace until Jan 30 → NO EXTENSION (independent, fresh 2-day grace)
 ```
 
-**Why?** Each installment has its own due date and circumstances. Extending Week 1 due to rain doesn't mean Week 2 will also have rain.
+**Why?** For weekly/monthly loans, each installment has its own due date and circumstances. Extending Week 1 due to rain doesn't mean Week 2 will also have rain. Each installment starts with a fresh grace period.
 
-### 2. **Additive Grace Period**
+### 2. **Collector Unavailability vs Customer Miss**
 
-Extensions add to the product's default grace period:
+Critical distinction for penalty calculation:
+
+**Collector Unavailability (Extension):**
+- Collector can't come due to weather, holiday, emergency
+- Does NOT consume customer's grace period
+- No penalty even if grace exhausted (not customer's fault)
+- Recorded as grace extension in system
+
+**Customer Miss:**
+- Customer doesn't pay when collector visits
+- CONSUMES grace period (daily) or uses installment grace (weekly/monthly)
+- Penalty applies when grace exhausted and payment still not made
+- Recorded as missed payment
+
+### 3. **Additive Grace Period**
+
+Extensions add to the product's default grace period (or maintain it for daily):
 
 ```
+Weekly/Monthly Loans (Additive):
 Product Grace Period: 2 days
 Collector Extension: 3 days
 ------------------------
-Total Grace Period: 5 days
+Total Grace Period: 5 days for that installment
+
+Daily Loans (Protective):
+Remaining Grace: 1 day
+Collector Extension: 2 days (can't come)
+------------------------
+Remaining Grace: Still 1 day (protected from consumption by collector unavailability)
 ```
 
-### 3. **Penalty Calculation Impact**
+### 4. **Penalty Calculation Impact**
 
+**For Weekly/Monthly (Per-Installment):**
 When grace is extended, penalties start calculating from the NEW date:
 
 ```
@@ -41,12 +107,28 @@ Due Date: Jan 7
 Grace Period: 2 days (until Jan 9)
 Penalty Starts: Jan 10
 
-With 3-Day Extension:
+With 3-Day Extension (Weekly/Monthly):
 Due Date: Jan 7
 Original Grace: 2 days
 Extension: 3 days
 Total Grace: 5 days (until Jan 12)
 Penalty Starts: Jan 13
+```
+
+**For Daily (Loan-Wide):**
+Extensions protect grace from being consumed on those days:
+
+```
+Loan Grace: 2 days total for month
+
+Day 1-4: Paid on time → Grace: 2 days
+Day 5: Customer miss → Grace: 1 day (consumed)
+Day 6-9: Paid on time → Grace: 1 day
+Day 10-12: Collector can't come (extension) → Grace: 1 day (protected, not consumed)
+Day 13: Customer miss → Grace: 0 days (consumed)
+Day 14-21: Paid on time → Grace: 0 days (exhausted)
+Day 22-24: Collector can't come (extension) → Grace: 0 days, NO penalty (collector fault)
+Day 25: Customer miss → Grace: 0 days, PENALTY charged (grace exhausted, customer fault)
 ```
 
 ## Database Schema

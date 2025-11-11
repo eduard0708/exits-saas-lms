@@ -424,6 +424,10 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
     this.router.navigate(['/collector/visit', customerId]);
   }
 
+  navigateToGraceExtension() {
+    this.router.navigate(['/collector/grace-extension']);
+  }
+
   async loadRouteData() {
     this.loading.set(true);
     try {
@@ -1379,11 +1383,11 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
 
   /**
    * Check if grace can be extended for a loan
+   * For daily schedules, always show the button so collector can extend when they can't come
    */
   canExtendGrace(loan: RouteCustomer): boolean {
     return loan.status !== 'collected' && 
-           loan.outstandingBalance > 0 &&
-           (loan.nextInstallment !== null || (loan.daysOverdue !== undefined && loan.daysOverdue > 0));
+           loan.outstandingBalance > 0;
   }
 
   /**
@@ -1392,15 +1396,28 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
   async extendGracePeriod(loan: RouteCustomer, event: Event) {
     event.stopPropagation();
     
-    const details = this.getLoanDetailsFromCache(loan.loanId);
+    // Auto-load loan details if not already loaded
+    let details = this.getLoanDetailsFromCache(loan.loanId);
     if (!details || !details.schedule) {
-      const toast = await this.toastController.create({
-        message: 'Please expand loan details first',
-        duration: 2000,
-        color: 'warning'
+      const loading = await this.toastController.create({
+        message: 'Loading loan details...',
+        duration: 2000
       });
-      await toast.present();
-      return;
+      await loading.present();
+      
+      await this.loadLoanDetails(loan.loanId);
+      details = this.getLoanDetailsFromCache(loan.loanId);
+      await loading.dismiss();
+      
+      if (!details || !details.schedule) {
+        const toast = await this.toastController.create({
+          message: 'Failed to load loan details',
+          duration: 2000,
+          color: 'danger'
+        });
+        await toast.present();
+        return;
+      }
     }
 
     // Get eligible installments (overdue, pending, or partially paid)
@@ -1428,7 +1445,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
    */
   async showGraceExtensionModal(loan: RouteCustomer, installments: any[]) {
     const alert = await this.alertController.create({
-      header: '⏰ Extend Grace Period',
+      header: 'Extend Grace Period',
       subHeader: loan.customerName,
       message: `Current grace: ${loan.gracePeriodDays || 0} days<br>Eligible installments: ${installments.length}`,
       inputs: [
@@ -1443,44 +1460,44 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
         {
           name: 'reason',
           type: 'radio',
-          label: '🌧️ Heavy rain/flood',
+          label: 'Heavy rain/flood',
           value: 'weather',
           checked: true
         },
         {
           name: 'reason',
           type: 'radio',
-          label: '🏖️ Holiday/weekend',
+          label: 'Holiday/weekend',
           value: 'holiday'
         },
         {
           name: 'reason',
           type: 'radio',
-          label: '🚑 Customer emergency',
+          label: 'Customer emergency',
           value: 'customer_emergency'
         },
         {
           name: 'reason',
           type: 'radio',
-          label: '🤒 Collector emergency',
+          label: 'Collector emergency',
           value: 'collector_emergency'
         },
         {
           name: 'reason',
           type: 'radio',
-          label: '🚧 Road/infrastructure',
+          label: 'Road/infrastructure',
           value: 'infrastructure'
         },
         {
           name: 'reason',
           type: 'radio',
-          label: '🤝 Goodwill',
+          label: 'Goodwill',
           value: 'goodwill'
         },
         {
           name: 'reason',
           type: 'radio',
-          label: '📝 Other',
+          label: 'Other',
           value: 'other'
         },
         {
@@ -1639,7 +1656,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
         await toast.present();
       } else {
         const toast = await this.toastController.create({
-          message: `✅ Grace extended by ${extensionDays} days for ${installments.length} installment(s)`,
+          message: `Grace extended by ${extensionDays} days for ${installments.length} installment(s)`,
           duration: 4000,
           color: 'success',
           icon: 'checkmark-circle-outline'
@@ -1687,28 +1704,28 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
     }
 
     const alert = await this.alertController.create({
-      header: '⚠️ Cannot Collect Today',
+      header: 'Cannot Collect Today',
       message: `Extend grace period for ${eligibleLoans.length} customer(s)`,
       inputs: [
         {
           type: 'radio',
-          label: '🌧️ Heavy rain/typhoon (2 days)',
+          label: 'Heavy rain/typhoon (2 days)',
           value: JSON.stringify({ days: 2, reason: 'weather', detail: 'Heavy rain preventing collection' }),
           checked: true
         },
         {
           type: 'radio',
-          label: '🏖️ Holiday (1 day)',
+          label: 'Holiday (1 day)',
           value: JSON.stringify({ days: 1, reason: 'holiday', detail: 'National/local holiday' })
         },
         {
           type: 'radio',
-          label: '🚧 Road closed (3 days)',
+          label: 'Road closed (3 days)',
           value: JSON.stringify({ days: 3, reason: 'infrastructure', detail: 'Road closed due to construction/repair' })
         },
         {
           type: 'radio',
-          label: '🤒 Collector sick (2 days)',
+          label: 'Collector sick (2 days)',
           value: JSON.stringify({ days: 2, reason: 'collector_emergency', detail: 'Collector unable to work due to illness' })
         }
       ],
@@ -1809,9 +1826,9 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
       const alert = await this.alertController.create({
         header: 'Bulk Grace Extension Complete',
         message: `
-          ✅ Success: ${successCount}
-          ⏳ Pending Approval: ${approvalNeededCount}
-          ❌ Failed: ${failCount}
+          Success: ${successCount}
+          Pending Approval: ${approvalNeededCount}
+          Failed: ${failCount}
         `,
         buttons: ['OK']
       });

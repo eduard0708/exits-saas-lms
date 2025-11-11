@@ -10,6 +10,8 @@ import { CollectorApplicationsService } from './services/collector-applications.
 import { CollectorDisbursementsService } from './services/collector-disbursements.service';
 import { CollectorPenaltyWaiversService } from './services/collector-penalty-waivers.service';
 import { CollectorVisitsService } from './services/collector-visits.service';
+import { CollectorGraceExtensionsService } from './services/collector-grace-extensions.service';
+import { GraceExtensionsController } from './grace-extensions.controller';
 import { CollectorGuard } from '../common/guards/collector.guard';
 import { KnexModule } from '../database/knex.module';
 import { RbacModule } from '../rbac/rbac.module';
@@ -22,6 +24,7 @@ import { RbacModule } from '../rbac/rbac.module';
     CollectorsController,
     CollectorActionsController,
     CollectorManagementController,
+    GraceExtensionsController,
   ],
   providers: [
     MoneyLoanService,
@@ -30,6 +33,7 @@ import { RbacModule } from '../rbac/rbac.module';
     CollectorDisbursementsService,
     CollectorPenaltyWaiversService,
     CollectorVisitsService,
+    CollectorGraceExtensionsService,
     CollectorGuard,
   ],
   exports: [MoneyLoanService],

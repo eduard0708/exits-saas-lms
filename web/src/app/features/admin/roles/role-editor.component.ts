@@ -766,6 +766,7 @@ export class RoleEditorComponent implements OnInit {
   { resource: 'money-loan:collection-activities', displayName: '💰 Collector: Activities', description: 'Collection activity tracking', actions: ['create', 'view', 'follow-up', 'escalate'], category: 'tenant', product: 'money-loan' },
   { resource: 'money-loan:collector-management', displayName: '💰 Collector: Management', description: 'Manage collectors (Admin/Manager)', actions: ['read', 'assign-customers', 'set-limits', 'set-targets', 'view-all-performance', 'view-action-logs', 'view-gps-tracking', 'manage'], category: 'tenant', product: 'money-loan' },
   { resource: 'money-loan:collector-notifications', displayName: '💰 Collector: Notifications', description: 'Collector notifications', actions: ['view', 'send-reminder'], category: 'tenant', product: 'money-loan' },
+  { resource: 'money-loan:collector', displayName: '💰 Collector: Grace Extensions', description: 'Extend grace periods for customers (bulk or individual)', actions: ['grace-extension'], category: 'tenant', product: 'money-loan' },
 
     // BNPL & Pawnshop
     { resource: 'bnpl', displayName: 'ðŸ›’ Buy Now Pay Later', description: 'BNPL management', actions: ['read', 'create', 'update', 'manage'], category: 'tenant', product: 'bnpl' },
@@ -1153,7 +1154,7 @@ export class RoleEditorComponent implements OnInit {
       'money-loan:collector-management',
       'money-loan:collector-notifications'
     ];
-    const targetGroups = this.resourceGroups.filter(group => 
+    const targetGroups = this.resourceGroups.filter(group =>
       collectorResources.includes(group.resource)
     );
     const allSelected = this.areAllCollectorSelected();
