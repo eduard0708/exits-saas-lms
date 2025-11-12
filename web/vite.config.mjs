@@ -2,9 +2,21 @@ import { defineConfig } from 'vite';
 import angular from '@analogjs/vite-plugin-angular';
 import tailwindcss from 'tailwindcss';
 import autoprefixer from 'autoprefixer';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export default defineConfig({
   plugins: [angular()],
+  resolve: {
+    alias: {
+      '@shared/models': resolve(__dirname, '../libs/shared-models/src/index.ts'),
+      '@shared/api': resolve(__dirname, '../libs/shared-api/src/index.ts'),
+      '@shared/ui': resolve(__dirname, '../libs/shared-ui/src/index.ts')
+    }
+  },
   server: {
     port: 4200,
     open: false,

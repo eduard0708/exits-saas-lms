@@ -4,8 +4,8 @@
 
 This document provides a complete reference of all permissions in the system, organized by resource and scope (System vs Tenant).
 
-**Last Updated:** November 11, 2025  
-**Total Permissions:** 175 (active keys)
+**Last Updated:** November 12, 2025  
+**Total Permissions:** 180 (active keys)
 
 ---
 
@@ -388,6 +388,29 @@ Each permission follows the format: `{resource}:{action}`
 
 > **Note:** This permission allows collectors to extend grace periods when they are unable to collect on scheduled days or for special circumstances. Supports bulk operations (all customers, selected customers, or date-based).
 
+### **Cashier: Cash Float Management (5)**
+| Permission Key | Resource | Action | Description |
+|----------------|----------|--------|-------------|
+| `money-loan:cash:issue` | money-loan-cash | issue | Issue morning cash float to collectors (10K cash cycle) |
+| `money-loan:cash:receive` | money-loan-cash | receive | Confirm end-of-day handover receipt from collectors |
+| `money-loan:cash:read` | money-loan-cash | read | View cash float history, pending confirmations, and balance monitor |
+| `money-loan:cash:manage` | money-loan-cash | manage | Full cash management access (issue, receive, monitor, history) |
+| `money-loan:collector` | money-loan-collector | operate | Collector cash operations (confirm float, record transactions, handover) |
+
+> **Note:** The 10K Cash Cycle system manages the daily cash flow from cashier to collector and back. Cashiers issue morning floats, collectors confirm receipt, use cash for disbursements/collections, and return remaining cash at end of day. All transactions are GPS-tracked and dual-confirmed for audit compliance.
+
+**Cash Float Workflow:**
+1. **Morning:** Cashier issues float → Collector confirms receipt
+2. **Field:** Collector disburses loans (cash deducted) & collects payments (cash added)
+3. **Evening:** Collector initiates handover → Cashier confirms receipt
+4. **Audit:** Full transaction history with GPS coordinates and timestamps
+
+**Safety Rules:**
+- Disbursement amount ≤ on-hand cash AND ≤ daily cap
+- Zero cash kept overnight (full handover required)
+- Variance detection with mandatory explanation
+- Real-time balance tracking per collector
+
 > **Removed Legacy Keys:** The broad tenant permissions `loans:*` and `payments:*` (including `money-loan:read/create/update/approve/payments`) were retired in November 2025. They are no longer present in the database and should not be assigned going forward.
 
 ---
@@ -438,7 +461,7 @@ Each permission follows the format: `{resource}:{action}`
 | • Billing | 5 |
 | • Reports | 6 |
 | • Recycle Bin | 3 |
-| **Money Loan Product** | 114 permissions |
+| **Money Loan Product** | 119 permissions |
 | • Overview | 6 |
 | • Customers | 5 |
 | • Loans | 9 |
@@ -461,9 +484,10 @@ Each permission follows the format: `{resource}:{action}`
 | • Collector: Management (Admin/Manager) | 8 |
 | • Collector: Notifications | 2 |
 | • Collector: Grace Extensions | 1 |
+| • Cashier: Cash Float Management | 5 |
 | **BNPL Product** | 4 permissions |
 | **Pawnshop Product** | 4 permissions |
-| **TOTAL** | **175 permissions** *(active keys)* |
+| **TOTAL** | **180 permissions** *(active keys)* |
 
 ---
 
@@ -500,7 +524,16 @@ Each permission follows the format: `{resource}:{action}`
 - Performance reports (5)
 - Collection activities (4)
 - Notifications (2)
-- **Total: 44 collector-specific permissions**
+- Cash operations (1) - `money-loan:collector` permission
+- **Total: 45 collector-specific permissions**
+
+### **Money Loan Cashier** (Tenant Space)
+- Cash float issuance (1) - `money-loan:cash:issue`
+- Cash handover receipt (1) - `money-loan:cash:receive`
+- Cash monitoring & history (1) - `money-loan:cash:read`
+- Full cash management (1) - `money-loan:cash:manage` (includes all above)
+- **Total: 4 cashier-specific permissions**
+- **Workflow:** Morning float issuance → End-of-day handover confirmation → Audit trail
 
 ### **Product-Specific Roles** (Tenant Space)
 - Assigned via `employee_product_access` table
@@ -535,6 +568,6 @@ The following broad permissions are deprecated in favor of granular permissions:
 
 ---
 
-**Document Version:** 3.0  
-**Database Status:** ✅ All permissions seeded (including 52 new collector permissions)  
-**Total Count:** 174 active permissions
+**Document Version:** 3.1  
+**Database Status:** ✅ All permissions seeded (including 52 collector + 5 cashier permissions)  
+**Total Count:** 180 active permissions

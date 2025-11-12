@@ -551,4 +551,59 @@ export class CollectorCashService {
       })
       .orderBy('u.first_name', 'asc');
   }
+
+  /**
+   * Get pending floats for cashier (floats awaiting collector confirmation)
+   */
+  async getPendingFloatsForCashier(tenantId: number) {
+    const knex = this.knexService.instance;
+
+    return await knex('money_loan_cash_floats as cf')
+      .select(
+        'cf.*',
+        'collector.first_name as collector_first_name',
+        'collector.last_name as collector_last_name',
+        'collector.email as collector_email'
+      )
+      .leftJoin('users as collector', 'cf.collector_id', 'collector.id')
+      .where({
+        'cf.tenant_id': tenantId,
+        'cf.type': 'issuance',
+        'cf.status': 'pending',
+      })
+      .orderBy('cf.created_at', 'desc');
+  }
+
+  /**
+   * Get float issuance history
+   */
+  async getFloatHistory(tenantId: number, fromDate?: string, toDate?: string) {
+    const knex = this.knexService.instance;
+
+    let query = knex('money_loan_cash_floats as cf')
+      .select(
+        'cf.*',
+        'collector.first_name as collector_first_name',
+        'collector.last_name as collector_last_name',
+        'cashier.first_name as cashier_first_name',
+        'cashier.last_name as cashier_last_name'
+      )
+      .leftJoin('users as collector', 'cf.collector_id', 'collector.id')
+      .leftJoin('users as cashier', 'cf.cashier_id', 'cashier.id')
+      .where({
+        'cf.tenant_id': tenantId,
+        'cf.type': 'issuance',
+      })
+      .orderBy('cf.created_at', 'desc');
+
+    if (fromDate) {
+      query = query.where('cf.float_date', '>=', fromDate);
+    }
+
+    if (toDate) {
+      query = query.where('cf.float_date', '<=', toDate);
+    }
+
+    return await query;
+  }
 }

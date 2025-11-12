@@ -232,6 +232,18 @@ interface ResourceGroup {
                 {{ areAllCollectorSelected() ? '❌ Unselect Collector' : '📱 Select Collector' }}
               </button>
 
+              <!-- Toggle Cashier permissions (subset of Money Loan) -->
+              <button
+                *ngIf="roleSpace !== 'customer' && (filterState().space === 'all' || filterState().space === 'tenant')"
+                (click)="toggleSelectCashier()"
+                [disabled]="isReadOnlyMode()"
+                [class]="areAllCashierSelected()
+                  ? 'w-full text-left rounded bg-red-50 px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-300 transition'
+                  : 'w-full text-left rounded bg-teal-50 px-3 py-2 text-xs font-medium text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:text-teal-300 transition disabled:opacity-50 disabled:cursor-not-allowed'"
+              >
+                {{ areAllCashierSelected() ? '❌ Unselect Cashier' : '💵 Select Cashier' }}
+              </button>
+
               <!-- Toggle BNPL permissions -->
               <button
                 *ngIf="roleSpace !== 'customer' && (filterState().space === 'all' || filterState().space === 'tenant')"
@@ -768,6 +780,10 @@ export class RoleEditorComponent implements OnInit {
   { resource: 'money-loan:collector-notifications', displayName: '💰 Collector: Notifications', description: 'Collector notifications', actions: ['view', 'send-reminder'], category: 'tenant', product: 'money-loan' },
   { resource: 'money-loan:collector', displayName: '💰 Collector: Grace Extensions', description: 'Extend grace periods for customers (bulk or individual)', actions: ['grace-extension'], category: 'tenant', product: 'money-loan' },
 
+  // Cashier Cash Float Management (10K Cash Cycle)
+  { resource: 'money-loan-cash', displayName: '💵 Cashier: Cash Float Management', description: '10K cash cycle - Issue floats and confirm handovers', actions: ['issue', 'receive', 'read', 'manage'], category: 'tenant', product: 'money-loan' },
+  { resource: 'money-loan-collector', displayName: '💵 Cashier: Collector Operations', description: 'Collector cash operations (confirm float, record transactions, handover)', actions: ['operate'], category: 'tenant', product: 'money-loan' },
+
     // BNPL & Pawnshop
     { resource: 'bnpl', displayName: 'ðŸ›’ Buy Now Pay Later', description: 'BNPL management', actions: ['read', 'create', 'update', 'manage'], category: 'tenant', product: 'bnpl' },
     { resource: 'pawnshop', displayName: 'ðŸª Pawnshop', description: 'Pawnshop operations', actions: ['read', 'create', 'update', 'manage'], category: 'tenant', product: 'pawnshop' },
@@ -1216,6 +1232,42 @@ export class RoleEditorComponent implements OnInit {
     this.setSpaceFilter('customer');
   }
 
+  toggleSelectCashier(): void {
+    const perms = new Set<string>();
+    const cashierResources = [
+      'money-loan-cash',
+      'money-loan-collector'
+    ];
+    const targetGroups = this.resourceGroups.filter(group =>
+      cashierResources.includes(group.resource)
+    );
+    const allSelected = this.areAllCashierSelected();
+
+    // Preserve all existing permissions
+    this.selectedPermissions().forEach(permKey => {
+      const { resource } = this.parsePermissionKey(permKey);
+      if (!resource || !cashierResources.includes(resource)) {
+        perms.add(permKey);
+      }
+    });
+
+    // If not all selected, select all cashier permissions
+    if (!allSelected) {
+      targetGroups.forEach(group => {
+        group.actions.forEach(action => {
+          perms.add(`${group.resource}:${action}`);
+        });
+      });
+    }
+
+    this.ensureEssentialTenantPermissions(perms);
+    this.selectedPermissions.set(perms);
+
+    // Focus filters on money-loan product for immediate visibility
+    this.setSpaceFilter('tenant');
+    this.setProductFilter('money-loan');
+  }
+
   // Check if all permissions are selected
   areAllSelected(): boolean {
     let totalAvailable = 0;
@@ -1330,6 +1382,29 @@ export class RoleEditorComponent implements OnInit {
     });
 
     return totalCustomerPerms > 0 && selectedCustomerPerms === totalCustomerPerms;
+  }
+
+  areAllCashierSelected(): boolean {
+    const cashierResources = [
+      'money-loan-cash',
+      'money-loan-collector'
+    ];
+
+    let totalPerms = 0;
+    let selectedPerms = 0;
+
+    this.resourceGroups.forEach(group => {
+      if (cashierResources.includes(group.resource)) {
+        totalPerms += group.actions.length;
+        group.actions.forEach(action => {
+          if (this.selectedPermissions().has(`${group.resource}:${action}`)) {
+            selectedPerms++;
+          }
+        });
+      }
+    });
+
+    return totalPerms > 0 && selectedPerms === totalPerms;
   }
 
   // Legacy methods (kept for compatibility)

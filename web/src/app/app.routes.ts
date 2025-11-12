@@ -244,6 +244,47 @@ export const routes: Routes = [
         path: 'collectors/targets',
         loadComponent: () => import('./features/platforms/money-loan/admin/collectors/collector-targets.component').then(m => m.CollectorTargetsComponent)
       },
+      // Cashier Management
+      {
+        path: 'cashier',
+        loadComponent: () => import('./features/platforms/money-loan/admin/cashier/cashier-dashboard.component').then(m => m.CashierDashboardComponent)
+      },
+      {
+        path: 'cashier/issue-float',
+        loadComponent: () => import('./features/platforms/money-loan/admin/cashier/issue-float.component').then(m => m.IssueFloatComponent)
+      },
+      {
+        path: 'cashier/pending-confirmations',
+        loadComponent: () => import('./features/platforms/money-loan/admin/cashier/pending-confirmations.component').then(m => m.PendingConfirmationsComponent)
+      },
+      {
+        path: 'cashier/pending-handovers',
+        loadComponent: () => import('./features/platforms/money-loan/admin/cashier/pending-handovers.component').then(m => m.PendingHandoversComponent)
+      },
+      {
+        path: 'cashier/balance-monitor',
+        loadComponent: () => import('./features/platforms/money-loan/admin/cashier/balance-monitor.component').then(m => m.BalanceMonitorComponent)
+      },
+      {
+        path: 'cashier/float-history',
+        loadComponent: () => import('./features/platforms/money-loan/admin/cashier/float-history.component').then(m => m.FloatHistoryComponent)
+      },
+      {
+        path: 'cashier/reports',
+        loadComponent: () => import('./features/platforms/money-loan/admin/cashier/reports-dashboard.component').then(m => m.ReportsDashboardComponent)
+      },
+      {
+        path: 'cashier/reports/customers',
+        loadComponent: () => import('./features/platforms/money-loan/admin/cashier/customer-reports.component').then(m => m.CustomerReportsComponent)
+      },
+      {
+        path: 'cashier/reports/collectors',
+        loadComponent: () => import('./features/platforms/money-loan/admin/cashier/collector-reports.component').then(m => m.CollectorReportsComponent)
+      },
+      {
+        path: 'cashier/reports/cashiers',
+        loadComponent: () => import('./features/platforms/money-loan/admin/cashier/cashier-reports.component').then(m => m.CashierReportsComponent)
+      },
       // Audit & Notifications
       {
         path: 'audit-log',

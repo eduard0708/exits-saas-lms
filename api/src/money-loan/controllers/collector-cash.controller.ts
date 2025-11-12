@@ -41,7 +41,7 @@ export class CollectorCashController {
 
   /**
    * Confirm handover receipt from collector (End of day)
-   * PUT /api/money-loan/cash/confirm-handover
+   * PUT /api/money-loan/cash/confirm-handover (old format)
    */
   @Put('confirm-handover')
   @Permissions('money-loan:cash:receive')
@@ -59,6 +59,79 @@ export class CollectorCashController {
   }
 
   /**
+   * Confirm handover receipt from collector (End of day) - with ID param
+   * POST /api/money-loan/cash/confirm-handover/:id
+   */
+  @Post('confirm-handover/:id')
+  @Permissions('money-loan:cash:receive')
+  async confirmHandoverById(
+    @Req() req: any, 
+    @Param('id') id: string,
+    @Body() body: { confirmed: boolean; rejection_reason?: string }
+  ) {
+    const handover = await this.collectorCashService.confirmHandover(
+      req.user.tenantId,
+      req.user.id,
+      {
+        handoverId: parseInt(id),
+        actualAmount: 0, // Will be fetched from handover record
+        ...body
+      } as any
+    );
+    return {
+      success: true,
+      message: body.confirmed 
+        ? 'Handover confirmed successfully'
+        : 'Handover rejected',
+      data: handover,
+    };
+  }
+
+  /**
+   * Get cashier dashboard stats
+   * GET /api/money-loan/cash/cashier-stats
+   */
+  @Get('cashier-stats')
+  @Permissions('money-loan:cash:read')
+  async getCashierStats(@Req() req: any) {
+    const status = await this.collectorCashService.getCollectorsCashStatus(
+      req.user.tenantId
+    );
+    
+    const totalFloat = status.reduce((sum, s) => sum + (s.opening_float || 0), 0);
+    const totalOnHand = status.reduce((sum, s) => sum + (s.on_hand_cash || 0), 0);
+    const pendingHandovers = status.filter(s => s.has_pending_handover).length;
+    const activeCollectors = status.filter(s => s.on_hand_cash > 0).length;
+
+    return {
+      success: true,
+      data: {
+        total_float_issued: totalFloat,
+        total_on_hand: totalOnHand,
+        pending_handovers: pendingHandovers,
+        active_collectors: activeCollectors,
+        collectors: status
+      }
+    };
+  }
+
+  /**
+   * Get pending confirmations (floats awaiting collector receipt)
+   * GET /api/money-loan/cash/pending-confirmations
+   */
+  @Get('pending-confirmations')
+  @Permissions('money-loan:cash:read')
+  async getPendingConfirmations(@Req() req: any) {
+    const floats = await this.collectorCashService.getPendingFloatsForCashier(
+      req.user.tenantId
+    );
+    return {
+      success: true,
+      data: floats,
+    };
+  }
+
+  /**
    * Get pending handovers awaiting confirmation
    * GET /api/money-loan/cash/pending-handovers
    */
@@ -72,10 +145,39 @@ export class CollectorCashController {
       req.user.tenantId,
       collectorId ? parseInt(collectorId) : undefined
     );
-    return {
-      success: true,
-      data: handovers,
-    };
+    return handovers;
+  }
+
+  /**
+   * Get balance monitor (real-time collector balances)
+   * GET /api/money-loan/cash/balance-monitor
+   */
+  @Get('balance-monitor')
+  @Permissions('money-loan:cash:read')
+  async getBalanceMonitor(@Req() req: any) {
+    const balances = await this.collectorCashService.getCollectorsCashStatus(
+      req.user.tenantId
+    );
+    return balances;
+  }
+
+  /**
+   * Get float issuance history
+   * GET /api/money-loan/cash/float-history
+   */
+  @Get('float-history')
+  @Permissions('money-loan:cash:read')
+  async getFloatHistory(
+    @Req() req: any,
+    @Query('from_date') fromDate?: string,
+    @Query('to_date') toDate?: string
+  ) {
+    const history = await this.collectorCashService.getFloatHistory(
+      req.user.tenantId,
+      fromDate,
+      toDate
+    );
+    return history;
   }
 
   /**
@@ -99,6 +201,46 @@ export class CollectorCashController {
   }
 
   // ========== COLLECTOR OPERATIONS ==========
+
+  /**
+   * Get collector stats for mobile dashboard
+   * GET /api/money-loan/cash/collector/:collectorId/stats
+   */
+  @Get('collector/:collectorId/stats')
+  @Permissions('money-loan:collector', 'money-loan:cash:read')
+  async getCollectorStats(
+    @Req() req: any,
+    @Param('collectorId') collectorId: string
+  ) {
+    const targetCollectorId = parseInt(collectorId);
+
+    // If not querying own stats, require admin permission
+    if (targetCollectorId !== req.user.id && !req.user.permissions?.includes('money-loan:cash:read')) {
+      return {
+        success: false,
+        message: 'Unauthorized to view other collectors stats',
+      };
+    }
+
+    const balance = await this.collectorCashService.getCurrentBalance(
+      req.user.tenantId,
+      targetCollectorId
+    );
+
+    return {
+      success: true,
+      data: {
+        on_hand_cash: balance.currentBalance,
+        daily_cap: balance.dailyCap,
+        available_for_disbursement: balance.availableForDisbursement,
+        total_collections: balance.totalCollections,
+        total_disbursements: balance.totalDisbursements,
+        opening_float: balance.openingFloat,
+        is_float_confirmed: balance.isFloatConfirmed,
+        is_day_closed: balance.isDayClosed,
+      }
+    };
+  }
 
   /**
    * Confirm float receipt (Collector accepts float)

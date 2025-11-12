@@ -278,6 +278,48 @@ import { AuthService } from '../../../../core/services/auth.service';
             }
           </div>
 
+          <!-- Cashier -->
+          <div class="space-y-1">
+            <button (click)="toggleSection('cashier')"
+                    class="w-full flex items-center justify-between px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+              <div class="flex items-center gap-3">
+                <span class="text-xl">💰</span>
+                <span class="font-medium">Cashier</span>
+              </div>
+              <svg class="w-4 h-4 transition-transform" [class.rotate-180]="expandedSections().cashier" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            @if (expandedSections().cashier) {
+              <div class="ml-8 space-y-1">
+                <a routerLink="/platforms/money-loan/dashboard/cashier" routerLinkActive="!text-gray-900 dark:!text-white bg-gray-100 dark:bg-gray-700"
+                   class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                  📊 Dashboard
+                </a>
+                <a routerLink="/platforms/money-loan/dashboard/cashier/issue-float" routerLinkActive="!text-gray-900 dark:!text-white bg-gray-100 dark:bg-gray-700"
+                   class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                  💵 Issue Float
+                </a>
+                <a routerLink="/platforms/money-loan/dashboard/cashier/pending-handovers" routerLinkActive="!text-gray-900 dark:!text-white bg-gray-100 dark:bg-gray-700"
+                   class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                  🤝 Pending Handovers
+                </a>
+                <a routerLink="/platforms/money-loan/dashboard/cashier/balance-monitor" routerLinkActive="!text-gray-900 dark:!text-white bg-gray-100 dark:bg-gray-700"
+                   class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                  📈 Balance Monitor
+                </a>
+                <a routerLink="/platforms/money-loan/dashboard/cashier/pending-confirmations" routerLinkActive="!text-gray-900 dark:!text-white bg-gray-100 dark:bg-gray-700"
+                   class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                  ⏳ Pending Confirmations
+                </a>
+                <a routerLink="/platforms/money-loan/dashboard/cashier/reports" routerLinkActive="!text-gray-900 dark:!text-white bg-gray-100 dark:bg-gray-700"
+                   class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                  📊 Reports
+                </a>
+              </div>
+            }
+          </div>
+
           <!-- KYC Verification -->
           <div class="space-y-1">
             <button (click)="toggleSection('kyc')"
@@ -465,7 +507,7 @@ import { AuthService } from '../../../../core/services/auth.service';
           <div class="flex items-center gap-4">
             <!-- Dev Info Icon -->
             <app-dev-info />
-            
+
             <div class="relative">
               <button
                 (click)="toggleUserMenu()"
@@ -546,6 +588,7 @@ export class MoneyLoanLayoutComponent {
     interest: false,
     collections: false,
     collectors: false,
+    cashier: false,
     kyc: false,
     reports: false,
     settings: false
