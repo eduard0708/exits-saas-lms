@@ -87,6 +87,37 @@ const routes: Routes = [
     component: PaymentProcessingComponent,
     data: { title: 'Process Payment', permission: 'money_loan:payments:create' }
   },
+  // Cashier routes
+  {
+    path: 'cashier',
+    loadComponent: () => import('../admin/cashier/cashier-dashboard.component').then(m => m.CashierDashboardComponent),
+    data: { title: 'Cashier Dashboard', permission: 'money_loan:cash:manage' }
+  },
+  {
+    path: 'cashier/issue-float',
+    loadComponent: () => import('../admin/cashier/issue-float.component').then(m => m.IssueFloatComponent),
+    data: { title: 'Issue Cash Float', permission: 'money_loan:cash:manage' }
+  },
+  {
+    path: 'cashier/pending-confirmations',
+    loadComponent: () => import('../admin/cashier/pending-confirmations.component').then(m => m.PendingConfirmationsComponent),
+    data: { title: 'Pending Confirmations', permission: 'money_loan:cash:manage' }
+  },
+  {
+    path: 'cashier/pending-handovers',
+    loadComponent: () => import('../admin/cashier/pending-handovers.component').then(m => m.PendingHandoversComponent),
+    data: { title: 'Pending Handovers', permission: 'money_loan:cash:manage' }
+  },
+  {
+    path: 'cashier/balance-monitor',
+    loadComponent: () => import('../admin/cashier/balance-monitor.component').then(m => m.BalanceMonitorComponent),
+    data: { title: 'Cash Balance Monitor', permission: 'money_loan:cash:manage' }
+  },
+  {
+    path: 'cashier/history',
+    loadComponent: () => import('../admin/cashier/float-history.component').then(m => m.FloatHistoryComponent),
+    data: { title: 'Float History', permission: 'money_loan:cash:manage' }
+  },
   // Configuration routes
   {
     path: 'config',

@@ -5,6 +5,11 @@
   "compilerOptions": {
     "baseUrl": "./",
     "outDir": "./dist/out-tsc",
+    "paths": {
+      "@shared/models": ["../libs/shared-models/src/index.ts"],
+      "@shared/api": ["../libs/shared-api/src/index.ts"],
+      "@shared/ui": ["../libs/shared-ui/src/index.ts"]
+    },
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "noImplicitOverride": true,

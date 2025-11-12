@@ -38,6 +38,7 @@ import {
 } from '../../core/services/collector.service';
 import { AuthService } from '../../core/services/auth.service';
 import { CollectorTopBarComponent } from '../../shared/components/collector-top-bar.component';
+import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.component';
 
 @Component({
   selector: 'app-collector-dashboard',
@@ -50,6 +51,7 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
     IonIcon,
     IonSkeletonText,
     CollectorTopBarComponent,
+    CashBalanceWidgetComponent,
   ],
   template: `
     <ion-content [fullscreen]="true" class="main-content">
@@ -105,6 +107,9 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
                 </div>
               </div>
             </div>
+
+            <!-- Cash Balance Widget -->
+            <app-cash-balance-widget></app-cash-balance-widget>
 
             <div class="progress-card">
               <div class="card-title">📈 Daily Progress</div>

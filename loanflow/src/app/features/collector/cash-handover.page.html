@@ -1,4 +1,4 @@
-<ion-header></ion-header>
+<ion-header>
   <ion-toolbar color="primary">
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/collector/dashboard"></ion-back-button>
@@ -76,7 +76,7 @@
             type="number"
             [(ngModel)]="actualHandover"
             placeholder="0.00"
-            [disabled]="balance()!.isDayClosed"
+            [disabled]="balance()!.status === 'inactive'"
             inputmode="decimal">
           </ion-input>
           <ion-note slot="helper">
@@ -89,7 +89,7 @@
           fill="outline" 
           size="small"
           (click)="setExpectedAmount()"
-          [disabled]="balance()!.isDayClosed">
+          [disabled]="balance()!.status === 'inactive'">
           <ion-icon name="calculator-outline" slot="start"></ion-icon>
           Use Expected Amount
         </ion-button>
@@ -149,7 +149,7 @@
 
     <!-- Submit Button -->
     <div class="action-buttons">
-      @if (balance()!.isDayClosed) {
+      @if (balance()!.status === 'inactive') {
         <ion-badge color="medium" class="closed-badge">
           Day Already Closed
         </ion-badge>
@@ -177,10 +177,7 @@
         [isOpen]="true"
         header="⚠️ Variance Detected"
         [message]="'There is a variance of ₱' + formatAmount(Math.abs(variance())) + ' (' + (variance() > 0 ? 'Overage' : 'Shortage') + '). Are you sure you want to proceed?'"
-        [buttons]="[
-          { text: 'Cancel', role: 'cancel', handler: () => cancelHandover() },
-          { text: 'Proceed Anyway', role: 'confirm', handler: () => submitHandover() }
-        ]">
+        [buttons]="alertButtons">
       </ion-alert>
     }
 

@@ -116,6 +116,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/collector/grace-extension.page').then((m) => m.GraceExtensionPage),
       },
       {
+        path: 'cash-float',
+        loadComponent: () => import('./features/collector/cash-float.page').then((m) => m.CashFloatPage),
+      },
+      {
+        path: 'cash-handover',
+        loadComponent: () => import('./features/collector/cash-handover.page').then((m) => m.CashHandoverPage),
+      },
+      {
         path: 'visits',
         loadComponent: () => import('./features/collector/visits.page').then((m) => m.CollectorVisitsPage),
       },

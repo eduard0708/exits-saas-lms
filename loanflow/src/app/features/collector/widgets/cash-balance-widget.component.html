@@ -1,4 +1,4 @@
-<ion-card class="cash-balance-widget" [class.has-pending]="pendingFloatsCount() > 0"></ion-card>
+<ion-card class="cash-balance-widget" [class.has-pending]="pendingFloatsCount() > 0">
   <!-- Pending Float Alert -->
   @if (pendingFloatsCount() > 0) {
     <div class="pending-alert" (click)="navigateToFloatPage()">

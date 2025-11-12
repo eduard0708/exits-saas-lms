@@ -1,4 +1,4 @@
-<ion-header></ion-header>
+<ion-header>
   <ion-toolbar color="primary">
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/collector/dashboard"></ion-back-button>
@@ -13,13 +13,13 @@
     <ion-card class="balance-card">
       <ion-card-header>
         <ion-card-title>Today's Cash Balance</ion-card-title>
-        <ion-card-subtitle>{{ formatDate(currentBalance()!.balanceDate) }}</ion-card-subtitle>
+        <ion-card-subtitle>{{ currentBalance()!.balanceDate ? formatDate(currentBalance()!.balanceDate!) : 'No date available' }}</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
         <div class="balance-grid">
           <div class="balance-item">
             <div class="balance-label">On-Hand Cash</div>
-            <div class="balance-value primary">₱{{ formatAmount(currentBalance()!.currentBalance) }}</div>
+            <div class="balance-value primary">₱{{ formatAmount(currentBalance()!.onHandCash) }}</div>
           </div>
           <div class="balance-item">
             <div class="balance-label">Daily Cap</div>
@@ -46,18 +46,18 @@
           </div>
           <div class="summary-row total">
             <span><strong>Current Balance:</strong></span>
-            <span><strong>₱{{ formatAmount(currentBalance()!.currentBalance) }}</strong></span>
+            <span><strong>₱{{ formatAmount(currentBalance()!.onHandCash) }}</strong></span>
           </div>
         </div>
 
-        @if (currentBalance()!.isFloatConfirmed) {
+        @if (currentBalance()!.floatConfirmed) {
           <ion-chip color="success">
             <ion-icon name="checkmark-circle"></ion-icon>
             <ion-text>Float Confirmed</ion-text>
           </ion-chip>
         }
         
-        @if (currentBalance()!.isDayClosed) {
+        @if (currentBalance()!.status === 'inactive') {
           <ion-chip color="medium">
             <ion-icon name="warning-outline"></ion-icon>
             <ion-text>Day Closed</ion-text>

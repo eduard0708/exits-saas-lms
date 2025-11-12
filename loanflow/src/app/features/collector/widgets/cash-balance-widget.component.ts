@@ -105,7 +105,7 @@ export class CashBalanceWidgetComponent implements OnInit {
     return (balance.currentBalance / balance.openingFloat) * 100;
   }
 
-  get balanceStatusColor(): string {
+  balanceStatusColor(): string {
     const percentage = this.balancePercentage;
     if (percentage >= 75) return 'success';
     if (percentage >= 40) return 'warning';

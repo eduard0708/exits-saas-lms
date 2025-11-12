@@ -20,36 +20,16 @@ import {
   IonChip,
   IonBadge,
 } from '@ionic/angular/standalone';
-import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { addIcons } from 'ionicons';
 import { cashOutline, checkmarkCircle, warningOutline, timeOutline, locationOutline } from 'ionicons/icons';
-
-interface PendingFloat {
-  id: number;
-  amount: number;
-  dailyCap: number;
-  floatDate: string;
-  cashierFirstName: string;
-  cashierLastName: string;
-  createdAt: string;
-  issuanceLatitude?: number;
-  issuanceLongitude?: number;
-  notes?: string;
-}
-
-interface CashBalance {
-  collectorId: number;
-  balanceDate: string;
-  openingFloat: number;
-  totalCollections: number;
-  totalDisbursements: number;
-  currentBalance: number;
-  dailyCap: number;
-  availableForDisbursement: number;
-  isFloatConfirmed: boolean;
-  isDayClosed: boolean;
-}
+import { 
+  CashFloatApiService, 
+  formatCurrency, 
+  formatDate as sharedFormatDate, 
+  formatTime as sharedFormatTime 
+} from '@shared/api';
+import type { PendingFloat, CollectorCashBalance, CashFloat } from '@shared/models';
 
 @Component({
   selector: 'app-cash-float',
@@ -80,13 +60,13 @@ interface CashBalance {
 })
 export class CashFloatPage implements OnInit {
   pendingFloats = signal<PendingFloat[]>([]);
-  currentBalance = signal<CashBalance | null>(null);
+  currentBalance = signal<CollectorCashBalance | null>(null);
   loading = signal(false);
   confirming = signal(false);
   currentLocation = signal<{latitude: number, longitude: number} | null>(null);
 
   constructor(
-    private http: HttpClient,
+    private cashFloatApi: CashFloatApiService,
     private router: Router
   ) {
     addIcons({ cashOutline, checkmarkCircle, warningOutline, timeOutline, locationOutline });
@@ -101,10 +81,21 @@ export class CashFloatPage implements OnInit {
   async loadPendingFloats() {
     this.loading.set(true);
     try {
-      const response: any = await this.http.get('/api/money-loan/cash/pending-floats').toPromise();
-      if (response.success) {
-        this.pendingFloats.set(response.data || []);
-      }
+      // Note: Backend should infer collector ID from auth token
+      // If collector ID is needed, inject AuthService and pass collector ID
+      const data = await this.cashFloatApi.getPendingConfirmations().toPromise();
+      // Map CashFloat to PendingFloat format
+      const pendingFloats: PendingFloat[] = (data || []).map((float: CashFloat) => ({
+        id: float.id!,
+        amount: float.floatAmount!,
+        dailyCap: float.dailyCap!,
+        floatDate: float.floatDate!,
+        cashierFirstName: float.collectorName?.split(' ')[0] || '',
+        cashierLastName: float.collectorName?.split(' ')[1] || '',
+        createdAt: float.issuedAt!,
+        notes: float.notes
+      }));
+      this.pendingFloats.set(pendingFloats);
     } catch (error) {
       console.error('Error loading pending floats:', error);
     } finally {
@@ -114,10 +105,10 @@ export class CashFloatPage implements OnInit {
 
   async loadCurrentBalance() {
     try {
-      const response: any = await this.http.get('/api/money-loan/cash/balance').toPromise();
-      if (response.success) {
-        this.currentBalance.set(response.data);
-      }
+      // TODO: Pass actual collector ID from auth
+      // For now, using 0 as placeholder - backend should use auth token
+      const data = await this.cashFloatApi.getCurrentBalance(0).toPromise();
+      this.currentBalance.set(data || null);
     } catch (error) {
       console.error('Error loading balance:', error);
     }
@@ -142,19 +133,15 @@ export class CashFloatPage implements OnInit {
   async confirmFloat(floatData: PendingFloat) {
     this.confirming.set(true);
     try {
-      const payload: any = {
-        floatId: floatData.id,
-      };
+      const location = this.currentLocation() ? {
+        lat: this.currentLocation()!.latitude,
+        lng: this.currentLocation()!.longitude
+      } : undefined;
 
-      if (this.currentLocation()) {
-        payload.latitude = this.currentLocation()!.latitude;
-        payload.longitude = this.currentLocation()!.longitude;
-      }
-
-      const response: any = await this.http.post('/api/money-loan/cash/confirm-float', payload).toPromise();
+      const response = await this.cashFloatApi.confirmFloatReceipt(floatData.id, location).toPromise();
       
-      if (response.success) {
-        alert(`✅ Float of ₱${this.formatAmount(floatData.amount)} confirmed successfully!`);
+      if (response?.success) {
+        alert(`✅ Float of ₱${formatCurrency(floatData.amount)} confirmed successfully!`);
         await this.loadPendingFloats();
         await this.loadCurrentBalance();
         this.router.navigate(['/collector/dashboard']);
@@ -167,24 +154,10 @@ export class CashFloatPage implements OnInit {
     }
   }
 
-  formatAmount(amount: number): string {
-    return amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
-
-  formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('en-PH', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  }
-
-  formatTime(dateString: string): string {
-    return new Date(dateString).toLocaleTimeString('en-PH', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  }
+  // Utility methods now use shared functions
+  formatAmount = formatCurrency;
+  formatDate = sharedFormatDate;
+  formatTime = sharedFormatTime;
 
   getCashierName(float: PendingFloat): string {
     return `${float.cashierFirstName} ${float.cashierLastName}`.trim();

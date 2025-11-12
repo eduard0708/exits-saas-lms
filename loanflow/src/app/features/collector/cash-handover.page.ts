@@ -23,23 +23,11 @@ import {
   IonBadge,
   IonAlert,
 } from '@ionic/angular/standalone';
-import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { addIcons } from 'ionicons';
 import { cashOutline, checkmarkCircle, warningOutline, calculatorOutline, locationOutline } from 'ionicons/icons';
-
-interface CashBalance {
-  collectorId: number;
-  balanceDate: string;
-  openingFloat: number;
-  totalCollections: number;
-  totalDisbursements: number;
-  currentBalance: number;
-  dailyCap: number;
-  availableForDisbursement: number;
-  isFloatConfirmed: boolean;
-  isDayClosed: boolean;
-}
+import { CashFloatApiService, formatCurrency } from '@shared/api';
+import type { CollectorCashBalance } from '@shared/models';
 
 @Component({
   selector: 'app-cash-handover',
@@ -66,18 +54,23 @@ interface CashBalance {
     IonLabel,
     IonNote,
     IonSpinner,
-    IonText,
     IonBadge,
     IonAlert,
   ],
 })
 export class CashHandoverPage implements OnInit {
-  balance = signal<CashBalance | null>(null);
+  Math = Math; // Expose Math to template
+  balance = signal<CollectorCashBalance | null>(null);
   actualHandover = signal<number>(0);
   loading = signal(false);
   submitting = signal(false);
   showConfirmAlert = signal(false);
   currentLocation = signal<{latitude: number, longitude: number} | null>(null);
+
+  alertButtons = [
+    { text: 'Cancel', role: 'cancel', handler: () => this.cancelHandover() },
+    { text: 'Proceed Anyway', role: 'confirm', handler: () => this.submitHandover() }
+  ];
 
   expectedHandover = computed(() => {
     const bal = this.balance();
@@ -100,7 +93,7 @@ export class CashHandoverPage implements OnInit {
   });
 
   constructor(
-    private http: HttpClient,
+    private cashFloatApi: CashFloatApiService,
     private router: Router
   ) {
     addIcons({ cashOutline, checkmarkCircle, warningOutline, calculatorOutline, locationOutline });
@@ -114,12 +107,11 @@ export class CashHandoverPage implements OnInit {
   async loadBalance() {
     this.loading.set(true);
     try {
-      const response: any = await this.http.get('/api/money-loan/cash/balance').toPromise();
-      if (response.success) {
-        this.balance.set(response.data);
-        // Pre-fill with expected amount
-        this.actualHandover.set(this.expectedHandover());
-      }
+      // TODO: Pass actual collector ID from auth service
+      const data = await this.cashFloatApi.getCurrentBalance(0).toPromise();
+      this.balance.set(data || null);
+      // Pre-fill with expected amount
+      this.actualHandover.set(this.expectedHandover());
     } catch (error) {
       console.error('Error loading balance:', error);
       alert('Failed to load cash balance. Please try again.');
@@ -149,7 +141,8 @@ export class CashHandoverPage implements OnInit {
     const bal = this.balance();
     if (!bal) return;
 
-    if (bal.isDayClosed) {
+    // Note: isDayClosed is not in CollectorCashBalance - check status instead
+    if (bal.status === 'inactive') {
       alert('Day already closed. Cannot initiate handover again.');
       return;
     }
@@ -173,19 +166,18 @@ export class CashHandoverPage implements OnInit {
     this.submitting.set(true);
 
     try {
-      const payload: any = {
-        actualHandover: this.actualHandover(),
+      const handoverData = {
+        collectorId: this.balance()?.collectorId || 0,
+        actualAmount: this.actualHandover(),
+        notes: this.hasVariance() ? `Variance: ₱${formatCurrency(this.variance())}` : undefined,
+        handoverLatitude: this.currentLocation()?.latitude,
+        handoverLongitude: this.currentLocation()?.longitude
       };
 
-      if (this.currentLocation()) {
-        payload.latitude = this.currentLocation()!.latitude;
-        payload.longitude = this.currentLocation()!.longitude;
-      }
-
-      const response: any = await this.http.post('/api/money-loan/cash/initiate-handover', payload).toPromise();
+      const response = await this.cashFloatApi.initiateHandover(handoverData).toPromise();
       
-      if (response.success) {
-        alert(`✅ Handover initiated successfully!\n\nAmount: ₱${this.formatAmount(this.actualHandover())}\nVariance: ₱${this.formatAmount(this.variance())}\n\nPlease hand over the cash to the cashier for confirmation.`);
+      if (response) {
+        alert(`✅ Handover initiated successfully!\n\nAmount: ₱${formatCurrency(this.actualHandover())}\nVariance: ₱${formatCurrency(this.variance())}\n\nPlease hand over the cash to the cashier for confirmation.`);
         this.router.navigate(['/collector/dashboard']);
       }
     } catch (error: any) {
@@ -196,9 +188,8 @@ export class CashHandoverPage implements OnInit {
     }
   }
 
-  formatAmount(amount: number): string {
-    return amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
+  // Utility methods now use shared functions
+  formatAmount = formatCurrency;
 
   setExpectedAmount() {
     this.actualHandover.set(this.expectedHandover());

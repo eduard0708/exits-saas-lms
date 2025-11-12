@@ -177,13 +177,26 @@ export class SidebarComponent {
     {
       label: 'Money Loan',
       icon: '💰',
-      anyPermission: ['money-loan:read', 'money-loan:overview:view', 'money-loan:customers:read', 'money-loan:loans:read'],
+      anyPermission: ['money-loan:read', 'money-loan:overview:view', 'money-loan:customers:read', 'money-loan:loans:read', 'money_loan:cash:manage'],
       children: [
         { label: 'Overview', icon: '📊', route: '/admin/money-loan/overview', permission: 'money-loan:overview:view' },
         { label: 'Customers', icon: '👥', route: '/admin/money-loan/customers', permission: 'money-loan:customers:read' },
         { label: 'All Loans', icon: '📝', route: '/admin/money-loan/loans', permission: 'money-loan:loans:read' },
         { label: 'Record Payment', icon: '💳', route: '/admin/money-loan/payments/record', permission: 'money-loan:payments:create' },
         { label: 'Collections', icon: '🔔', route: '/admin/money-loan/collections', permission: 'money-loan:collections:read' },
+        { 
+          label: 'Cashier', 
+          icon: '🏦', 
+          permission: 'money_loan:cash:manage',
+          children: [
+            { label: 'Dashboard', icon: '📊', route: '/platforms/money-loan/admin/cashier', permission: 'money_loan:cash:manage' },
+            { label: 'Issue Float', icon: '➕', route: '/platforms/money-loan/admin/cashier/issue-float', permission: 'money_loan:cash:manage' },
+            { label: 'Pending Confirmations', icon: '⏳', route: '/platforms/money-loan/admin/cashier/pending-confirmations', permission: 'money_loan:cash:manage' },
+            { label: 'Pending Handovers', icon: '🔄', route: '/platforms/money-loan/admin/cashier/pending-handovers', permission: 'money_loan:cash:manage' },
+            { label: 'Balance Monitor', icon: '📊', route: '/platforms/money-loan/admin/cashier/balance-monitor', permission: 'money_loan:cash:manage' },
+            { label: 'History', icon: '📜', route: '/platforms/money-loan/admin/cashier/history', permission: 'money_loan:cash:manage' },
+          ]
+        },
         { label: 'Reports', icon: '📈', route: '/admin/money-loan/reports', permission: 'money-loan:reports:read' },
       ]
     },
