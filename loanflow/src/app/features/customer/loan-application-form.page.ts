@@ -2,41 +2,7 @@ import { Component, OnInit, signal, inject, OnDestroy } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import {
-  IonContent,
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
-  IonCardContent,
-  IonItem,
-  IonLabel,
-  IonTextarea,
-  IonRange,
-  IonButton,
-  IonIcon,
-  IonSpinner,
-  ToastController,
-  LoadingController
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import {
-  arrowBackOutline,
-  checkmarkCircleOutline,
-  moonOutline,
-  sunnyOutline,
-  cardOutline,
-  briefcaseOutline,
-  cashOutline,
-  trendingUpOutline,
-  timeOutline,
-  calendarOutline,
-  clipboardOutline,
-  documentTextOutline,
-  lockClosedOutline,
-  walletOutline,
-  pieChartOutline,
-  informationCircleOutline
-} from 'ionicons/icons';
+import { IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonLabel, IonTextarea, IonRange, IonButton, IonSpinner, ToastController, LoadingController } from '@ionic/angular/standalone';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { ThemeService } from '../../core/services/theme.service';
@@ -90,7 +56,6 @@ interface LoanApplicationRequest {
     IonTextarea,
     IonRange,
     IonButton,
-    IonIcon,
     IonSpinner,
     HeaderUtilsComponent
   ]
@@ -126,26 +91,7 @@ export class LoanApplicationFormPage implements OnInit, OnDestroy {
   // User info (get from auth service)
   customerId = signal(0);
 
-  constructor() {
-    addIcons({
-      arrowBackOutline,
-      checkmarkCircleOutline,
-      moonOutline,
-      sunnyOutline,
-      cardOutline,
-      briefcaseOutline,
-      cashOutline,
-      trendingUpOutline,
-      timeOutline,
-      calendarOutline,
-      clipboardOutline,
-      documentTextOutline,
-      lockClosedOutline,
-      walletOutline,
-      pieChartOutline,
-      informationCircleOutline
-    });
-  }
+  constructor() {}
   
   toggleTheme() {
     this.themeService.toggleTheme();

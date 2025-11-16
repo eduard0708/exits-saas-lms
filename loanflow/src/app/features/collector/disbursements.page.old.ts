@@ -3,39 +3,7 @@ import { Component, OnInit, AfterViewInit, signal, inject, ViewChild } from '@an
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import {
-  IonContent,
-  IonRefresher,
-  IonRefresherContent,
-  IonItem,
-  IonLabel,
-  IonButton,
-  IonIcon,
-  IonSkeletonText,
-  IonModal,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonButtons,
-  IonInput,
-  IonSelect,
-  IonSelectOption,
-  IonTextarea,
-  ToastController,
-  AlertController,
-  ViewWillEnter,
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import {
-  cardOutline,
-  cashOutline,
-  phonePortraitOutline,
-  checkmarkCircleOutline,
-  alertCircleOutline,
-  personOutline,
-  calendarOutline,
-  documentTextOutline,
-} from 'ionicons/icons';
+import { IonContent, IonRefresher, IonRefresherContent, IonItem, IonLabel, IonButton, IonSkeletonText, IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonInput, IonSelect, IonSelectOption, IonTextarea, ToastController, AlertController, ViewWillEnter } from '@ionic/angular/standalone';
 import { 
   CollectorService, 
   PendingDisbursement,
@@ -56,7 +24,6 @@ import { HeaderUtilsComponent } from '../../shared/components/header-utils.compo
     IonItem,
     IonLabel,
     IonButton,
-    IonIcon,
     IonSkeletonText,
     IonModal,
     IonHeader,
@@ -170,7 +137,7 @@ import { HeaderUtilsComponent } from '../../shared/components/header-utils.compo
 
               <!-- Action Button -->
               <button class="action-btn disburse" (click)="openDisburseModal(disbursement)">
-                <ion-icon name="checkmark-circle-outline"></ion-icon>
+                <span  class="emoji-icon">✅</span>
                 <span>Disburse Now</span>
               </button>
             </div>
@@ -214,15 +181,15 @@ import { HeaderUtilsComponent } from '../../shared/components/header-utils.compo
                     placeholder="Select method"
                     interface="action-sheet">
                     <ion-select-option value="cash">
-                      <ion-icon [icon]="'cash-outline'"></ion-icon>
+                      <span  class="emoji-icon">💰</span>
                       Cash
                     </ion-select-option>
                     <ion-select-option value="bank_transfer">
-                      <ion-icon [icon]="'card-outline'"></ion-icon>
+                      <span  class="emoji-icon">💳</span>
                       Bank Transfer
                     </ion-select-option>
                     <ion-select-option value="mobile_money">
-                      <ion-icon [icon]="'phone-portrait-outline'"></ion-icon>
+                      <span  class="emoji-icon">📱</span>
                       Mobile Money (GCash/Maya)
                     </ion-select-option>
                   </ion-select>
@@ -251,7 +218,7 @@ import { HeaderUtilsComponent } from '../../shared/components/header-utils.compo
                 @if (selectedDisbursement()!.principalAmount > 100000) {
                   <div class="bg-orange-50 border-l-4 border-orange-500 p-4 rounded">
                     <div class="flex items-start">
-                      <ion-icon [icon]="'alert-circle-outline'" class="text-orange-500 text-xl mr-2"></ion-icon>
+                      <span  class="emoji-icon text-orange-500 text-xl mr-2">⚠️</span>
                       <div class="text-sm text-orange-700">
                         High-value disbursement. Please verify customer identity and ensure proper documentation.
                       </div>
@@ -266,7 +233,7 @@ import { HeaderUtilsComponent } from '../../shared/components/header-utils.compo
                     color="success" 
                     [disabled]="!isDisburseFormValid()"
                     (click)="confirmDisburse()">
-                    <ion-icon slot="start" [icon]="'checkmark-circle-outline'"></ion-icon>
+                    <span slot="start"  class="emoji-icon">✅</span>
                     Confirm Disbursement
                   </ion-button>
                   <ion-button expand="block" fill="outline" (click)="closeDisburseModal()">
@@ -618,18 +585,7 @@ export class CollectorDisbursementsPage implements OnInit, AfterViewInit, ViewWi
     notes: '',
   };
 
-  constructor() {
-    addIcons({
-      cardOutline,
-      cashOutline,
-      phonePortraitOutline,
-      checkmarkCircleOutline,
-      alertCircleOutline,
-      personOutline,
-      calendarOutline,
-      documentTextOutline,
-    });
-  }
+  constructor() {}
 
   ngOnInit() {
     const user = this.authService.currentUser();

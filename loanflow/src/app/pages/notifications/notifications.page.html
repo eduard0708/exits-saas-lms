@@ -6,7 +6,7 @@
     <ion-title>Notifications</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="markAllAsRead()">
-        <ion-icon name="checkmark-all"></ion-icon>
+        <span  class="emoji-icon">✅</span>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
@@ -21,7 +21,7 @@
     </ion-list-header>
     <ion-item-sliding *ngFor="let notification of notifications" #item>
       <ion-item [class.unread]="!notification.read">
-        <ion-icon name="notifications" slot="start" color="primary"></ion-icon>
+        <span  slot="start" color="primary" class="emoji-icon">🔔</span>
         <ion-label>
           <h2>{{ notification.title }}</h2>
           <p>{{ notification.message }}</p>
@@ -43,7 +43,7 @@
 
   <ion-card *ngIf="!(notifications$ | async)?.length" class="ion-margin">
     <ion-card-content class="ion-text-center">
-      <ion-icon name="notifications-off" size="large" color="medium"></ion-icon>
+      <span  size="large" color="medium" class="emoji-icon">🔕</span>
       <p>No notifications</p>
     </ion-card-content>
   </ion-card>

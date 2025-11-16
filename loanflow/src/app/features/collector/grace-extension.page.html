@@ -21,7 +21,7 @@
             <h3>All Customers</h3>
             <p>Apply to all customers with outstanding balance</p>
           </ion-label>
-          <ion-icon name="people-outline" slot="end" color="primary"></ion-icon>
+          <span  slot="end" color="primary" class="emoji-icon">👥</span>
         </ion-item>
 
         <ion-item>
@@ -30,7 +30,7 @@
             <h3>Select Customers</h3>
             <p>Choose specific customers from the list</p>
           </ion-label>
-          <ion-icon name="person-outline" slot="end" color="primary"></ion-icon>
+          <span  slot="end" color="primary" class="emoji-icon">👤</span>
         </ion-item>
 
         <ion-item>
@@ -39,7 +39,7 @@
             <h3>By Due Date</h3>
             <p>Filter by installment due date</p>
           </ion-label>
-          <ion-icon name="calendar-outline" slot="end" color="primary"></ion-icon>
+          <span  slot="end" color="primary" class="emoji-icon">📅</span>
         </ion-item>
       </ion-radio-group>
     </ion-card-content>
@@ -169,14 +169,14 @@
 
       @if (detailedReason.length > 0 && detailedReason.length < 10) {
         <ion-note color="danger" class="ion-margin-top">
-          <ion-icon name="alert-circle-outline"></ion-icon>
+          <span  class="emoji-icon">⚠️</span>
           Please provide at least 10 characters
         </ion-note>
       }
 
       @if (extensionDays > 3) {
         <ion-note color="warning" class="ion-margin-top">
-          <ion-icon name="alert-circle-outline"></ion-icon>
+          <span  class="emoji-icon">⚠️</span>
           Extensions over 3 days require manager approval
         </ion-note>
       }
@@ -212,7 +212,7 @@
     size="large"
     (click)="submitExtension()"
     [disabled]="detailedReason.length < 10">
-    <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+    <span  slot="start" class="emoji-icon">✅</span>
     Apply Grace Extension
   </ion-button>
 </ion-content>

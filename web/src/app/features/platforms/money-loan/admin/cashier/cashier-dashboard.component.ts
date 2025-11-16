@@ -2,6 +2,7 @@ import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { CashFloatApiService, formatCurrency } from '@shared/api';
+import { StatCardComponent, SharedButtonComponent } from '@shared/ui';
 import type { CashierStats } from '@shared/models';
 
 interface DashboardStats {
@@ -16,7 +17,7 @@ interface DashboardStats {
 @Component({
   selector: 'app-cashier-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, StatCardComponent, SharedButtonComponent],
   template: `
     <div class="p-4 md:p-6 space-y-6">
       <!-- Header -->
@@ -27,32 +28,41 @@ interface DashboardStats {
 
       <!-- Quick Actions -->
       <div class="flex flex-wrap gap-3">
-        <button (click)="navigate('/platforms/money-loan/admin/cashier/issue-float')"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+        <shared-button
+          variant="primary"
+          size="lg"
+          class="gap-2"
+          (click)="navigate('/platforms/money-loan/admin/cashier/issue-float')">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
           </svg>
           Issue Float
-        </button>
-        <button (click)="navigate('/platforms/money-loan/admin/cashier/pending-handovers')"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors">
+        </shared-button>
+        <shared-button
+          variant="warning"
+          size="lg"
+          class="gap-2"
+          (click)="navigate('/platforms/money-loan/admin/cashier/pending-handovers')">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
           </svg>
-          Pending Handovers
+          <span>Pending Handovers</span>
           @if (stats()?.pendingHandovers) {
-            <span class="bg-white text-orange-600 text-xs px-2 py-0.5 rounded-full font-bold">
+            <span class="bg-white text-amber-600 text-xs px-2 py-0.5 rounded-full font-bold">
               {{ stats()!.pendingHandovers }}
             </span>
           }
-        </button>
-        <button (click)="navigate('/platforms/money-loan/admin/cashier/balance-monitor')"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors">
+        </shared-button>
+        <shared-button
+          variant="info"
+          size="lg"
+          class="gap-2"
+          (click)="navigate('/platforms/money-loan/admin/cashier/balance-monitor')">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
           </svg>
           Monitor Balances
-        </button>
+        </shared-button>
       </div>
 
       <!-- Stats Grid -->
@@ -67,58 +77,44 @@ interface DashboardStats {
         </div>
       } @else if (stats()) {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <!-- Pending Floats -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 
-                      hover:shadow-lg transition-shadow cursor-pointer"
-               (click)="navigate('/platforms/money-loan/admin/cashier/pending-confirmations')">
-            <div class="flex items-center justify-between mb-2">
-              <p class="text-sm text-gray-600 dark:text-gray-400">Pending Confirmations</p>
-              <div class="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
-                <span class="text-xl">⏳</span>
-              </div>
-            </div>
-            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()!.pendingFloats }}</p>
-            <p class="text-xs text-gray-500 mt-1">Waiting for collector</p>
+          <div class="h-full cursor-pointer" (click)="navigate('/platforms/money-loan/admin/cashier/pending-confirmations')">
+            <shared-stat-card
+              title="Pending Confirmations"
+              [value]="stats()!.pendingFloats"
+              subtitle="Waiting for collector"
+              variant="warning">
+              <span icon class="text-xl">⏳</span>
+            </shared-stat-card>
           </div>
 
-          <!-- Pending Handovers -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 
-                      hover:shadow-lg transition-shadow cursor-pointer"
-               (click)="navigate('/platforms/money-loan/admin/cashier/pending-handovers')">
-            <div class="flex items-center justify-between mb-2">
-              <p class="text-sm text-gray-600 dark:text-gray-400">Pending Handovers</p>
-              <div class="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
-                <span class="text-xl">🏦</span>
-              </div>
-            </div>
-            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()!.pendingHandovers }}</p>
-            <p class="text-xs text-gray-500 mt-1">Need your confirmation</p>
+          <div class="h-full cursor-pointer" (click)="navigate('/platforms/money-loan/admin/cashier/pending-handovers')">
+            <shared-stat-card
+              title="Pending Handovers"
+              [value]="stats()!.pendingHandovers"
+              subtitle="Need your confirmation"
+              variant="danger">
+              <span icon class="text-xl">🏦</span>
+            </shared-stat-card>
           </div>
 
-          <!-- Total Cash Out -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-            <div class="flex items-center justify-between mb-2">
-              <p class="text-sm text-gray-600 dark:text-gray-400">Total Cash Out</p>
-              <div class="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
-                <span class="text-xl">💸</span>
-              </div>
-            </div>
-            <p class="text-3xl font-bold text-gray-900 dark:text-white">₱{{ formatAmount(stats()!.totalCashOut) }}</p>
-            <p class="text-xs text-gray-500 mt-1">Currently with collectors</p>
+          <div class="h-full">
+            <shared-stat-card
+              title="Total Cash Out"
+              [value]="formatAmount(stats()!.totalCashOut)"
+              subtitle="Currently with collectors"
+              variant="info">
+              <span icon class="text-xl">💸</span>
+            </shared-stat-card>
           </div>
 
-          <!-- Active Collectors -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 
-                      hover:shadow-lg transition-shadow cursor-pointer"
-               (click)="navigate('/platforms/money-loan/admin/cashier/balance-monitor')">
-            <div class="flex items-center justify-between mb-2">
-              <p class="text-sm text-gray-600 dark:text-gray-400">Active Collectors</p>
-              <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                <span class="text-xl">✅</span>
-              </div>
-            </div>
-            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()!.activeCollectors }}</p>
-            <p class="text-xs text-gray-500 mt-1">Out in the field</p>
+          <div class="h-full cursor-pointer" (click)="navigate('/platforms/money-loan/admin/cashier/balance-monitor')">
+            <shared-stat-card
+              title="Active Collectors"
+              [value]="stats()!.activeCollectors"
+              subtitle="Out in the field"
+              variant="success">
+              <span icon class="text-xl">✅</span>
+            </shared-stat-card>
           </div>
         </div>
 

@@ -2,20 +2,11 @@
 import { Component, Input, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { IonBadge, IonIcon } from '@ionic/angular/standalone';
+import { IonBadge } from '@ionic/angular/standalone';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { HeaderUtilsComponent } from './header-utils.component';
-import { addIcons } from 'ionicons';
-import { 
-  notificationsOutline,
-  businessOutline,
-  peopleOutline,
-  trendingUpOutline,
-  documentTextOutline,
-  calendarOutline,
-  gridOutline
-} from 'ionicons/icons';
+import { iconToEmoji } from '@shared/utils/emoji-icon.util';
 
 @Component({
   selector: 'app-customer-top-bar',
@@ -23,7 +14,6 @@ import {
   imports: [
     CommonModule,
     IonBadge,
-    IonIcon,
     HeaderUtilsComponent
   ],
   template: `
@@ -31,7 +21,7 @@ import {
       <div class="top-bar-content">
         <div class="top-bar-left">
           @if (icon) {
-            <ion-icon [name]="icon" class="app-icon"></ion-icon>
+            <span class="emoji-icon app-icon">{{ emoji(icon) }}</span>
           }
           <div class="title-group">
             <span class="app-title">{{ title }}</span>
@@ -52,7 +42,7 @@ import {
               class="icon-btn notifications-btn" 
               title="Notifications"
             >
-              <ion-icon name="notifications-outline" class="icon-bell"></ion-icon>
+              <span  class="emoji-icon icon-bell">🔔</span>
               @if (unreadCount() > 0) {
                 <ion-badge class="notification-badge">{{ unreadCount() }}</ion-badge>
               }
@@ -191,22 +181,13 @@ export class CustomerTopBarComponent {
   @Input() notificationsLink: string = '/customer/notifications';
 
   unreadCount = signal(0);
+  protected emoji = iconToEmoji;
 
   constructor(
     private router: Router,
     private authService: AuthService,
     private notificationService: NotificationService
   ) {
-    addIcons({
-      notificationsOutline,
-      businessOutline,
-      peopleOutline,
-      trendingUpOutline,
-      documentTextOutline,
-      calendarOutline,
-      gridOutline
-    });
-
     // Subscribe to notification count changes
     effect(() => {
       this.notificationService.unreadCount$.subscribe(count => {

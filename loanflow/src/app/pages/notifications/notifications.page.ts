@@ -1,13 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { 
-  IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton, 
-  IonContent, IonList, IonItem, IonLabel,
-  IonButton, IonIcon, IonListHeader, IonItemSliding, IonItemOptions, IonItemOption,
-  IonCard, IonCardContent, IonText 
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import { trashOutline, checkmarkOutline } from 'ionicons/icons';
+import { IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton, IonContent, IonList, IonItem, IonLabel, IonButton, IonListHeader, IonItemSliding, IonItemOptions, IonItemOption, IonCard, IonCardContent, IonText } from '@ionic/angular/standalone';
 import { NotificationService } from '@app/core/services/notification.service';
 import { Observable } from 'rxjs';
 
@@ -26,7 +19,6 @@ import { Observable } from 'rxjs';
   IonItem,
   IonLabel,
     IonButton,
-    IonIcon,
     IonListHeader,
     IonItemSliding,
     IonItemOptions,
@@ -44,12 +36,7 @@ export class NotificationsPage implements OnInit {
 
   constructor(private notificationService: NotificationService) {
     this.notifications$ = this.notificationService.notifications$;
-    this.unreadCount$ = this.notificationService.unreadCount$;
-    addIcons({
-      'trash-outline': trashOutline,
-      'checkmark-outline': checkmarkOutline,
-    });
-  }
+    this.unreadCount$ = this.notificationService.unreadCount$;}
 
   ngOnInit(): void {}
 

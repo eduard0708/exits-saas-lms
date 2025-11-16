@@ -2,33 +2,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import {
-  IonContent,
-  IonRefresher,
-  IonRefresherContent,
-  IonButton,
-  IonIcon,
-  IonBadge,
-  IonSkeletonText,
-  ToastController
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import {
-  walletOutline,
-  cardOutline,
-  timeOutline,
-  checkmarkCircleOutline,
-  trendingUpOutline,
-  documentTextOutline,
-  addCircleOutline,
-  arrowForwardOutline,
-  peopleOutline,
-  chevronForwardOutline,
-  calendarOutline,
-  alertCircleOutline,
-  refreshOutline,
-  gridOutline
-} from 'ionicons/icons';
+import { IonContent, IonRefresher, IonRefresherContent, IonButton, IonBadge, IonSkeletonText, ToastController } from '@ionic/angular/standalone';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
@@ -74,7 +48,6 @@ interface AssignedCollector {
     IonRefresher,
     IonRefresherContent,
     IonButton,
-    IonIcon,
     IonBadge,
     IonSkeletonText,
     CustomerTopBarComponent
@@ -109,7 +82,7 @@ interface AssignedCollector {
 
           <div class="hero-info-cards">
             <div class="info-card">
-              <ion-icon name="business-outline" class="info-icon"></ion-icon>
+              <span  class="emoji-icon info-icon">🏢</span>
               <div class="info-details">
                 <span class="info-label">Tenant</span>
                 <span class="info-value">{{ authService.currentUser()?.tenant?.name || 'LoanFlow Tenant' }}</span>
@@ -117,7 +90,7 @@ interface AssignedCollector {
             </div>
 
             <div class="info-card" *ngIf="assignedCollector() as collector">
-              <ion-icon name="people-outline" class="info-icon"></ion-icon>
+              <span  class="emoji-icon info-icon">👥</span>
               <div class="info-details">
                 <span class="info-label">Collector</span>
                 <span class="info-value">{{ collector.fullName }}</span>
@@ -127,7 +100,7 @@ interface AssignedCollector {
             </div>
 
             <div class="info-card" *ngIf="stats().activeLoans > 0">
-              <ion-icon name="trending-up-outline" class="info-icon"></ion-icon>
+              <span  class="emoji-icon info-icon">📈</span>
               <div class="info-details">
                 <span class="info-label">Active Loans</span>
                 <span class="info-value">{{ stats().activeLoans }}</span>
@@ -142,7 +115,7 @@ interface AssignedCollector {
           <div class="stat-card stat-primary">
             <div class="stat-header">
               <div class="stat-icon-wrapper stat-icon-primary">
-                <ion-icon name="wallet-outline" class="stat-icon"></ion-icon>
+                <span  class="emoji-icon stat-icon">👛</span>
               </div>
               <ion-badge color="primary" class="stat-badge">{{ stats().activeLoans }}</ion-badge>
             </div>
@@ -159,7 +132,7 @@ interface AssignedCollector {
           <div class="stat-card stat-warning">
             <div class="stat-header">
               <div class="stat-icon-wrapper stat-icon-warning">
-                <ion-icon name="time-outline" class="stat-icon"></ion-icon>
+                <span  class="emoji-icon stat-icon">⏰</span>
               </div>
             </div>
             @if (loading()) {
@@ -175,7 +148,7 @@ interface AssignedCollector {
           <div class="stat-card stat-success">
             <div class="stat-header">
               <div class="stat-icon-wrapper stat-icon-success">
-                <ion-icon name="checkmark-circle-outline" class="stat-icon"></ion-icon>
+                <span  class="emoji-icon stat-icon">✅</span>
               </div>
             </div>
             @if (loading()) {
@@ -191,7 +164,7 @@ interface AssignedCollector {
           <div class="stat-card stat-purple">
             <div class="stat-header">
               <div class="stat-icon-wrapper stat-icon-purple">
-                <ion-icon name="trending-up-outline" class="stat-icon"></ion-icon>
+                <span  class="emoji-icon stat-icon">📈</span>
               </div>
             </div>
             @if (loading()) {
@@ -224,7 +197,7 @@ interface AssignedCollector {
           <div class="insight-divider"></div>
           <div class="insight-item">
             <div class="insight-icon-wrapper">
-              <ion-icon name="calendar-outline" class="insight-icon"></ion-icon>
+              <span  class="emoji-icon insight-icon">📅</span>
             </div>
             <div class="insight-details">
               <p class="insight-title">Next payment</p>
@@ -238,7 +211,7 @@ interface AssignedCollector {
           <div class="payment-card animate-fade-up delay-3">
             <div class="payment-header">
               <div class="payment-icon-wrapper">
-                <ion-icon name="time-outline" class="payment-icon"></ion-icon>
+                <span  class="emoji-icon payment-icon">⏰</span>
               </div>
               <p class="payment-title">Next Payment Due</p>
             </div>
@@ -246,7 +219,7 @@ interface AssignedCollector {
               <div class="payment-info">
                 <p class="payment-amount">₱{{ formatCurrency(stats().nextPaymentAmount) }}</p>
                 <p class="payment-date">
-                  <ion-icon name="calendar-outline" class="date-icon"></ion-icon>
+                  <span  class="emoji-icon date-icon">📅</span>
                   Due: {{ stats().nextPaymentDate }}
                 </p>
               </div>
@@ -256,7 +229,7 @@ interface AssignedCollector {
                 size="default"
                 expand="block"
               >
-                <ion-icon name="card-outline" slot="start"></ion-icon>
+                <span  slot="start" class="emoji-icon">💳</span>
                 Pay Now
               </ion-button>
             </div>
@@ -274,10 +247,10 @@ interface AssignedCollector {
               class="action-btn action-primary"
             >
               <div class="action-icon-wrapper action-icon-primary">
-                <ion-icon name="document-text-outline" class="action-icon"></ion-icon>
+                <span  class="emoji-icon action-icon">📄</span>
               </div>
               <span class="action-label">My Loans</span>
-              <ion-icon name="chevron-forward-outline" class="action-arrow"></ion-icon>
+              <span  class="emoji-icon action-arrow">›</span>
             </button>
 
             <button
@@ -285,10 +258,10 @@ interface AssignedCollector {
               class="action-btn action-success"
             >
               <div class="action-icon-wrapper action-icon-success">
-                <ion-icon name="card-outline" class="action-icon"></ion-icon>
+                <span  class="emoji-icon action-icon">💳</span>
               </div>
               <span class="action-label">Payments</span>
-              <ion-icon name="chevron-forward-outline" class="action-arrow"></ion-icon>
+              <span  class="emoji-icon action-arrow">›</span>
             </button>
 
             <button
@@ -296,10 +269,10 @@ interface AssignedCollector {
               class="action-btn action-purple"
             >
               <div class="action-icon-wrapper action-icon-purple">
-                <ion-icon name="add-circle-outline" class="action-icon"></ion-icon>
+                <span  class="emoji-icon action-icon">➕</span>
               </div>
               <span class="action-label">Apply Loan</span>
-              <ion-icon name="chevron-forward-outline" class="action-arrow"></ion-icon>
+              <span  class="emoji-icon action-arrow">›</span>
             </button>
 
             <button
@@ -307,10 +280,10 @@ interface AssignedCollector {
               class="action-btn action-warning"
             >
               <div class="action-icon-wrapper action-icon-warning">
-                <ion-icon name="wallet-outline" class="action-icon"></ion-icon>
+                <span  class="emoji-icon action-icon">👛</span>
               </div>
               <span class="action-label">Products</span>
-              <ion-icon name="chevron-forward-outline" class="action-arrow"></ion-icon>
+              <span  class="emoji-icon action-arrow">›</span>
             </button>
           </div>
         </div>
@@ -319,7 +292,7 @@ interface AssignedCollector {
   <div class="section-card animate-fade-up delay-5">
           <div class="section-header">
             <div class="section-header-left">
-              <ion-icon name="document-text-outline" class="section-icon"></ion-icon>
+              <span  class="emoji-icon section-icon">📄</span>
               <h2 class="section-title">Recent Loans</h2>
             </div>
             <ion-button 
@@ -329,7 +302,7 @@ interface AssignedCollector {
               class="view-all-btn"
             >
               View All
-              <ion-icon name="arrow-forward-outline" slot="end"></ion-icon>
+              <span  slot="end" class="emoji-icon">➡️</span>
             </ion-button>
           </div>
 
@@ -371,7 +344,7 @@ interface AssignedCollector {
           } @else if (filteredRecentLoans().length === 0) {
             <div class="empty-state">
               <div class="empty-icon-wrapper">
-                <ion-icon name="document-text-outline" class="empty-icon"></ion-icon>
+                <span  class="emoji-icon empty-icon">📄</span>
               </div>
               <p class="empty-title">No Active Loans</p>
               <p class="empty-subtitle">Ready to take the next step? Apply for a loan and unlock financial opportunities.</p>
@@ -382,7 +355,7 @@ interface AssignedCollector {
                   class="empty-cta-primary"
                   expand="block"
                 >
-                  <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+                  <span  slot="start" class="emoji-icon">➕</span>
                   Apply for a Loan
                 </ion-button>
                 <ion-button 
@@ -392,7 +365,7 @@ interface AssignedCollector {
                   class="empty-cta-secondary"
                   expand="block"
                 >
-                  <ion-icon name="refresh-outline" slot="start"></ion-icon>
+                  <span  slot="start" class="emoji-icon">🔄</span>
                   Refresh Dashboard
                 </ion-button>
               </div>
@@ -424,12 +397,12 @@ interface AssignedCollector {
                     
                     <!-- Row 3: Due Date -->
                     <div class="loan-compact-footer">
-                      <ion-icon name="calendar-outline" class="due-icon-compact"></ion-icon>
+                      <span  class="emoji-icon due-icon-compact">📅</span>
                       <span class="due-text-compact">{{ loan.dueDate }}</span>
                     </div>
                   </div>
                   <div class="loan-compact-arrow">
-                    <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+                    <span  class="emoji-icon arrow-icon">›</span>
                   </div>
                 </div>
               }
@@ -1965,24 +1938,7 @@ export class CustomerDashboardPage implements OnInit {
     public themeService: ThemeService,
     private confirmationService: ConfirmationService,
     private toastController: ToastController
-  ) {
-    addIcons({
-      walletOutline,
-      cardOutline,
-      timeOutline,
-      checkmarkCircleOutline,
-      trendingUpOutline,
-      documentTextOutline,
-      addCircleOutline,
-      arrowForwardOutline,
-      peopleOutline,
-      chevronForwardOutline,
-      calendarOutline,
-      alertCircleOutline,
-      refreshOutline,
-      gridOutline
-    });
-  }
+  ) {}
 
   ngOnInit() {
     this.currentUser.set(this.authService.currentUser());

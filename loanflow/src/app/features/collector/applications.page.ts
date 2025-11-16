@@ -3,46 +3,7 @@ import { Component, OnInit, signal, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import {
-  IonContent,
-  IonRefresher,
-  IonRefresherContent,
-  IonItem,
-  IonLabel,
-  IonBadge,
-  IonButton,
-  IonIcon,
-  IonSkeletonText,
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
-  IonCardContent,
-  IonModal,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonButtons,
-  IonInput,
-  IonTextarea,
-  IonSelect,
-  IonSelectOption,
-  ToastController,
-  AlertController,
-  ModalController,
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import {
-  documentTextOutline,
-  checkmarkCircleOutline,
-  closeCircleOutline,
-  alertCircleOutline,
-  personOutline,
-  calendarOutline,
-  cashOutline,
-  timeOutline,
-  arrowBackOutline,
-  refreshOutline,
-} from 'ionicons/icons';
+import { IonContent, IonRefresher, IonRefresherContent, IonItem, IonLabel, IonBadge, IonButton, IonSkeletonText, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonInput, IonTextarea, IonSelect, IonSelectOption, ToastController, AlertController, ModalController } from '@ionic/angular/standalone';
 import { 
   CollectorService, 
   CollectorApplication,
@@ -65,7 +26,6 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
     IonItem,
     IonLabel,
     IonButton,
-    IonIcon,
     IonSkeletonText,
     IonModal,
     IonHeader,
@@ -112,7 +72,7 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
             You're all caught up. We'll let you know the moment a new request needs your review.
           </p>
           <div class="empty-hint">
-            <ion-icon [icon]="'time-outline'"></ion-icon>
+            <span  class="emoji-icon">⏰</span>
             <span>Pull down anytime or tap below to check for updates.</span>
           </div>
           <div class="empty-actions">
@@ -123,7 +83,7 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
               (click)="refreshApplications()"
               [disabled]="loading()"
             >
-              <ion-icon slot="start" [icon]="'refresh-outline'"></ion-icon>
+              <span slot="start"  class="emoji-icon">🔄</span>
               Check for updates
             </ion-button>
           </div>
@@ -286,15 +246,15 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
                   <!-- Approve/Reject in expanded state -->
                   <div class="expanded-actions" (click)="$event.stopPropagation()">
                     <button class="action-btn approve" (click)="confirmApprove()">
-                      <ion-icon [icon]="'checkmark-circle-outline'"></ion-icon>
+                      <span  class="emoji-icon">✅</span>
                       <span>Approve</span>
                     </button>
                     <button class="action-btn reject" (click)="openRejectModal(app)">
-                      <ion-icon [icon]="'close-circle-outline'"></ion-icon>
+                      <span  class="emoji-icon">❌</span>
                       <span>Reject</span>
                     </button>
                     <button class="action-btn back" (click)="closeApproveModal()">
-                      <ion-icon [icon]="'arrow-back-outline'"></ion-icon>
+                      <span  class="emoji-icon">⬅️</span>
                       <span>Close</span>
                     </button>
                   </div>
@@ -305,11 +265,11 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
               @if (selectedApp()?.id !== app.id || !showApproveModal()) {
                 <div class="action-buttons" (click)="$event.stopPropagation()">
                   <button class="action-btn reject" (click)="openRejectModal(app)">
-                    <ion-icon [icon]="'close-circle-outline'"></ion-icon>
+                    <span  class="emoji-icon">❌</span>
                     <span>Reject</span>
                   </button>
                   <button class="action-btn review" (click)="requestReview(app)">
-                    <ion-icon [icon]="'alert-circle-outline'"></ion-icon>
+                    <span  class="emoji-icon">⚠️</span>
                     <span>Review</span>
                   </button>
                 </div>
@@ -370,7 +330,7 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
                     color="danger" 
                     [disabled]="!rejectForm.rejectionReason"
                     (click)="confirmReject()">
-                    <ion-icon slot="start" [icon]="'close-circle-outline'"></ion-icon>
+                    <span slot="start"  class="emoji-icon">❌</span>
                     Confirm Rejection
                   </ion-button>
                   <ion-button expand="block" fill="outline" (click)="closeRejectModal()">
@@ -1111,20 +1071,7 @@ export class CollectorApplicationsPage implements OnInit, OnDestroy {
   deductProcessingFeeInAdvance = false;
   deductInterestInAdvance = false;
 
-  constructor() {
-    addIcons({
-      documentTextOutline,
-      checkmarkCircleOutline,
-      closeCircleOutline,
-      alertCircleOutline,
-      personOutline,
-      calendarOutline,
-      cashOutline,
-      timeOutline,
-      arrowBackOutline,
-      refreshOutline,
-    });
-  }
+  constructor() {}
 
   ngOnInit() {
     const user = this.authService.currentUser();

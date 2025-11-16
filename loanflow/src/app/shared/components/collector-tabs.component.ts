@@ -2,23 +2,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import {
-  IonTabBar,
-  IonTabButton,
-  IonIcon,
-  IonLabel
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import {
-  gridOutline,
-  mapOutline,
-  documentTextOutline,
-  cashOutline,
-  peopleOutline,
-  alertCircleOutline,
-  alertCircle
-} from 'ionicons/icons';
-
+import { IonTabBar, IonTabButton, IonLabel } from '@ionic/angular/standalone';
 @Component({
   selector: 'app-collector-tabs',
   standalone: true,
@@ -28,7 +12,6 @@ import {
     RouterLinkActive,
     IonTabBar,
     IonTabButton,
-    IonIcon,
     IonLabel
   ],
   template: `
@@ -38,7 +21,7 @@ import {
         routerLinkActive="tab-selected"
         [routerLinkActiveOptions]="{exact: false}"
       >
-        <ion-icon name="grid-outline" class="tab-icon"></ion-icon>
+        <span  class="emoji-icon tab-icon">🔲</span>
         <ion-label class="tab-label">Dashboard</ion-label>
       </ion-tab-button>
 
@@ -47,7 +30,7 @@ import {
         routerLinkActive="tab-selected"
         [routerLinkActiveOptions]="{exact: false}"
       >
-        <ion-icon name="map-outline" class="tab-icon"></ion-icon>
+        <span  class="emoji-icon tab-icon">🗺️</span>
         <ion-label class="tab-label">Route</ion-label>
       </ion-tab-button>
 
@@ -56,7 +39,7 @@ import {
         routerLinkActive="tab-selected"
         [routerLinkActiveOptions]="{exact: false}"
       >
-        <ion-icon name="document-text-outline" class="tab-icon"></ion-icon>
+        <span  class="emoji-icon tab-icon">📄</span>
         <ion-label class="tab-label">Applications</ion-label>
       </ion-tab-button>
 
@@ -65,7 +48,7 @@ import {
         routerLinkActive="tab-selected"
         [routerLinkActiveOptions]="{exact: false}"
       >
-        <ion-icon name="cash-outline" class="tab-icon"></ion-icon>
+        <span  class="emoji-icon tab-icon">💰</span>
         <ion-label class="tab-label">Disbursements</ion-label>
       </ion-tab-button>
 
@@ -74,7 +57,7 @@ import {
         routerLinkActive="tab-selected"
         [routerLinkActiveOptions]="{exact: false}"
       >
-        <ion-icon name="people-outline" class="tab-icon"></ion-icon>
+        <span  class="emoji-icon tab-icon">👥</span>
         <ion-label class="tab-label">Visits</ion-label>
       </ion-tab-button>
 
@@ -83,7 +66,7 @@ import {
         routerLinkActive="tab-selected"
         [routerLinkActiveOptions]="{exact: false}"
       >
-        <ion-icon name="alert-circle-outline" class="tab-icon"></ion-icon>
+        <span  class="emoji-icon tab-icon">⚠️</span>
         <ion-label class="tab-label">Waivers</ion-label>
       </ion-tab-button>
     </ion-tab-bar>
@@ -153,15 +136,5 @@ import {
 export class CollectorTabsComponent {
   private router = inject(Router);
 
-  constructor() {
-    addIcons({
-      gridOutline,
-      mapOutline,
-      documentTextOutline,
-      cashOutline,
-      peopleOutline,
-      alertCircleOutline,
-      alertCircle
-    });
-  }
+  constructor() {}
 }

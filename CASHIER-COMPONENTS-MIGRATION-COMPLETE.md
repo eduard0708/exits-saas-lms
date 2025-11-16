@@ -13,6 +13,7 @@ Successfully migrated all 6 high-priority cashier components in the `web` app to
    - Replaced local `CashierStats` interface with `import type { CashierStats } from '@shared/models'`
    - Replaced `HttpClient` with `CashFloatApiService`
    - Uses: `getCashierStats()`, `formatCurrency()`
+  - Quick action buttons now use `<shared-button>` variants (`primary`, `warning`, `info`) for consistency with loanflow
 
 2. **issue-float.component.ts**
    - Replaced local `CashFloat` interface with shared type
@@ -152,25 +153,33 @@ import { CashFloatApiService, formatCurrency } from '@shared/api';
 import type { CollectorStats, CashFloat } from '@shared/models';
 ```
 
-### 2. **Create Shared UI Components** (Optional)
-Extract reusable Tailwind components:
-- `libs/shared-ui/src/components/stat-card.component.ts`
-- `libs/shared-ui/src/components/data-table.component.ts`
-- `libs/shared-ui/src/components/filter-panel.component.ts`
-- `libs/shared-ui/src/components/status-badge.component.ts`
+### 2. **Adopt Shared UI Components** (Optional)
+Prefer the published building blocks under `libs/shared-ui/src`:
+- `stat-card.component.ts`
+- `status-badge.component.ts`
+- `button.component.ts`
 
-Use `@Input()` properties for customization:
+Example:
 ```typescript
+import { StatCardComponent } from '@shared/ui';
+
 @Component({
-  selector: 'app-stat-card',
+  selector: 'app-sample-dashboard',
   standalone: true,
-  template: `...`,
-  ...
+  imports: [StatCardComponent],
+  template: `
+    <shared-stat-card
+      title="Pending Floats"
+      [value]="pendingCount"
+      subtitle="Awaiting confirmation"
+      variant="warning"
+    >
+      <span icon>⏳</span>
+    </shared-stat-card>
+  `
 })
-export class StatCardComponent {
-  @Input() label!: string;
-  @Input() value!: string | number;
-  @Input() colorClass = 'text-blue-600';
+export class SampleDashboardComponent {
+  pendingCount = 8;
 }
 ```
 

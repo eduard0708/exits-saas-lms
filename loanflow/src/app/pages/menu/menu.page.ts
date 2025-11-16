@@ -1,17 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { 
-  IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, 
-  IonList, IonItem, IonIcon, IonLabel, IonCard, IonCardContent,
-  IonMenuToggle, MenuController 
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import { 
-  homeOutline, peopleOutline, shieldOutline, businessOutline, 
-  documentTextOutline, personOutline, personCircleOutline, settingsOutline, logOutOutline 
-} from 'ionicons/icons';
+import { IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonCard, IonCardContent, IonMenuToggle, MenuController } from '@ionic/angular/standalone';
 import { AuthService } from '@app/core/services/auth.service';
+import { iconToEmoji } from '@shared/utils/emoji-icon.util';
 
 @Component({
   selector: 'app-menu',
@@ -24,9 +16,8 @@ import { AuthService } from '@app/core/services/auth.service';
     IonToolbar,
     IonTitle,
     IonContent,
-    IonList,
-    IonItem,
-    IonIcon,
+  IonList,
+  IonItem,
     IonLabel,
     IonCard,
     IonCardContent,
@@ -37,6 +28,7 @@ import { AuthService } from '@app/core/services/auth.service';
 })
 export class MenuPage implements OnInit {
   currentUser = this.authService.getCurrentUser();
+  protected emoji = iconToEmoji;
 
   menuItems = [
     { label: 'Dashboard', icon: 'home-outline', route: '/dashboard' },
@@ -51,19 +43,7 @@ export class MenuPage implements OnInit {
   constructor(
     private menu: MenuController,
     private authService: AuthService
-  ) {
-    addIcons({
-      'home-outline': homeOutline,
-      'people-outline': peopleOutline,
-      'shield-outline': shieldOutline,
-      'business-outline': businessOutline,
-      'document-text-outline': documentTextOutline,
-      'person-outline': personOutline,
-      'person-circle-outline': personCircleOutline,
-      'settings-outline': settingsOutline,
-      'log-out-outline': logOutOutline
-    });
-  }
+  ) {}
 
   ngOnInit(): void {}
 

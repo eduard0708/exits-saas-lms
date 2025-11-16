@@ -1,38 +1,26 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import {
-  IonButton,
-  IonIcon,
-  IonBadge,
-  MenuController,
-  ToastController,
-  AlertController,
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import {
-  menuOutline,
-  notificationsOutline,
-  logOutOutline,
-} from 'ionicons/icons';
+import { IonButton, IonBadge, MenuController, ToastController, AlertController } from '@ionic/angular/standalone';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { HeaderUtilsComponent } from './header-utils.component';
+import { iconToEmoji } from '@shared/utils/emoji-icon.util';
 
 @Component({
   selector: 'app-collector-top-bar',
   standalone: true,
-  imports: [CommonModule, RouterLink, IonButton, IonIcon, IonBadge, HeaderUtilsComponent],
+  imports: [CommonModule, RouterLink, IonButton, IonBadge, HeaderUtilsComponent],
   template: `
     <div class="fixed-top-bar">
       <div class="top-bar-content">
         <div class="top-bar-left">
           <ion-button fill="clear" class="icon-button" size="small" (click)="openMenu()">
-            <ion-icon slot="icon-only" name="menu-outline"></ion-icon>
+            <span slot="icon-only"  class="emoji-icon">☰</span>
           </ion-button>
           @if (icon) {
-            <ion-icon [name]="icon" class="app-icon"></ion-icon>
+            <span class="emoji-icon app-icon">{{ emoji(icon) }}</span>
           }
           <div class="title-group">
             <span class="app-title">{{ title }}</span>
@@ -43,7 +31,7 @@ import { HeaderUtilsComponent } from './header-utils.component';
           <ng-content select="[topbar-right]"></ng-content>
           <app-header-utils [showLogout]="false" />
           <ion-button fill="clear" class="icon-button" size="small" [routerLink]="notificationsLink">
-            <ion-icon slot="icon-only" name="notifications-outline"></ion-icon>
+            <span slot="icon-only"  class="emoji-icon">🔔</span>
             @if ((notifications$ | async)?.length) {
               <ion-badge class="notif-badge" color="danger">{{ (notifications$ | async)?.length }}</ion-badge>
             }
@@ -55,7 +43,7 @@ import { HeaderUtilsComponent } from './header-utils.component';
             size="small"
             (click)="logout()"
           >
-            <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
+            <span slot="icon-only"  class="emoji-icon">🚪</span>
           </ion-button>
         </div>
       </div>
@@ -134,7 +122,7 @@ import { HeaderUtilsComponent } from './header-utils.component';
       position: relative;
     }
 
-    .icon-button ion-icon {
+    .icon-button .emoji-icon {
       font-size: 1.35rem;
     }
 
@@ -194,6 +182,7 @@ export class CollectorTopBarComponent {
   @Input() notificationsLink: string | any[] = ['/notifications'];
   @Input() showLogout = true;
   notifications$ = this.notificationService.notifications$;
+  protected emoji = iconToEmoji;
 
   constructor(
     private menu: MenuController,
@@ -203,13 +192,7 @@ export class CollectorTopBarComponent {
     private toastController: ToastController,
     private alertController: AlertController,
     public themeService: ThemeService
-  ) {
-    addIcons({
-      menuOutline,
-      notificationsOutline,
-      logOutOutline,
-    });
-  }
+  ) {}
 
   openMenu(): void {
     this.menu.open('mainMenu');

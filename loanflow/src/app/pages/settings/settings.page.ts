@@ -1,10 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { 
-  IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton, 
-  IonContent, IonItem, IonLabel, IonToggle, IonSelect, IonSelectOption,
-  IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonText 
-} from '@ionic/angular/standalone';
+import { IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton, IonContent, IonItem, IonLabel, IonToggle, IonSelect, IonSelectOption, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonText } from '@ionic/angular/standalone';
 import { SettingsService } from '@app/core/services/settings.service';
 import { Observable } from 'rxjs';
 

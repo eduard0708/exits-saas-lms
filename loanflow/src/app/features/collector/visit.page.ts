@@ -1,8 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  IonContent,
-} from '@ionic/angular/standalone';
+import { IonContent } from '@ionic/angular/standalone';
 import { ApiService } from '../../core/services/api.service';
 import { CollectorTopBarComponent } from '../../shared/components/collector-top-bar.component';
 

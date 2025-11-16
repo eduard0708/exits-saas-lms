@@ -3,42 +3,7 @@ import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import {
-  IonContent,
-  IonRefresher,
-  IonRefresherContent,
-  IonButton,
-  IonIcon,
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
-  IonCardContent,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonButtons,
-  IonModal,
-  IonInput,
-  IonSelect,
-  IonSelectOption,
-  IonTextarea,
-  IonBadge,
-  IonItem,
-  IonLabel,
-  ToastController,
-  AlertController,
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import {
-  locationOutline,
-  checkmarkCircleOutline,
-  timeOutline,
-  navigateOutline,
-  personOutline,
-  calendarOutline,
-  cashOutline,
-  alertCircleOutline,
-} from 'ionicons/icons';
+import { IonContent, IonRefresher, IonRefresherContent, IonButton, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonModal, IonInput, IonSelect, IonSelectOption, IonTextarea, IonBadge, IonItem, IonLabel, ToastController, AlertController } from '@ionic/angular/standalone';
 import { 
   CollectorService, 
   CustomerVisit,
@@ -60,7 +25,6 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
     IonRefresher,
     IonRefresherContent,
     IonButton,
-    IonIcon,
     IonCard,
     IonCardHeader,
     IonCardTitle,
@@ -130,7 +94,7 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
                 </div>
 
                 <ion-button expand="block" color="success" (click)="openCheckOutModal()">
-                  <ion-icon slot="start" [icon]="'checkmark-circle-outline'"></ion-icon>
+                  <span slot="start"  class="emoji-icon">✅</span>
                   Check Out
                 </ion-button>
               </div>
@@ -145,7 +109,7 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
                   <div class="cta-subtitle">Start your next customer visit with GPS tracking.</div>
                 </div>
                 <ion-button color="primary" (click)="openCheckInModal()">
-                  <ion-icon slot="start" [icon]="'location-outline'"></ion-icon>
+                  <span slot="start"  class="emoji-icon">📍</span>
                   Start Visit
                 </ion-button>
               </div>
@@ -169,7 +133,7 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
             <ion-card-content class="empty-state">
               <div class="state-message">No visits logged yet today.</div>
               <ion-button expand="block" fill="outline" color="primary" (click)="openCheckInModal()">
-                <ion-icon slot="start" [icon]="'location-outline'"></ion-icon>
+                <span slot="start"  class="emoji-icon">📍</span>
                 Start a visit
               </ion-button>
             </ion-card-content>
@@ -245,7 +209,7 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
               @if (currentLocation()) {
                 <div class="bg-green-50 p-4 rounded-lg">
                   <div class="flex items-center gap-2 text-green-700">
-                    <ion-icon [icon]="'checkmark-circle-outline'" class="text-xl"></ion-icon>
+                    <span  class="emoji-icon text-xl">✅</span>
                     <span class="font-semibold">GPS Location Acquired</span>
                   </div>
                   <div class="text-sm text-gray-600 mt-1">
@@ -255,7 +219,7 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
               } @else {
                 <div class="bg-yellow-50 p-4 rounded-lg">
                   <div class="flex items-center gap-2 text-yellow-700">
-                    <ion-icon [icon]="'alert-circle-outline'" class="text-xl"></ion-icon>
+                    <span  class="emoji-icon text-xl">⚠️</span>
                     <span class="font-semibold">Getting GPS location...</span>
                   </div>
                 </div>
@@ -317,7 +281,7 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
                   color="primary" 
                   [disabled]="!isCheckInFormValid() || !currentLocation()"
                   (click)="confirmCheckIn()">
-                  <ion-icon slot="start" [icon]="'location-outline'"></ion-icon>
+                  <span slot="start"  class="emoji-icon">📍</span>
                   Start Visit
                 </ion-button>
                 <ion-button expand="block" fill="outline" (click)="closeCheckInModal()">
@@ -405,7 +369,7 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
                     color="success" 
                     [disabled]="!isCheckOutFormValid()"
                     (click)="confirmCheckOut()">
-                    <ion-icon slot="start" [icon]="'checkmark-circle-outline'"></ion-icon>
+                    <span slot="start"  class="emoji-icon">✅</span>
                     Complete Visit
                   </ion-button>
                   <ion-button expand="block" fill="outline" (click)="closeCheckOutModal()">
@@ -603,18 +567,7 @@ export class CollectorVisitsPage implements OnInit {
     outcomeNotes: '',
   };
 
-  constructor() {
-    addIcons({
-      locationOutline,
-      checkmarkCircleOutline,
-      timeOutline,
-      navigateOutline,
-      personOutline,
-      calendarOutline,
-      cashOutline,
-      alertCircleOutline,
-    });
-  }
+  constructor() {}
 
   async ngOnInit() {
     const user = this.authService.currentUser();

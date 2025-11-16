@@ -1,10 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { 
-  IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton, 
-  IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent, 
-  IonList, IonItem, IonLabel, IonButton, IonText 
-} from '@ionic/angular/standalone';
+import { IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton, IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonList, IonItem, IonLabel, IonButton, IonText } from '@ionic/angular/standalone';
 import { AuthService } from '@app/core/services/auth.service';
 
 @Component({

@@ -1,8 +1,6 @@
 import { Component, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonIcon, IonButton, ToastController } from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import { codeSlashOutline } from 'ionicons/icons';
+import { IonButton, ToastController } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 import { Location } from '@angular/common';
 
@@ -14,7 +12,7 @@ import { Location } from '@angular/common';
 @Component({
   selector: 'app-dev-info',
   standalone: true,
-  imports: [CommonModule, IonIcon, IonButton],
+  imports: [CommonModule, IonButton],
   template: `
     <ion-button 
       fill="clear" 
@@ -22,7 +20,7 @@ import { Location } from '@angular/common';
       (click)="showInfo()"
       class="dev-info-button"
     >
-      <ion-icon slot="icon-only" name="code-slash-outline"></ion-icon>
+      <span slot="icon-only"  class="emoji-icon">💻</span>
     </ion-button>
   `,
   styles: [`
@@ -47,9 +45,7 @@ export class DevInfoComponent {
     private router: Router,
     private location: Location,
     private toastController: ToastController
-  ) {
-    addIcons({ 'code-slash-outline': codeSlashOutline });
-  }
+  ) {}
 
   async showInfo() {
     // Emit event for parent component to handle logging

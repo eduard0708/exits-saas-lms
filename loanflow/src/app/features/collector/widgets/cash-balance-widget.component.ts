@@ -1,22 +1,8 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
-  IonCardSubtitle,
-  IonCardContent,
-  IonButton,
-  IonIcon,
-  IonBadge,
-  IonText,
-  IonSpinner,
-} from '@ionic/angular/standalone';
+import { IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonButton, IonBadge, IonText, IonSpinner } from '@ionic/angular/standalone';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { addIcons } from 'ionicons';
-import { cashOutline, alertCircleOutline, checkmarkCircleOutline } from 'ionicons/icons';
-
 interface CashBalance {
   collectorId: number;
   balanceDate: string;
@@ -43,7 +29,6 @@ interface CashBalance {
     IonCardSubtitle,
     IonCardContent,
     IonButton,
-    IonIcon,
     IonBadge,
     IonText,
     IonSpinner,
@@ -57,9 +42,7 @@ export class CashBalanceWidgetComponent implements OnInit {
   constructor(
     private http: HttpClient,
     private router: Router
-  ) {
-    addIcons({ cashOutline, alertCircleOutline, checkmarkCircleOutline });
-  }
+  ) {}
 
   ngOnInit() {
     this.loadBalance();

@@ -3,21 +3,7 @@ import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import {
-  IonContent,
-  IonRefresher,
-  IonRefresherContent,
-  IonSegment,
-  IonSegmentButton,
-  IonIcon,
-  ToastController,
-  AlertController,
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import {
-  alertCircleOutline,
-  bulbOutline
-} from 'ionicons/icons';
+import { IonContent, IonRefresher, IonRefresherContent, IonSegment, IonSegmentButton, ToastController, AlertController } from '@ionic/angular/standalone';
 import { 
   CollectorService, 
   PenaltyWaiver,
@@ -38,7 +24,6 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
     IonRefresherContent,
     IonSegment,
     IonSegmentButton,
-    IonIcon,
     CollectorTopBarComponent
   ],
   template: `
@@ -82,13 +67,13 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
           @else if (pendingWaivers().length === 0) {
             <div class="empty-state">
               <div class="empty-icon-wrapper">
-                <ion-icon name="alert-circle-outline" class="empty-icon"></ion-icon>
+                <span  class="emoji-icon empty-icon">⚠️</span>
               </div>
               <h3 class="empty-title">No Pending Waivers</h3>
               <p class="empty-subtitle">You don't have any waiver requests at the moment</p>
               <div class="hint-box">
                 <div class="hint-icon">
-                  <ion-icon name="bulb-outline"></ion-icon>
+                  <span  class="emoji-icon">💡</span>
                 </div>
                 <div class="hint-content">
                   <div class="hint-label">Quick Tip</div>
@@ -904,12 +889,7 @@ export class CollectorWaiversPage implements OnInit {
     notes: '',
   };
 
-  constructor() {
-    addIcons({
-      alertCircleOutline,
-      bulbOutline
-    });
-  }
+  constructor() {}
 
   async ngOnInit() {
     const user = this.authService.currentUser();

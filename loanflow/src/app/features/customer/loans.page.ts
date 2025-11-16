@@ -1,29 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  IonContent,
-  IonRefresher,
-  IonRefresherContent,
-  IonSkeletonText,
-  IonIcon,
-  ToastController
-} from '@ionic/angular/standalone';
+import { IonContent, IonRefresher, IonRefresherContent, IonSkeletonText, ToastController } from '@ionic/angular/standalone';
 import { Router, RouterLink } from '@angular/router';
-import { addIcons } from 'ionicons';
-import {
-  documentTextOutline,
-  briefcaseOutline,
-  trendingUpOutline,
-  ribbonOutline,
-  refreshOutline,
-  homeOutline,
-  chevronUpOutline,
-  chevronDownOutline,
-  calendarOutline,
-  cashOutline,
-  arrowForwardOutline
-} from 'ionicons/icons';
-
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
@@ -52,7 +30,6 @@ interface Loan {
     IonRefresher,
     IonRefresherContent,
     IonSkeletonText,
-    IonIcon,
     CustomerTopBarComponent
   ],
   template: `
@@ -68,7 +45,7 @@ interface Loan {
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-icon-wrapper purple-gradient">
-              <ion-icon name="briefcase-outline" class="stat-icon"></ion-icon>
+              <span  class="emoji-icon stat-icon">💼</span>
             </div>
             <div class="stat-content">
               <div class="stat-label">Total Loans</div>
@@ -82,7 +59,7 @@ interface Loan {
 
           <div class="stat-card">
             <div class="stat-icon-wrapper green-gradient">
-              <ion-icon name="trending-up-outline" class="stat-icon"></ion-icon>
+              <span  class="emoji-icon stat-icon">📈</span>
             </div>
             <div class="stat-content">
               <div class="stat-label">Total Balance</div>
@@ -157,7 +134,7 @@ interface Loan {
         } @else if (filter() === 'submitted' && applications().length === 0) {
           <div class="empty-state">
             <div class="empty-icon-wrapper">
-              <ion-icon name="clipboard-outline" class="empty-icon"></ion-icon>
+              <span  class="emoji-icon empty-icon">📋</span>
             </div>
             <h3 class="empty-title">No Submitted Applications</h3>
             <p class="empty-message">
@@ -165,11 +142,11 @@ interface Loan {
             </p>
             <div class="empty-actions">
               <button class="refresh-btn" (click)="loadApplications()" [disabled]="loading()">
-                <ion-icon name="refresh-outline" class="btn-icon"></ion-icon>
+                <span  class="emoji-icon btn-icon">🔄</span>
                 <span>Refresh</span>
               </button>
               <button class="dashboard-btn" routerLink="/customer/dashboard">
-                <ion-icon name="home-outline" class="btn-icon"></ion-icon>
+                <span  class="emoji-icon btn-icon">🏠</span>
                 <span>Back to Dashboard</span>
               </button>
             </div>
@@ -177,7 +154,7 @@ interface Loan {
         } @else if (filter() !== 'submitted' && filteredLoans().length === 0) {
           <div class="empty-state">
             <div class="empty-icon-wrapper">
-              <ion-icon name="ribbon-outline" class="empty-icon"></ion-icon>
+              <span  class="emoji-icon empty-icon">🎗️</span>
             </div>
             <h3 class="empty-title">No Loans Found</h3>
             <p class="empty-message">
@@ -193,11 +170,11 @@ interface Loan {
             </p>
             <div class="empty-actions">
               <button class="refresh-btn" (click)="loadLoans()" [disabled]="loading()">
-                <ion-icon name="refresh-outline" class="btn-icon"></ion-icon>
+                <span  class="emoji-icon btn-icon">🔄</span>
                 <span>Refresh</span>
               </button>
               <button class="dashboard-btn" routerLink="/customer/dashboard">
-                <ion-icon name="home-outline" class="btn-icon"></ion-icon>
+                <span  class="emoji-icon btn-icon">🏠</span>
                 <span>Back to Dashboard</span>
               </button>
             </div>
@@ -215,7 +192,7 @@ interface Loan {
                 <div class="app-header">
                   <div class="app-left">
                     <div class="app-icon-wrapper">
-                      <ion-icon name="clipboard-outline" class="app-icon"></ion-icon>
+                      <span  class="emoji-icon app-icon">📋</span>
                     </div>
                     <div class="app-info">
                       <div class="app-number">{{ app.applicationNumber }}</div>
@@ -248,14 +225,14 @@ interface Loan {
                       'status-overdue': loan.status === 'overdue',
                       'status-pending': loan.status === 'pending'
                     }">
-                      <ion-icon name="ribbon-outline" class="loan-icon"></ion-icon>
+                      <span  class="emoji-icon loan-icon">🎗️</span>
                     </div>
                     <div>
                       <div class="loan-number">{{ loan.loanNumber }}</div>
                       <div class="loan-date">Applied: {{ loan.dueDate }}</div>
                     </div>
                   </div>
-                  <ion-icon [name]="expandedLoanId() === loan.id ? 'chevron-up-outline' : 'chevron-down-outline'" class="expand-icon"></ion-icon>
+                  <span class="emoji-icon expand-icon">{{ expandedLoanId() === loan.id ? '🔼' : '🔽' }}</span>
                 </div>
 
                 <!-- Status Badge -->
@@ -311,7 +288,7 @@ interface Loan {
                     <div class="details-grid">
                       <div class="detail-row">
                         <div class="detail-icon-wrapper">
-                          <ion-icon name="calendar-outline" class="detail-icon"></ion-icon>
+                          <span  class="emoji-icon detail-icon">📅</span>
                         </div>
                         <div class="detail-content">
                           <div class="detail-label">Due Date</div>
@@ -321,7 +298,7 @@ interface Loan {
 
                       <div class="detail-row">
                         <div class="detail-icon-wrapper">
-                          <ion-icon name="cash-outline" class="detail-icon"></ion-icon>
+                          <span  class="emoji-icon detail-icon">💰</span>
                         </div>
                         <div class="detail-content">
                           <div class="detail-label">Monthly Payment</div>
@@ -336,7 +313,7 @@ interface Loan {
                       (click)="viewLoanDetails(loan); $event.stopPropagation()"
                     >
                       View Full Details
-                      <ion-icon name="arrow-forward-outline" class="btn-icon"></ion-icon>
+                      <span  class="emoji-icon btn-icon">➡️</span>
                     </button>
                   </div>
                 }
@@ -1068,21 +1045,7 @@ export class CustomerLoansPage implements OnInit {
     private router: Router,
     public themeService: ThemeService,
     private toastController: ToastController
-  ) {
-    addIcons({
-      documentTextOutline,
-      briefcaseOutline,
-      trendingUpOutline,
-      ribbonOutline,
-      refreshOutline,
-      homeOutline,
-      chevronUpOutline,
-      chevronDownOutline,
-      calendarOutline,
-      cashOutline,
-      arrowForwardOutline
-    });
-  }
+  ) {}
 
   ngOnInit() {
     this.loadLoans();

@@ -1,35 +1,7 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import {
-  IonContent,
-  IonRefresher,
-  IonRefresherContent,
-  IonIcon,
-  IonSkeletonText,
-  ToastController,
-  ViewWillEnter,
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import {
-  personOutline,
-  peopleOutline,
-  walletOutline,
-  documentTextOutline,
-  checkmarkCircleOutline,
-  timeOutline,
-  locationOutline,
-  alertCircleOutline,
-  trendingUpOutline,
-  cardOutline,
-  refreshOutline,
-  arrowForwardOutline,
-  chevronForwardOutline,
-  searchOutline,
-  closeOutline,
-  callOutline,
-  mailOutline,
-} from 'ionicons/icons';
+import { IonContent, IonRefresher, IonRefresherContent, IonSkeletonText, ToastController, ViewWillEnter } from '@ionic/angular/standalone';
 import {
   CollectorService,
   CollectorDailySummary,
@@ -48,7 +20,6 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
     IonContent,
     IonRefresher,
     IonRefresherContent,
-    IonIcon,
     IonSkeletonText,
     CollectorTopBarComponent,
     CashBalanceWidgetComponent,
@@ -77,7 +48,7 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
             <h2>No dashboard data yet</h2>
             <p>Pull to refresh or tap below to sync your assignments.</p>
             <button type="button" class="empty-action" (click)="loadDashboard(true)">
-              <ion-icon name="refresh-outline"></ion-icon>
+              <span  class="emoji-icon">🔄</span>
               <span>Refresh dashboard</span>
             </button>
           </div>
@@ -86,21 +57,21 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
             <!-- Daily Summary -->
             <div class="summary-pills">
               <div class="summary-pill">
-                <ion-icon name="wallet-outline"></ion-icon>
+                <span  class="emoji-icon">👛</span>
                 <div class="pill-content">
                   <span class="pill-value">₱{{ summary()!.collectedToday.toLocaleString() }}</span>
                   <span class="pill-label">Collected today</span>
                 </div>
               </div>
               <div class="summary-pill">
-                <ion-icon name="people-outline"></ion-icon>
+                <span  class="emoji-icon">👥</span>
                 <div class="pill-content">
                   <span class="pill-value">{{ summary()?.totalCustomers ?? 0 }}</span>
                   <span class="pill-label">Assigned</span>
                 </div>
               </div>
               <div class="summary-pill">
-                <ion-icon name="location-outline"></ion-icon>
+                <span  class="emoji-icon">📍</span>
                 <div class="pill-content">
                   <span class="pill-value">{{ summary()!.visitsPlanned }}</span>
                   <span class="pill-label">Visits</span>
@@ -196,7 +167,7 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
                   </div>
                   <div class="action-right">
                     <div class="action-badge">{{ summary()!.pendingApplications }}</div>
-                    <ion-icon name="chevron-forward-outline" class="chevron-icon"></ion-icon>
+                    <span  class="emoji-icon chevron-icon">›</span>
                   </div>
                 </div>
 
@@ -210,7 +181,7 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
                   </div>
                   <div class="action-right">
                     <div class="action-badge">{{ summary()!.pendingDisbursements }}</div>
-                    <ion-icon name="chevron-forward-outline" class="chevron-icon"></ion-icon>
+                    <span  class="emoji-icon chevron-icon">›</span>
                   </div>
                 </div>
 
@@ -224,7 +195,7 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
                   </div>
                   <div class="action-right">
                     <div class="action-badge">{{ summary()!.pendingWaivers }}</div>
-                    <ion-icon name="chevron-forward-outline" class="chevron-icon"></ion-icon>
+                    <span  class="emoji-icon chevron-icon">›</span>
                   </div>
                 </div>
               </div>
@@ -265,11 +236,11 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
             <!-- Quick Actions -->
             <div class="quick-actions">
               <button class="action-btn primary" (click)="navigateTo('/collector/visits')">
-                <ion-icon name="location-outline"></ion-icon>
+                <span  class="emoji-icon">📍</span>
                 <span>Start Visit</span>
               </button>
               <button class="action-btn success" (click)="navigateTo('/collector/route')">
-                <ion-icon name="people-outline"></ion-icon>
+                <span  class="emoji-icon">👥</span>
                 <span>My Customers</span>
               </button>
             </div>
@@ -293,13 +264,13 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
                 </p>
               </div>
               <button class="close-btn" (click)="closeCustomerList()">
-                <ion-icon name="close-outline"></ion-icon>
+                <span  class="emoji-icon">✖️</span>
               </button>
             </div>
 
             <div class="modal-toolbar">
               <div class="search-field">
-                <ion-icon name="search-outline" class="search-leading"></ion-icon>
+                <span  class="emoji-icon search-leading">🔍</span>
                 <input
                   type="search"
                   class="search-input"
@@ -309,7 +280,7 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
                 />
                 @if (customerSearch()) {
                   <button class="search-clear" (click)="clearCustomerSearch()">
-                    <ion-icon name="close-outline"></ion-icon>
+                    <span  class="emoji-icon">✖️</span>
                   </button>
                 }
               </div>
@@ -404,7 +375,7 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
 
                       <div class="card-footer">
                         <div class="contact-row">
-                          <ion-icon name="call-outline"></ion-icon>
+                          <span  class="emoji-icon">📞</span>
                           <span>{{ customer.phoneNumber || 'No phone on file' }}</span>
                         </div>
                         <div class="assigned-pill">
@@ -414,7 +385,7 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
 
                       @if (customer.address) {
                         <div class="address-row">
-                          <ion-icon name="location-outline"></ion-icon>
+                          <span  class="emoji-icon">📍</span>
                           <span>{{ customer.address }}</span>
                         </div>
                       }
@@ -427,7 +398,7 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
             <div class="modal-footer">
               <button class="modal-action" (click)="navigateTo('/collector/route')">
                 Review route
-                <ion-icon name="arrow-forward-outline"></ion-icon>
+                <span  class="emoji-icon">➡️</span>
               </button>
             </div>
           </div>
@@ -1546,26 +1517,7 @@ export class CollectorDashboardPage implements OnInit, ViewWillEnter {
     return list;
   });
 
-  constructor() {
-    addIcons({
-      personOutline,
-      walletOutline,
-      documentTextOutline,
-      checkmarkCircleOutline,
-      timeOutline,
-      locationOutline,
-      alertCircleOutline,
-      trendingUpOutline,
-      cardOutline,
-      refreshOutline,
-      arrowForwardOutline,
-      chevronForwardOutline,
-      searchOutline,
-      closeOutline,
-      callOutline,
-      mailOutline,
-    });
-  }
+  constructor() {}
 
   ngOnInit() {
     const user = this.authService.currentUser();

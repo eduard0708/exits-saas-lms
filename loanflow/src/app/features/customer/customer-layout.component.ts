@@ -2,27 +2,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import {
-  IonTabs,
-  IonTabBar,
-  IonTabButton,
-  IonIcon,
-  IonLabel,
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import {
-  homeOutline,
-  home,
-  documentTextOutline,
-  documentText,
-  cardOutline,
-  card,
-  addCircleOutline,
-  addCircle,
-  personOutline,
-  person,
-} from 'ionicons/icons';
-
+import { IonTabs, IonTabBar, IonTabButton, IonLabel } from '@ionic/angular/standalone';
 @Component({
   selector: 'app-customer-layout',
   standalone: true,
@@ -32,40 +12,39 @@ import {
     IonTabs,
     IonTabBar,
     IonTabButton,
-    IonIcon,
     IonLabel,
   ],
   template: `
     <ion-tabs>
       <ion-tab-bar slot="bottom" class="custom-tab-bar">
         <ion-tab-button tab="dashboard" class="custom-tab-button">
-          <ion-icon name="home-outline" class="tab-icon-outline"></ion-icon>
-          <ion-icon name="home" class="tab-icon-filled"></ion-icon>
+          <span  class="emoji-icon tab-icon-outline">🏠</span>
+          <span  class="emoji-icon tab-icon-filled">🏠</span>
           <ion-label class="tab-label">Dashboard</ion-label>
         </ion-tab-button>
 
         <ion-tab-button tab="loans" class="custom-tab-button">
-          <ion-icon name="document-text-outline" class="tab-icon-outline"></ion-icon>
-          <ion-icon name="document-text" class="tab-icon-filled"></ion-icon>
+          <span  class="emoji-icon tab-icon-outline">📄</span>
+          <span  class="emoji-icon tab-icon-filled">📄</span>
           <ion-label class="tab-label">Loans</ion-label>
         </ion-tab-button>
 
         <ion-tab-button tab="apply" class="custom-tab-button tab-center">
           <div class="center-fab">
-            <ion-icon name="add-circle" class="fab-icon"></ion-icon>
+            <span  class="emoji-icon fab-icon">➕</span>
           </div>
           <ion-label class="tab-label">Apply</ion-label>
         </ion-tab-button>
 
         <ion-tab-button tab="payments" class="custom-tab-button">
-          <ion-icon name="card-outline" class="tab-icon-outline"></ion-icon>
-          <ion-icon name="card" class="tab-icon-filled"></ion-icon>
+          <span  class="emoji-icon tab-icon-outline">💳</span>
+          <span  class="emoji-icon tab-icon-filled">💳</span>
           <ion-label class="tab-label">Payments</ion-label>
         </ion-tab-button>
 
         <ion-tab-button tab="profile" class="custom-tab-button">
-          <ion-icon name="person-outline" class="tab-icon-outline"></ion-icon>
-          <ion-icon name="person" class="tab-icon-filled"></ion-icon>
+          <span  class="emoji-icon tab-icon-outline">👤</span>
+          <span  class="emoji-icon tab-icon-filled">👤</span>
           <ion-label class="tab-label">Profile</ion-label>
         </ion-tab-button>
       </ion-tab-bar>
@@ -259,18 +238,5 @@ import {
   `],
 })
 export class CustomerLayoutComponent {
-  constructor() {
-    addIcons({
-      'home-outline': homeOutline,
-      'home': home,
-      'document-text-outline': documentTextOutline,
-      'document-text': documentText,
-      'card-outline': cardOutline,
-      'card': card,
-      'add-circle-outline': addCircleOutline,
-      'add-circle': addCircle,
-      'person-outline': personOutline,
-      'person': person,
-    });
-  }
+  constructor() {}
 }

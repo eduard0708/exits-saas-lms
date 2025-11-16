@@ -2,35 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import {
-  IonContent,
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
-  IonCardContent,
-  IonList,
-  IonItem,
-  IonLabel,
-  IonInput,
-  IonButton,
-  IonSpinner,
-  IonSegment,
-  IonSegmentButton,
-  IonIcon,
-  IonToggle,
-  IonTextarea,
-  ToastController,
-  AlertController,
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import {
-  personOutline,
-  callOutline,
-  homeOutline,
-  locationOutline,
-  saveOutline,
-  checkmarkCircleOutline,
-} from 'ionicons/icons';
+import { IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonList, IonItem, IonLabel, IonInput, IonButton, IonSpinner, IonSegment, IonSegmentButton, IonToggle, IonTextarea, ToastController, AlertController } from '@ionic/angular/standalone';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { HeaderUtilsComponent } from '../../shared/components/header-utils.component';
@@ -56,7 +28,6 @@ import { environment } from '../../../environments/environment';
     IonSpinner,
     IonSegment,
     IonSegmentButton,
-    IonIcon,
     IonToggle,
     IonTextarea,
     HeaderUtilsComponent
@@ -67,7 +38,7 @@ import { environment } from '../../../environments/environment';
       <div class="fixed-top-bar">
         <div class="top-bar-content">
           <div class="top-bar-left">
-            <ion-icon name="person-outline" class="app-icon"></ion-icon>
+            <span  class="emoji-icon app-icon">👤</span>
             <span class="app-title">Profile</span>
           </div>
           
@@ -98,11 +69,11 @@ import { environment } from '../../../environments/environment';
               </div>
               <div class="hero-tags">
                 <span class="hero-tag">
-                  <ion-icon name="checkmark-circle-outline"></ion-icon>
+                  <span  class="emoji-icon">✅</span>
                   {{ completedFieldsCount() }}/{{ totalFieldsCount() }} fields updated
                 </span>
                 <span class="hero-tag soft">
-                  <ion-icon name="call-outline"></ion-icon>
+                  <span  class="emoji-icon">📞</span>
                   {{ personalInfo.phone || 'Add a phone number' }}
                 </span>
               </div>
@@ -113,11 +84,11 @@ import { environment } from '../../../environments/environment';
         <!-- Segment for tabs -->
         <ion-segment [(ngModel)]="selectedTab" (ionChange)="onTabChange()">
           <ion-segment-button value="personal">
-            <ion-icon name="person-outline"></ion-icon>
+            <span  class="emoji-icon">👤</span>
             <ion-label>Personal Info</ion-label>
           </ion-segment-button>
           <ion-segment-button value="address">
-            <ion-icon name="home-outline"></ion-icon>
+            <span  class="emoji-icon">🏠</span>
             <ion-label>Address</ion-label>
           </ion-segment-button>
         </ion-segment>
@@ -130,7 +101,7 @@ import { environment } from '../../../environments/environment';
             </ion-card-header>
             <ion-card-content>
               <p class="info-text">
-                <ion-icon name="checkmark-circle-outline" color="primary"></ion-icon>
+                <span  color="primary" class="emoji-icon">✅</span>
                 Please complete your personal information. All fields are required.
               </p>
 
@@ -184,7 +155,7 @@ import { environment } from '../../../environments/environment';
                 [disabled]="savingPersonal"
                 class="save-button"
               >
-                <ion-icon slot="start" name="save-outline"></ion-icon>
+                <span slot="start"  class="emoji-icon">💾</span>
                 <span *ngIf="!savingPersonal">Save Personal Info</span>
                 <ion-spinner *ngIf="savingPersonal" name="crescent"></ion-spinner>
               </ion-button>
@@ -200,7 +171,7 @@ import { environment } from '../../../environments/environment';
             </ion-card-header>
             <ion-card-content>
               <p class="info-text">
-                <ion-icon name="location-outline" color="medium"></ion-icon>
+                <span  color="medium" class="emoji-icon">📍</span>
                 Address information is optional but recommended for loan applications.
               </p>
 
@@ -432,7 +403,7 @@ import { environment } from '../../../environments/environment';
                 [disabled]="savingAddress"
                 class="save-button"
               >
-                <ion-icon slot="start" name="save-outline"></ion-icon>
+                <span slot="start"  class="emoji-icon">💾</span>
                 <span *ngIf="!savingAddress">Save Address</span>
                 <ion-spinner *ngIf="savingAddress" name="crescent"></ion-spinner>
               </ion-button>
@@ -1325,16 +1296,7 @@ export class ProfilePage implements OnInit {
     private alertController: AlertController,
     private http: HttpClient,
     public themeService: ThemeService
-  ) {
-    addIcons({
-      'person-outline': personOutline,
-      'call-outline': callOutline,
-      'home-outline': homeOutline,
-      'location-outline': locationOutline,
-      'save-outline': saveOutline,
-      'checkmark-circle-outline': checkmarkCircleOutline,
-    });
-  }
+  ) {}
 
   ngOnInit() {
     this.loadCurrentProfile();

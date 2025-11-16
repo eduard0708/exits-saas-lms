@@ -9,7 +9,7 @@
     <!-- User Info -->
     <ion-card class="user-info">
       <ion-card-content class="ion-text-center">
-  <ion-icon name="person-circle-outline" size="large" color="primary"></ion-icon>
+  <span  size="large" color="primary" class="emoji-icon">🙂</span>
         <h2>{{ currentUser?.firstName }} {{ currentUser?.lastName }}</h2>
         <p color="medium">{{ currentUser?.email }}</p>
         <p color="medium" style="font-size: 12px">{{ currentUser?.role }}</p>
@@ -20,7 +20,7 @@
     <ion-list>
       <ion-menu-toggle auto-close *ngFor="let item of menuItems">
         <ion-item [routerLink]="item.route" routerLinkActive="active" (click)="closeMenu()">
-          <ion-icon [name]="item.icon" slot="start"></ion-icon>
+          <span  class="emoji-icon" slot="start">{{ emoji(item.icon) }}</span>
           <ion-label>{{ item.label }}</ion-label>
         </ion-item>
       </ion-menu-toggle>
@@ -28,7 +28,7 @@
 
     <!-- Logout -->
     <ion-item button (click)="logout()" color="danger">
-  <ion-icon name="log-out-outline" slot="start"></ion-icon>
+  <span  slot="start" class="emoji-icon">🚪</span>
       <ion-label>Logout</ion-label>
     </ion-item>
   </ion-content>

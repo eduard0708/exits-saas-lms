@@ -2,7 +2,7 @@
   <!-- Pending Float Alert -->
   @if (pendingFloatsCount() > 0) {
     <div class="pending-alert" (click)="navigateToFloatPage()">
-      <ion-icon name="alert-circle-outline"></ion-icon>
+      <span  class="emoji-icon">⚠️</span>
       <div class="alert-text">
         <strong>Action Required!</strong>
         <span>{{ pendingFloatsCount() }} pending float confirmation(s)</span>
@@ -15,14 +15,14 @@
     <div class="header-row">
       <div>
         <ion-card-title>
-          <ion-icon name="cash-outline"></ion-icon>
+          <span  class="emoji-icon">💰</span>
           Cash Balance
         </ion-card-title>
         <ion-card-subtitle>On-Hand Cash</ion-card-subtitle>
       </div>
       @if (balance() && balance()!.isFloatConfirmed) {
         <ion-badge color="success">
-          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          <span  class="emoji-icon">✅</span>
           Confirmed
         </ion-badge>
       }
@@ -85,7 +85,7 @@
       </ion-button>
     } @else {
       <div class="empty-state">
-        <ion-icon name="cash-outline"></ion-icon>
+        <span  class="emoji-icon">💰</span>
         <p>No float issued today</p>
         <ion-text color="medium">
           <small>Wait for cashier to issue your float</small>

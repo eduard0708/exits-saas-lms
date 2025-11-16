@@ -41,7 +41,7 @@
 
         <!-- Calculation Breakdown -->
         <div class="calculation-box">
-          <ion-icon name="calculator-outline"></ion-icon>
+          <span  class="emoji-icon">🧮</span>
           <div class="calculation">
             <div class="calc-row">
               <span>{{ formatAmount(balance()!.openingFloat) }}</span>
@@ -90,7 +90,7 @@
           size="small"
           (click)="setExpectedAmount()"
           [disabled]="balance()!.status === 'inactive'">
-          <ion-icon name="calculator-outline" slot="start"></ion-icon>
+          <span  slot="start" class="emoji-icon">🧮</span>
           Use Expected Amount
         </ion-button>
 
@@ -98,7 +98,7 @@
         @if (actualHandover() > 0) {
           <div class="variance-box" [class]="varianceColor()">
             <div class="variance-header">
-              <ion-icon [name]="hasVariance() ? 'warning-outline' : 'checkmark-circle'"></ion-icon>
+              <span  class="emoji-icon">{{ hasVariance() ? '⚠️' : '✅' }}</span>
               <span>Variance Check</span>
             </div>
             <div class="variance-amount" [class]="varianceColor()">
@@ -124,7 +124,7 @@
 
         @if (currentLocation()) {
           <div class="location-info">
-            <ion-icon name="location-outline"></ion-icon>
+            <span  class="emoji-icon">📍</span>
             <span>Location confirmed for handover</span>
           </div>
         }
@@ -164,7 +164,7 @@
             <ion-spinner name="crescent"></ion-spinner>
             <span>&nbsp;Submitting...</span>
           } @else {
-            <ion-icon name="checkmark-circle" slot="start"></ion-icon>
+            <span  slot="start" class="emoji-icon">✅</span>
             Submit Handover of ₱{{ formatAmount(actualHandover()) }}
           }
         </ion-button>
@@ -184,7 +184,7 @@
   } @else {
     <ion-card>
       <ion-card-content class="empty-state">
-        <ion-icon name="warning-outline"></ion-icon>
+        <span  class="emoji-icon">⚠️</span>
         <h3>No Active Balance</h3>
         <p>No cash float found for today. Please confirm your float receipt first.</p>
         <ion-button routerLink="/collector/cash-float">

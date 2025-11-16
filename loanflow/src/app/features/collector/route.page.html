@@ -15,7 +15,7 @@
   <!-- Sync Status Banner -->
   @if (!syncService.isOnline()) {
     <div class="offline-banner">
-      <ion-icon name="cloud-offline-outline" class="offline-icon"></ion-icon>
+      <span  class="emoji-icon offline-icon">☁️</span>
       <span>Offline Mode - {{ syncService.pendingSyncCount() }} pending sync</span>
     </div>
   }
@@ -34,7 +34,7 @@
       <div class="stat-card">
         <div class="stat-header">
           <div class="stat-icon-wrapper stat-icon-purple">
-            <ion-icon class="stat-icon" name="list-outline"></ion-icon>
+            <span class="emoji-icon stat-icon" >📝</span>
           </div>
         </div>
         @if (loading()) {
@@ -50,7 +50,7 @@
       <div class="stat-card">
         <div class="stat-header">
           <div class="stat-icon-wrapper stat-icon-success">
-            <ion-icon class="stat-icon" name="checkmark-circle-outline"></ion-icon>
+            <span class="emoji-icon stat-icon" >✅</span>
           </div>
         </div>
         @if (loading()) {
@@ -66,7 +66,7 @@
       <div class="stat-card">
         <div class="stat-header">
           <div class="stat-icon-wrapper stat-icon-primary">
-            <ion-icon class="stat-icon" name="cash-outline"></ion-icon>
+            <span class="emoji-icon stat-icon" >💰</span>
           </div>
         </div>
         @if (loading()) {
@@ -82,7 +82,7 @@
       <div class="stat-card">
         <div class="stat-header">
           <div class="stat-icon-wrapper stat-icon-warning">
-            <ion-icon class="stat-icon" name="time-outline"></ion-icon>
+            <span class="emoji-icon stat-icon" >⏰</span>
           </div>
         </div>
         @if (loading()) {
@@ -112,7 +112,7 @@
     <!-- Search Bar -->
     <div class="search-container">
       <div class="search-wrapper">
-        <ion-icon name="search-outline" class="search-icon"></ion-icon>
+        <span  class="emoji-icon search-icon">🔍</span>
         <input 
           type="text" 
           class="search-input"
@@ -122,7 +122,7 @@
         />
         @if (searchQuery) {
           <button class="search-clear" (click)="clearSearch()">
-            <ion-icon name="close-outline"></ion-icon>
+            <span  class="emoji-icon">✖️</span>
           </button>
         }
       </div>
@@ -149,7 +149,7 @@
       } @else if (filteredCustomers().length === 0) {
         <div class="empty-state">
           <div class="empty-icon-wrapper">
-            <ion-icon name="map-outline" class="empty-icon"></ion-icon>
+            <span  class="emoji-icon empty-icon">🗺️</span>
           </div>
           @if (searchQuery) {
             <p class="empty-title">No customers found</p>
@@ -179,12 +179,12 @@
                   <h3 class="customer-name">{{ loan.customerName }}</h3>
                   <div class="contact-chips">
                     <span class="contact-chip loan-chip">
-                      <ion-icon name="document-text-outline"></ion-icon>
+                      <span  class="emoji-icon">📄</span>
                       {{ loan.loanNumber }}
                     </span>
                     @if (loan.nextInstallment) {
                       <span class="contact-chip">
-                        <ion-icon name="calendar-outline"></ion-icon>
+                        <span  class="emoji-icon">📅</span>
                         #{{ loan.nextInstallment }}
                       </span>
                     }
@@ -198,7 +198,7 @@
               <!-- Loan Product -->
               @if (loan.productName) {
                 <div class="product-badge">
-                  <ion-icon name="card-outline"></ion-icon>
+                  <span  class="emoji-icon">💳</span>
                   <span>{{ loan.productName }}</span>
                 </div>
               }
@@ -207,13 +207,13 @@
               <div class="contact-info-compact">
                 @if (loan.phone && loan.phone !== 'N/A') {
                   <span class="info-item">
-                    <ion-icon name="call-outline"></ion-icon>
+                    <span  class="emoji-icon">📞</span>
                     {{ loan.phone }}
                   </span>
                 }
                 @if (loan.email) {
                   <span class="info-item">
-                    <ion-icon name="mail-outline"></ion-icon>
+                    <span  class="emoji-icon">✉️</span>
                     {{ loan.email }}
                   </span>
                 }
@@ -222,7 +222,7 @@
               <!-- Address -->
               @if (loan.address && loan.address !== 'N/A') {
                 <div class="address-row">
-                  <ion-icon name="location-outline"></ion-icon>
+                  <span  class="emoji-icon">📍</span>
                   <span>{{ loan.address }}</span>
                 </div>
               }
@@ -253,7 +253,7 @@
                      [class.grace-consumed]="loan.gracePeriodConsumed"
                      [class.grace-active]="!loan.gracePeriodConsumed">
                   <div class="alert-header">
-                    <ion-icon [name]="loan.gracePeriodConsumed ? 'alert-circle' : 'time'"></ion-icon>
+                    <span  class="emoji-icon">{{ loan.gracePeriodConsumed ? '⚠️' : '⏰' }}</span>
                     <span class="alert-title">
                       @if (loan.gracePeriodConsumed) {
                         Grace Period Expired
@@ -275,7 +275,7 @@
                         <span class="stat-value penalty">₱{{ formatCurrency(loan.totalPenalties || 0) }}</span>
                       </div>
                       <div class="penalty-note">
-                        <ion-icon name="information-circle-outline"></ion-icon>
+                        <span  class="emoji-icon">ℹ️</span>
                         Penalty: {{ formatPenaltyPercent(loan.latePenaltyPercent) }}%/day after {{ loan.gracePeriodDays }} day grace
                       </div>
                     } @else {
@@ -285,7 +285,7 @@
                         <span class="stat-value grace">{{ loan.gracePeriodRemaining }} day(s)</span>
                       </div>
                       <div class="grace-note">
-                        <ion-icon name="checkmark-circle-outline"></ion-icon>
+                        <span  class="emoji-icon">✅</span>
                         No penalty yet. {{ loan.gracePeriodDays }} day grace period.
                       </div>
                     }
@@ -302,7 +302,7 @@
                     [href]="'tel:' + loan.phone"
                     (click)="$event.stopPropagation()"
                   >
-                    <ion-icon name="call-outline" slot="icon-only"></ion-icon>
+                    <span  slot="icon-only" class="emoji-icon">📞</span>
                   </ion-button>
                 }
                 <ion-button 
@@ -310,14 +310,14 @@
                   fill="clear"
                   (click)="openMap(loan); $event.stopPropagation()"
                 >
-                  <ion-icon name="navigate-outline" slot="icon-only"></ion-icon>
+                  <span  slot="icon-only" class="emoji-icon">🧭</span>
                 </ion-button>
 
                 <ion-button size="small" fill="clear" (click)="goToVisit(loan.customerId); $event.stopPropagation()">
                   Visit
                 </ion-button>
 
-                <ion-button 
+                  <ion-button 
                   size="small" 
                   fill="solid"
                   [color]="getAlertColor(loan)"
@@ -325,7 +325,7 @@
                   [class.warning-pulse]="(loan.daysOverdue || 0) > 0 && loan.gracePeriodConsumed !== true"
                   [class.active-view]="viewMode() === 'summary'"
                   (click)="openLoanWithView(loan.loanId, 'summary'); $event.stopPropagation()">
-                  <ion-icon [name]="getAlertIcon(loan)" slot="start"></ion-icon>
+                  <span  class="emoji-icon" slot="start">{{ emoji(getAlertIcon(loan)) }}</span>
                   {{ getAlertLabel(loan) }}
                 </ion-button>
 
@@ -333,13 +333,13 @@
                   size="small" 
                   [fill]="viewMode() === 'payments' ? 'solid' : 'outline'" 
                   (click)="openLoanWithView(loan.loanId, 'payments'); $event.stopPropagation()">
-                  <ion-icon name="cash-outline" slot="start"></ion-icon>
+                  <span  slot="start" class="emoji-icon">💰</span>
                   Collect Payment
                 </ion-button>
 
                 @if (loan.dueDate) {
                   <div class="due-chip">
-                    <ion-icon name="time-outline"></ion-icon>
+                    <span  class="emoji-icon">⏰</span>
                     {{ formatDueDate(loan.dueDate) }}
                   </div>
                 }
@@ -355,7 +355,7 @@
                         size="small" 
                         [fill]="installmentFilter() === 'pending' ? 'solid' : 'outline'"
                         (click)="installmentFilter.set('pending'); $event.stopPropagation()">
-                        <ion-icon name="time-outline" slot="start"></ion-icon>
+                        <span  slot="start" class="emoji-icon">⏰</span>
                         Pending
                       </ion-button>
                       <ion-button 
@@ -364,7 +364,7 @@
                         color="success"
                         [disabled]="!hasPaidInstallments(loan)"
                         (click)="installmentFilter.set('paid'); $event.stopPropagation()">
-                        <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+                        <span  slot="start" class="emoji-icon">✅</span>
                         Paid
                       </ion-button>
                       <ion-button 
@@ -372,7 +372,7 @@
                         [fill]="installmentFilter() === 'all' ? 'solid' : 'outline'"
                         color="medium"
                         (click)="installmentFilter.set('all'); $event.stopPropagation()">
-                        <ion-icon name="list-outline" slot="start"></ion-icon>
+                        <span  slot="start" class="emoji-icon">📝</span>
                         All
                       </ion-button>
                     </div>
@@ -431,7 +431,7 @@
                                 fill="outline" 
                                 color="danger"
                                 (click)="payInstallmentPenaltyOnly(loan, item); $event.stopPropagation()">
-                                <ion-icon name="cash-outline" slot="start"></ion-icon>
+                                <span  slot="start" class="emoji-icon">💰</span>
                                 Pay Penalty
                               </ion-button>
                               <ion-button 
@@ -439,7 +439,7 @@
                                 fill="outline" 
                                 color="warning"
                                 (click)="waiveInstallmentPenalty(loan, item); $event.stopPropagation()">
-                                <ion-icon name="hand-right-outline" slot="start"></ion-icon>
+                                <span  slot="start" class="emoji-icon">👉</span>
                                 Waive
                               </ion-button>
                             </div>
@@ -454,7 +454,7 @@
                       @if (getTotalOverdueInstallments(getLoanDetailsFromCache(loan.loanId).schedule) > 0) {
                         <div class="penalty-summary-card">
                           <div class="penalty-summary-header">
-                            <ion-icon name="alert-circle" class="penalty-icon"></ion-icon>
+                            <span  class="emoji-icon penalty-icon">⚠️</span>
                             <div class="penalty-summary-title">
                               <h4>Overdue Summary</h4>
                               <p>{{ getTotalOverdueInstallments(getLoanDetailsFromCache(loan.loanId).schedule) }} installment(s) overdue</p>
@@ -498,7 +498,7 @@
                               color="success"
                               [disabled]="getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule) === 0"
                               (click)="payAllWithPenalties(loan); $event.stopPropagation()">
-                              <ion-icon name="cash-outline" slot="start"></ion-icon>
+                              <span  slot="start" class="emoji-icon">💰</span>
                               Pay All (₱{{ formatCurrency(getTotalInstallmentAmount(getLoanDetailsFromCache(loan.loanId).schedule) + getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule)) }})
                             </ion-button>
                             <ion-button 
@@ -507,7 +507,7 @@
                               fill="outline"
                               [disabled]="getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule) === 0"
                               (click)="payPenaltyOnly(loan); $event.stopPropagation()">
-                              <ion-icon name="alert-circle-outline" slot="start"></ion-icon>
+                              <span  slot="start" class="emoji-icon">⚠️</span>
                               Pay Penalty Only (₱{{ formatCurrency(getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule)) }})
                             </ion-button>
                             <ion-button 
@@ -516,7 +516,7 @@
                               fill="outline"
                               [disabled]="getTotalPenaltiesForLoan(getLoanDetailsFromCache(loan.loanId).schedule) === 0"
                               (click)="requestPenaltyWaiver(loan); $event.stopPropagation()">
-                              <ion-icon name="hand-right-outline" slot="start"></ion-icon>
+                              <span  slot="start" class="emoji-icon">👉</span>
                               Request Penalty Waiver
                             </ion-button>
                             @if (canExtendGrace(loan)) {
@@ -525,7 +525,7 @@
                                 color="primary"
                                 fill="outline"
                                 (click)="extendGracePeriod(loan, $event)">
-                                <ion-icon name="time-outline" slot="start"></ion-icon>
+                                <span  slot="start" class="emoji-icon">⏰</span>
                                 Extend Grace Period
                               </ion-button>
                             }
@@ -576,7 +576,7 @@
       <div class="modal-header">
         <h2 class="modal-title">Record Payment</h2>
         <button class="close-button" (click)="closePaymentModal()" aria-label="Close modal">
-          <ion-icon name="close-outline"></ion-icon>
+          <span  class="emoji-icon">✖️</span>
         </button>
       </div>
 
@@ -621,7 +621,7 @@
           @if (selectedInstallment() && (selectedInstallment()!.daysOverdue || selectedInstallment()!.days_overdue)) {
             <div class="penalty-warning-card">
               <div class="info-row warning-row">
-                <ion-icon name="alert-circle-outline" class="warning-icon"></ion-icon>
+                <span  class="emoji-icon warning-icon">⚠️</span>
                 <div class="warning-content">
                   <span class="warning-label">Days Overdue: {{ selectedInstallment()!.daysOverdue || selectedInstallment()!.days_overdue }} day(s)</span>
                   @if (getInstallmentPenalty(selectedInstallment()!) > 0) {
@@ -704,10 +704,10 @@
               @if (paymentAmount <= 0 || paymentAmount >= (selectedInstallment()!.outstandingAmount || 0)) {
                 <div class="payment-error">
                   @if (paymentAmount <= 0) {
-                    <ion-icon name="alert-circle-outline"></ion-icon>
+                    <span  class="emoji-icon">⚠️</span>
                     <span>Amount must be greater than ₱0</span>
                   } @else if (paymentAmount >= (selectedInstallment()!.outstandingAmount || 0)) {
-                    <ion-icon name="alert-circle-outline"></ion-icon>
+                    <span  class="emoji-icon">⚠️</span>
                     <span>Use Full Payment instead</span>
                   }
                 </div>
@@ -746,7 +746,7 @@
           (click)="submitPayment()"
           [disabled]="!isPaymentValid()"
         >
-          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          <span  class="emoji-icon">✅</span>
           <span>Record ₱{{ formatCurrency(paymentAmount || 0) }}</span>
         </button>
       </div>
@@ -758,14 +758,14 @@
 @if (filteredCustomers().length > 0 && syncService.isOnline()) {
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button color="primary">
-      <ion-icon name="ellipsis-vertical"></ion-icon>
+      <span  class="emoji-icon">⋮</span>
     </ion-fab-button>
     <ion-fab-list side="top">
       <ion-fab-button 
         color="tertiary"
         (click)="navigateToGraceExtension()"
         title="Grace Period Extension">
-        <ion-icon name="time-outline"></ion-icon>
+        <span  class="emoji-icon">⏰</span>
       </ion-fab-button>
     </ion-fab-list>
   </ion-fab>

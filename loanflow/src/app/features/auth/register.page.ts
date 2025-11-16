@@ -2,27 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import {
-  IonContent,
-  IonCard,
-  IonCardContent,
-  IonButton,
-  IonSpinner,
-  IonIcon,
-  IonSelect,
-  IonSelectOption,
-  ToastController
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import { 
-  mailOutline, 
-  lockClosedOutline, 
-  eyeOutline, 
-  eyeOffOutline,
-  arrowBackOutline,
-  businessOutline,
-  logoGoogle
-} from 'ionicons/icons';
+import { IonContent, IonCard, IonCardContent, IonButton, IonSpinner, IonSelect, IonSelectOption, ToastController } from '@ionic/angular/standalone';
 import { AuthService } from '../../core/services/auth.service';
 import { TenantService, Tenant } from '../../core/services/tenant.service';
 import { ThemeService } from '../../core/services/theme.service';
@@ -40,7 +20,6 @@ import { HeaderUtilsComponent } from '../../shared/components/header-utils.compo
     IonCardContent,
     IonButton,
     IonSpinner,
-    IonIcon,
     IonSelect,
     IonSelectOption,
     HeaderUtilsComponent
@@ -218,7 +197,7 @@ import { HeaderUtilsComponent } from '../../shared/components/header-utils.compo
               [disabled]="loading"
             >
               <span class="google-icon">
-                <ion-icon name="logo-google"></ion-icon>
+                <span  class="emoji-icon">🟢</span>
               </span>
               <span class="google-text">Sign up with Google</span>
             </button>
@@ -793,18 +772,7 @@ export class RegisterPage {
     private router: Router,
     public themeService: ThemeService,
     private toastController: ToastController
-  ) {
-    addIcons({
-      'mail-outline': mailOutline,
-      'lock-closed-outline': lockClosedOutline,
-      'business-outline': businessOutline,
-      'eye-outline': eyeOutline,
-      'eye-off-outline': eyeOffOutline,
-      'arrow-back-outline': arrowBackOutline,
-      'logo-google': logoGoogle
-    });
-    
-    // Load tenants on initialization
+  ) {// Load tenants on initialization
     this.loadTenants();
   }
 

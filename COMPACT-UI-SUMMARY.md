@@ -99,6 +99,51 @@ Overall Page        6px gaps  4px     more compact
    - Proper focus states
    - Semantic HTML structure
 
+## Shared UI Library (`libs/shared-ui`)
+
+- ✨ Introduced a lightweight Shared UI package that exposes reusable Tailwind-ready Angular standalone components.
+- 📦 Components exported via `@shared/ui` so both the Ionic (loanflow) and Angular web apps can consume the same visual building blocks.
+- 🧱 First two primitives:
+   - `StatCardComponent` – consistent metric cards with icon slot, variant colors, and optional trend text.
+   - `StatusBadgeComponent` – pill-style badge with automatic color tokens for neutral/success/warning/danger/info states.
+- 📄 Example usage:
+   ```html
+   <shared-stat-card
+      title="On-Hand Cash"
+      variant="success"
+      valuePrelude="₱"
+      [value]="formatAmount(balance.onHandCash)"
+      subtitle="Counted cash on hand">
+      <ion-icon icon name="cash-outline"></ion-icon>
+   </shared-stat-card>
+   <shared-status-badge label="Pending" variant="warning"></shared-status-badge>
+   ```
+- 🔁 The collector Cash Float page (`loanflow/src/app/features/collector/cash-float.page.ts|html`) now consumes both components as a reference implementation.
+- ➕ Added `SharedButtonComponent` with consistent sizing tokens (`xs`, `sm`, `md`, `lg`), semantic variants (primary/secondary/success/danger/outline/ghost), optional loading state, and a `fullWidth` toggle to align action buttons across Ionic + Angular screens.
+- 📏 Button sizing cheatsheet:
+
+   | Size | Padding | Min height | Typical usage |
+   |------|---------|------------|----------------|
+   | `xs` | `px-3 py-1` | 28px | inline tags, compact toolbars |
+   | `sm` | `px-3 py-1.5` | 32px | secondary actions, dense tables |
+   | `md` | `px-4 py-2` | 36px | default form actions |
+   | `lg` | `px-5 py-2.5` | 44px | primary CTAs /
+
+   Example:
+
+   ```html
+   <shared-button
+      variant="success"
+      size="lg"
+      [fullWidth]="true"
+      [loading]="confirming()"
+      (click)="confirmFloat(float)">
+      Confirm Receipt
+   </shared-button>
+   ```
+
+- 📘 Additional primitives can be layered on top of the same library without touching feature modules, keeping UIs consistent across platforms.
+
 ## Key CSS Changes
 
 ### Padding Reductions

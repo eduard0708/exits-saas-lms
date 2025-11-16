@@ -6,8 +6,9 @@ This guide explains how to use the reusable UI components created from the Trans
 
 1. **PageHeaderComponent** - Consistent page headers with icon, title, and description
 2. **StatCardComponent** - Stat/metric cards with icons and values
-3. **FilterSectionComponent** - Comprehensive filter section with search, selects, dates, and pagination
-4. **DataTableComponent** - Feature-rich data table with sorting, selection, loading states, and custom templates
+3. **SharedButtonComponent** - Consistent button system with variants, sizes, and loading state
+4. **FilterSectionComponent** - Comprehensive filter section with search, selects, dates, and pagination
+5. **DataTableComponent** - Feature-rich data table with sorting, selection, loading states, and custom templates
 
 ---
 
@@ -45,61 +46,117 @@ import { PageHeaderComponent } from '@app/shared/components/ui';
 ### Basic Usage
 
 ```typescript
-import { StatCardComponent } from '@app/shared/components/ui';
+import { StatCardComponent } from '@shared/ui';
 
 @Component({
   imports: [StatCardComponent],
   template: `
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-      <app-stat-card
-        label="Total"
+      <shared-stat-card
+        title="Total"
         [value]="totalCount"
-        icon="📊"
-        valueColorClass="text-gray-900 dark:text-white"
-        iconBgClass="bg-blue-100 dark:bg-blue-900/30"
-      />
-      
-      <app-stat-card
-        label="Completed"
+        subtitle="Overall records"
+        variant="default">
+        <span icon>📊</span>
+      </shared-stat-card>
+
+      <shared-stat-card
+        title="Completed"
         [value]="completedCount"
-        icon="✅"
-        valueColorClass="text-green-600 dark:text-green-400"
-        iconBgClass="bg-green-100 dark:bg-green-900/30"
-      />
-      
-      <app-stat-card
-        label="Pending"
+        subtitle="Approved items"
+        variant="success">
+        <span icon>✅</span>
+      </shared-stat-card>
+
+      <shared-stat-card
+        title="Pending"
         [value]="pendingCount"
-        icon="⏳"
-        valueColorClass="text-yellow-600 dark:text-yellow-400"
-        iconBgClass="bg-yellow-100 dark:bg-yellow-900/30"
-      />
-      
-      <app-stat-card
-        label="Failed"
+        subtitle="Waiting for review"
+        variant="warning">
+        <span icon>⏳</span>
+      </shared-stat-card>
+
+      <shared-stat-card
+        title="Failed"
         [value]="failedCount"
-        icon="❌"
-        valueColorClass="text-red-600 dark:text-red-400"
-        iconBgClass="bg-red-100 dark:bg-red-900/30"
-      />
+        subtitle="Requires attention"
+        variant="danger">
+        <span icon>❌</span>
+      </shared-stat-card>
     </div>
   `
 })
 ```
 
-### Props
+### Inputs
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `label` | string | '' | Card label/title |
-| `value` | string \| number | 0 | Value to display |
-| `icon` | string | '📊' | Emoji or icon |
-| `valueColorClass` | string | 'text-gray-900 dark:text-white' | Tailwind classes for value color |
-| `iconBgClass` | string | 'bg-blue-100 dark:bg-blue-900/30' | Tailwind classes for icon background |
+| `title` | string | '' | Heading text rendered in uppercase style |
+| `value` | string \| number | '' | Primary value displayed in large font |
+| `valuePrelude` | string | undefined | Optional text rendered before the value (e.g., currency symbol) |
+| `valueSuffix` | string | undefined | Optional text rendered after the value (e.g., % sign) |
+| `subtitle` | string | '' | Secondary description below the value |
+| `trendLabel` | string | undefined | Short label for trend data (e.g., "vs yesterday") |
+| `trendValue` | string | undefined | Trend numeric/string value |
+| `trendDirection` | 'up' \| 'down' \| 'neutral' | 'neutral' | Controls the color of the trend text |
+| `variant` | 'default' \| 'success' \| 'warning' \| 'danger' \| 'info' | 'default' | Applies matching border & icon colors |
+
+> **Icon slot:** place any markup inside `<span icon>...</span>` to render a custom emoji, SVG, or icon component inside the stat card's icon container.
 
 ---
 
-## 3. FilterSectionComponent
+## 3. SharedButtonComponent
+
+### Basic Usage
+
+```typescript
+import { SharedButtonComponent } from '@shared/ui';
+
+@Component({
+  standalone: true,
+  imports: [SharedButtonComponent],
+  template: `
+    <div class="flex flex-wrap gap-3">
+      <shared-button variant="primary" size="md">
+        Create Record
+      </shared-button>
+      <shared-button variant="warning" size="lg" class="gap-2">
+        <span>⚠️</span>
+        Review Pending Items
+      </shared-button>
+      <shared-button variant="info" size="sm" [loading]="isSyncing">
+        Sync Balances
+      </shared-button>
+      <shared-button variant="outline" size="sm" [fullWidth]="true">
+        Secondary Action
+      </shared-button>
+    </div>
+  `
+})
+export class ActionsComponent {
+  isSyncing = false;
+}
+```
+
+The `cashier-dashboard.component.ts` quick actions now use this component exclusively so admin shortcuts inherit the same hover/focus feel as the collector mobile app.
+
+### Inputs
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `variant` | 'primary' \| 'secondary' \| 'success' \| 'danger' \| 'warning' \| 'info' \| 'outline' \| 'ghost' | 'primary' | Controls background/border styles |
+| `size` | 'xs' \| 'sm' \| 'md' \| 'lg' | 'md' | Adjusts padding and font size |
+| `fullWidth` | boolean | false | Stretch button to 100% width |
+| `type` | 'button' \| 'submit' \| 'reset' | 'button' | Underlying `<button>` type |
+| `disabled` | boolean | false | Explicitly disable the button |
+| `loading` | boolean | false | Shows spinner + disables button |
+
+> **Tip:** Apply utility classes (e.g., `class="gap-2"`) on `<shared-button>` when pairing emojis/icons with text.
+
+---
+
+## 4. FilterSectionComponent
 
 ### Basic Usage
 
@@ -209,7 +266,7 @@ export class MyComponent {
 
 ---
 
-## 4. DataTableComponent
+## 5. DataTableComponent
 
 ### Basic Usage
 
@@ -385,9 +442,9 @@ Here's how to combine all components to create a page like Transaction History:
 
 ```typescript
 import { Component, signal, computed } from '@angular/core';
+import { StatCardComponent } from '@shared/ui';
 import { 
   PageHeaderComponent, 
-  StatCardComponent, 
   FilterSectionComponent, 
   DataTableComponent,
   FilterConfig,
@@ -414,18 +471,21 @@ import {
 
       <!-- Stats -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <app-stat-card
-          label="Total"
+        <shared-stat-card
+          title="Total"
           [value]="stats.total"
-          icon="📊"
-        />
-        <app-stat-card
-          label="Active"
+          subtitle="Overall records"
+        >
+          <span icon>📊</span>
+        </shared-stat-card>
+        <shared-stat-card
+          title="Active"
           [value]="stats.active"
-          icon="✅"
-          valueColorClass="text-green-600 dark:text-green-400"
-          iconBgClass="bg-green-100 dark:bg-green-900/30"
-        />
+          subtitle="Currently available"
+          variant="success"
+        >
+          <span icon>✅</span>
+        </shared-stat-card>
       </div>
 
       <!-- Filters -->
@@ -480,10 +540,15 @@ All components use Tailwind CSS and support dark mode. You can customize:
 Example:
 
 ```html
-<app-stat-card
-  valueColorClass="text-purple-600 dark:text-purple-400"
-  iconBgClass="bg-purple-100 dark:bg-purple-900/30"
-/>
+<shared-stat-card
+  title="Custom"
+  [value]="42"
+  valuePrelude="~"
+  subtitle="Example styling"
+  variant="info"
+>
+  <span icon>🎨</span>
+</shared-stat-card>
 ```
 
 ---
@@ -503,7 +568,7 @@ Example:
 To migrate an existing page:
 
 1. Replace custom header HTML with `<app-page-header>`
-2. Convert stat cards to `<app-stat-card>` components
+2. Convert stat cards to `<shared-stat-card>` components
 3. Extract filter logic to use `<app-filter-section>`
 4. Migrate table to `<app-data-table>` with column configs
 5. Move sorting/filtering to parent component logic

@@ -1,14 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import {
-  IonContent,
-  IonButton,
-  IonBadge,
-  IonSkeletonText,
-  IonProgressBar,
-  ToastController
-} from '@ionic/angular/standalone';
+import { IonContent, IonButton, IonBadge, IonSkeletonText, IonProgressBar, ToastController } from '@ionic/angular/standalone';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';

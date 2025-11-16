@@ -1,54 +1,40 @@
 import { Component } from '@angular/core';
-import { IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import {
-  homeOutline,
-  home,
-  documentTextOutline,
-  documentText,
-  walletOutline,
-  wallet,
-  locationOutline,
-  location,
-  alertCircleOutline,
-  alertCircle,
-} from 'ionicons/icons';
-
+import { IonTabs, IonTabBar, IonTabButton, IonLabel } from '@ionic/angular/standalone';
 @Component({
   selector: 'app-collector-layout',
   standalone: true,
-  imports: [IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel],
+  imports: [IonTabs, IonTabBar, IonTabButton, IonLabel],
   template: `
     <ion-tabs>
       <ion-tab-bar slot="bottom" class="collector-tab-bar">
         <ion-tab-button tab="dashboard" class="tab-button">
-          <ion-icon [name]="'home-outline'" class="tab-icon tab-icon-outline"></ion-icon>
-          <ion-icon [name]="'home'" class="tab-icon tab-icon-filled"></ion-icon>
+          <span  class="emoji-icon tab-icon tab-icon-outline">🏠</span>
+          <span  class="emoji-icon tab-icon tab-icon-filled">🏠</span>
           <ion-label class="tab-label">Dashboard</ion-label>
         </ion-tab-button>
 
         <ion-tab-button tab="applications" class="tab-button">
-          <ion-icon [name]="'document-text-outline'" class="tab-icon tab-icon-outline"></ion-icon>
-          <ion-icon [name]="'document-text'" class="tab-icon tab-icon-filled"></ion-icon>
+          <span  class="emoji-icon tab-icon tab-icon-outline">📄</span>
+          <span  class="emoji-icon tab-icon tab-icon-filled">📄</span>
           <ion-label class="tab-label">Applications</ion-label>
         </ion-tab-button>
 
         <ion-tab-button tab="route" class="tab-button tab-button-fab">
           <div class="fab-button">
-            <ion-icon name="location" class="fab-icon"></ion-icon>
+            <span  class="emoji-icon fab-icon">📍</span>
           </div>
           <ion-label class="tab-label fab-label">Route</ion-label>
         </ion-tab-button>
 
         <ion-tab-button tab="disbursements" class="tab-button">
-          <ion-icon [name]="'wallet-outline'" class="tab-icon tab-icon-outline"></ion-icon>
-          <ion-icon [name]="'wallet'" class="tab-icon tab-icon-filled"></ion-icon>
+          <span  class="emoji-icon tab-icon tab-icon-outline">👛</span>
+          <span  class="emoji-icon tab-icon tab-icon-filled">👛</span>
           <ion-label class="tab-label">Disbursements</ion-label>
         </ion-tab-button>
 
         <ion-tab-button tab="waivers" class="tab-button">
-          <ion-icon [name]="'alert-circle-outline'" class="tab-icon tab-icon-outline"></ion-icon>
-          <ion-icon [name]="'alert-circle'" class="tab-icon tab-icon-filled"></ion-icon>
+          <span  class="emoji-icon tab-icon tab-icon-outline">⚠️</span>
+          <span  class="emoji-icon tab-icon tab-icon-filled">⚠️</span>
           <ion-label class="tab-label">Waivers</ion-label>
         </ion-tab-button>
       </ion-tab-bar>
@@ -251,18 +237,5 @@ import {
   `],
 })
 export class CollectorLayoutComponent {
-  constructor() {
-    addIcons({
-      homeOutline,
-      home,
-      documentTextOutline,
-      documentText,
-      walletOutline,
-      wallet,
-      locationOutline,
-      location,
-      alertCircleOutline,
-      alertCircle,
-    });
-  }
+  constructor() {}
 }

@@ -1,31 +1,8 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  IonContent,
-  IonHeader,
-  IonTitle,
-  IonToolbar,
-  IonButtons,
-  IonBackButton,
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
-  IonCardContent,
-  IonButton,
-  IonIcon,
-  IonInput,
-  IonItem,
-  IonLabel,
-  IonNote,
-  IonSpinner,
-  IonText,
-  IonBadge,
-  IonAlert,
-} from '@ionic/angular/standalone';
+import { IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonInput, IonItem, IonLabel, IonNote, IonSpinner, IonText, IonBadge, IonAlert } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
-import { addIcons } from 'ionicons';
-import { cashOutline, checkmarkCircle, warningOutline, calculatorOutline, locationOutline } from 'ionicons/icons';
 import { CashFloatApiService, formatCurrency } from '@shared/api';
 import type { CollectorCashBalance } from '@shared/models';
 
@@ -48,7 +25,6 @@ import type { CollectorCashBalance } from '@shared/models';
     IonCardTitle,
     IonCardContent,
     IonButton,
-    IonIcon,
     IonInput,
     IonItem,
     IonLabel,
@@ -95,9 +71,7 @@ export class CashHandoverPage implements OnInit {
   constructor(
     private cashFloatApi: CashFloatApiService,
     private router: Router
-  ) {
-    addIcons({ cashOutline, checkmarkCircle, warningOutline, calculatorOutline, locationOutline });
-  }
+  ) {}
 
   ngOnInit() {
     this.loadBalance();

@@ -1,34 +1,11 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import {
-  IonContent,
-  IonButton,
-  IonIcon,
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
-  IonCardContent,
-  IonBadge,
-  IonSpinner,
-  ToastController
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import {
-  arrowBackOutline,
-  checkmarkCircleOutline,
-  timeOutline,
-  documentTextOutline,
-  cashOutline,
-  moonOutline,
-  sunnyOutline,
-  clipboardOutline,
-  homeOutline,
-  closeCircleOutline
-} from 'ionicons/icons';
+import { IonContent, IonButton, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonBadge, IonSpinner, ToastController } from '@ionic/angular/standalone';
 import { ApiService } from '../../core/services/api.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { HeaderUtilsComponent } from '../../shared/components/header-utils.component';
+import { iconToEmoji } from '@shared/utils/emoji-icon.util';
 
 interface ApplicationTimeline {
   id: number;
@@ -58,7 +35,6 @@ interface TimelineStep {
     CommonModule,
     IonContent,
     IonButton,
-    IonIcon,
     IonCard,
     IonCardHeader,
     IonCardTitle,
@@ -73,7 +49,7 @@ interface TimelineStep {
       <div class="fixed-top-bar">
         <div class="top-bar-content">
           <div class="top-bar-left">
-            <ion-icon name="clipboard-outline" class="app-emoji"></ion-icon>
+            <span  class="emoji-icon app-emoji">📋</span>
             <span class="app-title">Application Status</span>
           </div>
           
@@ -134,7 +110,7 @@ interface TimelineStep {
                        [class.current]="step.status === 'current'"
                        [class.rejected]="step.status === 'rejected'">
                     <div class="step-icon">
-                      <ion-icon [name]="step.icon"></ion-icon>
+                      <span  class="emoji-icon">{{ emoji(step.icon) }}</span>
                     </div>
                     <div class="step-content">
                       <h3 class="step-title">{{ step.title }}</h3>
@@ -158,13 +134,13 @@ interface TimelineStep {
           <div class="action-buttons">
             @if (application()?.status === 'approved') {
               <div class="info-message success">
-                <ion-icon name="checkmark-circle-outline"></ion-icon>
+                <span  class="emoji-icon">✅</span>
                 <p>Your application has been approved! Waiting for disbursement.</p>
               </div>
             }
             @if (application()?.status === 'rejected') {
               <div class="info-message error">
-                <ion-icon name="close-circle-outline"></ion-icon>
+                <span  class="emoji-icon">❌</span>
                 <p>Unfortunately, your application was not approved. You can apply again with a different product.</p>
               </div>
               <ion-button expand="block" (click)="applyAgain()">
@@ -173,7 +149,7 @@ interface TimelineStep {
             }
             @if (application()?.status === 'submitted' || application()?.status === 'pending') {
               <div class="info-message warning">
-                <ion-icon name="time-outline"></ion-icon>
+                <span  class="emoji-icon">⏰</span>
                 <p>Your application is being reviewed. We'll notify you once it's processed.</p>
               </div>
             }
@@ -182,13 +158,13 @@ interface TimelineStep {
           <!-- Back to Dashboard Button -->
           <div class="dashboard-button-container">
             <button class="dashboard-button" (click)="goBack()">
-              <ion-icon name="home-outline" class="dashboard-icon"></ion-icon>
+              <span  class="emoji-icon dashboard-icon">🏠</span>
               <span class="dashboard-text">Back to Dashboard</span>
             </button>
           </div>
         } @else {
           <div class="error-state">
-            <ion-icon name="document-text-outline" class="error-icon"></ion-icon>
+            <span  class="emoji-icon error-icon">📄</span>
             <p>Application not found</p>
             <ion-button (click)="goBack()">Go Back</ion-button>
           </div>
@@ -228,7 +204,7 @@ interface TimelineStep {
       to {
         opacity: 1;
         transform: scale(1);
-      }
+    }
     }
 
     @keyframes pulse {
@@ -542,7 +518,7 @@ interface TimelineStep {
       transition: all 0.3s ease;
     }
 
-    .step-icon ion-icon {
+    .step-icon .emoji-icon {
       font-size: 1.25rem;
       color: var(--ion-color-medium);
       transition: all 0.3s ease;
@@ -553,7 +529,7 @@ interface TimelineStep {
       animation: scaleIn 0.4s ease-out;
     }
 
-    .timeline-step.completed .step-icon ion-icon {
+    .timeline-step.completed .step-icon .emoji-icon {
       color: white;
     }
 
@@ -562,7 +538,7 @@ interface TimelineStep {
       animation: progressPulse 2s infinite;
     }
 
-    .timeline-step.current .step-icon ion-icon {
+    .timeline-step.current .step-icon .emoji-icon {
       color: white;
       animation: pulse 1.5s infinite;
     }
@@ -571,7 +547,7 @@ interface TimelineStep {
       background: linear-gradient(135deg, #ef4444, #dc2626);
     }
 
-    .timeline-step.rejected .step-icon ion-icon {
+    .timeline-step.rejected .step-icon .emoji-icon {
       color: white;
     }
 
@@ -635,7 +611,7 @@ interface TimelineStep {
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
-    .info-message ion-icon {
+    .info-message .emoji-icon {
       font-size: 1.75rem;
       flex-shrink: 0;
     }
@@ -699,6 +675,7 @@ export class ApplicationTimelinePage implements OnInit {
   loading = signal(false);
   application = signal<ApplicationTimeline | null>(null);
   timelineSteps = signal<TimelineStep[]>([]);
+  protected emoji = iconToEmoji;
 
   constructor(
     private route: ActivatedRoute,
@@ -707,20 +684,7 @@ export class ApplicationTimelinePage implements OnInit {
     private apiService: ApiService,
     public themeService: ThemeService,
     private toastController: ToastController
-  ) {
-    addIcons({
-      arrowBackOutline,
-      checkmarkCircleOutline,
-      timeOutline,
-      documentTextOutline,
-      cashOutline,
-      moonOutline,
-      sunnyOutline,
-      clipboardOutline,
-      homeOutline,
-      closeCircleOutline
-    });
-  }
+  ) {}
 
   ngOnInit() {
     const applicationId = this.route.snapshot.paramMap.get('id');

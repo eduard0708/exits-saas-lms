@@ -2,44 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import {
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonContent,
-  IonButtons,
-  IonBackButton,
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
-  IonCardContent,
-  IonList,
-  IonItem,
-  IonLabel,
-  IonRadioGroup,
-  IonRadio,
-  IonButton,
-  IonTextarea,
-  IonInput,
-  IonCheckbox,
-  IonDatetime,
-  IonIcon,
-  IonNote,
-  ToastController,
-  AlertController,
-  LoadingController
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import { 
-  arrowBack, 
-  calendarOutline, 
-  peopleOutline, 
-  personOutline,
-  timeOutline,
-  checkmarkCircleOutline,
-  alertCircleOutline,
-  informationCircleOutline
-} from 'ionicons/icons';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonList, IonItem, IonLabel, IonRadioGroup, IonRadio, IonButton, IonTextarea, IonInput, IonCheckbox, IonDatetime, IonNote, ToastController, AlertController, LoadingController } from '@ionic/angular/standalone';
 import { CollectorService } from '../../core/services/collector.service';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -81,7 +44,6 @@ interface Customer {
     IonInput,
     IonCheckbox,
     IonDatetime,
-    IonIcon,
     IonNote
   ]
 })
@@ -118,18 +80,7 @@ export class GraceExtensionPage implements OnInit {
     private toastController: ToastController,
     private alertController: AlertController,
     private loadingController: LoadingController
-  ) {
-    addIcons({
-      arrowBack,
-      calendarOutline,
-      peopleOutline,
-      personOutline,
-      timeOutline,
-      checkmarkCircleOutline,
-      alertCircleOutline,
-      informationCircleOutline
-    });
-  }
+  ) {}
 
   async ngOnInit() {
     await this.loadCustomers();

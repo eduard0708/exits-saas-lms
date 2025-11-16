@@ -4,69 +4,15 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { lastValueFrom } from 'rxjs';
-import {
-  IonContent,
-  IonRefresher,
-  IonRefresherContent,
-  IonButton,
-  IonIcon,
-  IonBadge,
-  IonSkeletonText,
-  IonChip,
-  IonModal,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonButtons,
-  IonInput,
-  IonSelect,
-  IonSelectOption,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonFab,
-  IonFabButton,
-  IonFabList,
-  ToastController,
-  AlertController,
-  ModalController,
-  ViewWillEnter
-} from '@ionic/angular/standalone';
+import { IonContent, IonRefresher, IonRefresherContent, IonButton, IonBadge, IonSkeletonText, IonChip, IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonInput, IonSelect, IonSelectOption, IonItem, IonLabel, IonList, IonFab, IonFabButton, IonFabList, ToastController, AlertController, ModalController, ViewWillEnter } from '@ionic/angular/standalone';
 import { CurrencyMaskDirective } from '../../shared/directives/currency-mask.directive';
-import { addIcons } from 'ionicons';
-import {
-  mapOutline,
-  locationOutline,
-  cashOutline,
-  checkmarkCircleOutline,
-  timeOutline,
-  personOutline,
-  callOutline,
-  mailOutline,
-  navigateOutline,
-  listOutline,
-  statsChartOutline,
-  logOutOutline,
-  syncOutline,
-  moonOutline,
-  sunnyOutline,
-  alertCircleOutline,
-  documentTextOutline,
-  cardOutline,
-  calendarOutline,
-  closeOutline,
-  logoGoogle,
-  rainyOutline,
-  ellipsisVertical,
-  hourglassOutline,
-  handRightOutline
-} from 'ionicons/icons';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { SyncService } from '../../core/services/sync.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { ConfirmationService } from '../../core/services/confirmation.service';
 import { CollectorTopBarComponent } from '../../shared/components/collector-top-bar.component';
+import { iconToEmoji } from '../../shared/utils/emoji-icon.util';
 
 // API Response interface
 interface ApiResponse<T> {
@@ -125,7 +71,6 @@ interface CollectionStats {
     IonRefresher,
     IonRefresherContent,
     IonButton,
-    IonIcon,
     IonBadge,
     IonSkeletonText,
     IonFab,
@@ -183,36 +128,9 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
   private confirmationService = inject(ConfirmationService);
   private toastController = inject(ToastController);
   private alertController = inject(AlertController);
+  protected emoji = iconToEmoji;
 
-  constructor() {
-    addIcons({
-      mapOutline,
-      locationOutline,
-      cashOutline,
-      checkmarkCircleOutline,
-      timeOutline,
-      personOutline,
-      callOutline,
-      mailOutline,
-      navigateOutline,
-      listOutline,
-      statsChartOutline,
-      logOutOutline,
-      syncOutline,
-      moonOutline,
-      sunnyOutline,
-      alertCircleOutline,
-      documentTextOutline,
-      cardOutline,
-      calendarOutline,
-      closeOutline,
-      logoGoogle,
-      rainyOutline,
-      ellipsisVertical,
-      hourglassOutline,
-      handRightOutline
-    });
-  }
+  constructor() {}
 
   ngOnInit() {
     this.currentUser.set(this.authService.currentUser());

@@ -2,32 +2,12 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import {
-  IonContent,
-  IonSpinner,
-  IonRefresher,
-  IonRefresherContent,
-  IonIcon,
-  ToastController,
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import {
-  receiptOutline,
-  cashOutline,
-  cardOutline,
-  businessOutline,
-  phonePortraitOutline,
-  walletOutline,
-  calendarOutline,
-  chevronUpOutline,
-  chevronDownOutline,
-  refreshOutline,
-  homeOutline
-} from 'ionicons/icons';
+import { IonContent, IonSpinner, IonRefresher, IonRefresherContent, ToastController } from '@ionic/angular/standalone';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { CustomerTopBarComponent } from '../../shared/components/customer-top-bar.component';
+import { iconToEmoji } from '@shared/utils/emoji-icon.util';
 
 interface Payment {
   id: number;
@@ -56,7 +36,6 @@ interface Payment {
     IonSpinner,
     IonRefresher,
     IonRefresherContent,
-    IonIcon,
     CustomerTopBarComponent
   ],
   template: `
@@ -75,7 +54,7 @@ interface Payment {
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-icon-wrapper purple">
-              <ion-icon name="receipt-outline" class="stat-icon"></ion-icon>
+              <span  class="emoji-icon stat-icon">🧾</span>
             </div>
             <div class="stat-content">
               <div class="stat-label">Total Payments</div>
@@ -85,7 +64,7 @@ interface Payment {
 
           <div class="stat-card">
             <div class="stat-icon-wrapper green">
-              <ion-icon name="cash-outline" class="stat-icon"></ion-icon>
+              <span  class="emoji-icon stat-icon">💰</span>
             </div>
             <div class="stat-content">
               <div class="stat-label">Total Paid</div>
@@ -150,11 +129,11 @@ interface Payment {
             </p>
             <div class="empty-actions">
               <button class="refresh-btn" (click)="refreshPayments()" [disabled]="loading()">
-                <ion-icon name="refresh-outline" class="btn-icon"></ion-icon>
+                <span  class="emoji-icon btn-icon">🔄</span>
                 <span>Refresh</span>
               </button>
               <button class="dashboard-btn" routerLink="/customer/dashboard">
-                <ion-icon name="home-outline" class="btn-icon"></ion-icon>
+                <span  class="emoji-icon btn-icon">🏠</span>
                 <span>Back to Dashboard</span>
               </button>
             </div>
@@ -175,7 +154,7 @@ interface Payment {
                 <div class="card-header">
                   <div class="header-left">
                     <div class="payment-icon" [class]="getPaymentMethodClass(payment.paymentMethod)">
-                      <ion-icon [name]="getPaymentMethodIcon(payment.paymentMethod)" class="payment-method-icon"></ion-icon>
+                      <span  class="emoji-icon payment-method-icon">{{ getPaymentMethodEmoji(payment.paymentMethod) }}</span>
                     </div>
                     <div class="payment-main">
                       <div class="payment-amount">₱{{ formatCurrency(payment.amount) }}</div>
@@ -192,11 +171,11 @@ interface Payment {
                 <!-- Card Summary (Always Visible) -->
                 <div class="card-summary">
                   <div class="summary-item">
-                    <ion-icon name="receipt-outline" class="summary-icon"></ion-icon>
+                    <span  class="emoji-icon summary-icon">🧾</span>
                     <span>{{ payment.loanNumber }}</span>
                   </div>
                   <div class="summary-item">
-                    <ion-icon name="calendar-outline" class="summary-icon"></ion-icon>
+                    <span  class="emoji-icon summary-icon">📅</span>
                     <span>{{ formatDate(payment.paymentDate) }}</span>
                   </div>
                 </div>
@@ -257,7 +236,7 @@ interface Payment {
 
                 <!-- Expand Indicator -->
                 <div class="expand-indicator">
-                  <ion-icon [name]="expandedPaymentId() === payment.id ? 'chevron-up-outline' : 'chevron-down-outline'" class="expand-icon"></ion-icon>
+                  <span  class="emoji-icon expand-icon">{{ expandedPaymentId() === payment.id ? '🔼' : '🔽' }}</span>
                 </div>
               </div>
             }
@@ -800,21 +779,7 @@ export class CustomerPaymentsPage implements OnInit {
     private authService: AuthService,
     private toastController: ToastController,
     private router: Router
-  ) {
-    addIcons({
-      receiptOutline,
-      cashOutline,
-      cardOutline,
-      businessOutline,
-      phonePortraitOutline,
-      walletOutline,
-      calendarOutline,
-      chevronUpOutline,
-      chevronDownOutline,
-      refreshOutline,
-      homeOutline
-    });
-  }
+  ) {}
 
   ngOnInit() {
     this.loadPayments();
@@ -896,23 +861,30 @@ export class CustomerPaymentsPage implements OnInit {
     this.router.navigate(['/customer/dashboard']);
   }
 
-  getPaymentMethodIcon(method: string): string {
-    switch (method.toLowerCase()) {
+  getPaymentMethodEmoji(method: string): string {
+    let iconName = 'wallet-outline';
+    switch ((method || '').toLowerCase()) {
       case 'cash':
-        return 'cash-outline';
+        iconName = 'cash-outline';
+        break;
       case 'card':
       case 'credit_card':
       case 'debit_card':
-        return 'card-outline';
+        iconName = 'card-outline';
+        break;
       case 'bank_transfer':
       case 'online_banking':
-        return 'business-outline';
+        iconName = 'business-outline';
+        break;
       case 'gcash':
       case 'paymaya':
-        return 'phone-portrait-outline';
+        iconName = 'phone-portrait-outline';
+        break;
       default:
-        return 'wallet-outline';
+        iconName = 'wallet-outline';
     }
+
+    return iconToEmoji(iconName);
   }
 
   getStatusColor(status: string): string {

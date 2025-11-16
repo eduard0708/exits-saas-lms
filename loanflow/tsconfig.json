@@ -25,8 +25,15 @@
     ],
     "useDefineForClassFields": false,
     "paths": {
-      "@shared/models": ["src/app/shared/models/index.ts"],
-      "@shared/api": ["src/app/shared/api/index.ts"],
+      "@shared/models": [
+        "../libs/shared-models/src/index.ts"
+      ],
+      "@shared/api": [
+        "../libs/shared-api/src/index.ts"
+      ],
+      "@shared/ui": [
+        "../libs/shared-ui/src/index.ts"
+      ],
       "@app/*": [
         "src/app/*"
       ],

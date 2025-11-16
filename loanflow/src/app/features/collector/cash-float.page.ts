@@ -1,28 +1,8 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  IonContent,
-  IonHeader,
-  IonTitle,
-  IonToolbar,
-  IonButtons,
-  IonBackButton,
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
-  IonCardSubtitle,
-  IonCardContent,
-  IonButton,
-  IonIcon,
-  IonSpinner,
-  IonText,
-  IonChip,
-  IonBadge,
-} from '@ionic/angular/standalone';
+import { IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonSpinner, IonBadge } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
-import { addIcons } from 'ionicons';
-import { cashOutline, checkmarkCircle, warningOutline, timeOutline, locationOutline } from 'ionicons/icons';
 import { 
   CashFloatApiService, 
   formatCurrency, 
@@ -30,6 +10,7 @@ import {
   formatTime as sharedFormatTime 
 } from '@shared/api';
 import type { PendingFloat, CollectorCashBalance, CashFloat } from '@shared/models';
+import { StatCardComponent, StatusBadgeComponent, SharedButtonComponent } from '@shared/ui';
 
 @Component({
   selector: 'app-cash-float',
@@ -49,13 +30,12 @@ import type { PendingFloat, CollectorCashBalance, CashFloat } from '@shared/mode
     IonCardHeader,
     IonCardTitle,
     IonCardSubtitle,
-    IonCardContent,
-    IonButton,
-    IonIcon,
+  IonCardContent,
     IonSpinner,
-    IonText,
-    IonChip,
     IonBadge,
+    StatCardComponent,
+    StatusBadgeComponent,
+    SharedButtonComponent,
   ],
 })
 export class CashFloatPage implements OnInit {
@@ -68,9 +48,7 @@ export class CashFloatPage implements OnInit {
   constructor(
     private cashFloatApi: CashFloatApiService,
     private router: Router
-  ) {
-    addIcons({ cashOutline, checkmarkCircle, warningOutline, timeOutline, locationOutline });
-  }
+  ) {}
 
   ngOnInit() {
     this.loadPendingFloats();
@@ -161,5 +139,9 @@ export class CashFloatPage implements OnInit {
 
   getCashierName(float: PendingFloat): string {
     return `${float.cashierFirstName} ${float.cashierLastName}`.trim();
+  }
+
+  goToCashHistory() {
+    this.router.navigate(['/collector/cash-history']);
   }
 }

@@ -2,28 +2,7 @@ import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import {
-  IonContent,
-  IonCard,
-  IonCardContent,
-  IonButton,
-  IonSpinner,
-  IonIcon,
-  ToastController,
-  AlertController,
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import {
-  cashOutline,
-  personOutline,
-  briefcaseOutline,
-  mailOutline,
-  lockClosedOutline,
-  eyeOutline,
-  eyeOffOutline,
-  logInOutline,
-  arrowForwardOutline
-} from 'ionicons/icons';
+import { IonContent, IonCard, IonCardContent, IonButton, IonSpinner, ToastController, AlertController } from '@ionic/angular/standalone';
 import { AuthService, User } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { HeaderUtilsComponent } from '../../shared/components/header-utils.component';
@@ -49,7 +28,6 @@ interface TestUser {
     IonCardContent,
     IonButton,
     IonSpinner,
-    IonIcon,
     HeaderUtilsComponent,
   ],
   template: `
@@ -67,7 +45,7 @@ interface TestUser {
         <!-- Logo -->
         <div class="hero-section">
           <div class="logo-circle">
-            <ion-icon name="cash-outline" class="logo-icon"></ion-icon>
+            <span  class="emoji-icon logo-icon">💰</span>
           </div>
         </div>
 
@@ -83,7 +61,7 @@ interface TestUser {
                 (click)="setLoginMode(false)"
                 [attr.aria-pressed]="!loginAsEmployee()"
               >
-                <ion-icon name="person-outline" class="toggle-icon"></ion-icon>
+                <span  class="emoji-icon toggle-icon">👤</span>
                 Customer
               </button>
               <button
@@ -93,7 +71,7 @@ interface TestUser {
                 (click)="setLoginMode(true)"
                 [attr.aria-pressed]="loginAsEmployee()"
               >
-                <ion-icon name="briefcase-outline" class="toggle-icon"></ion-icon>
+                <span  class="emoji-icon toggle-icon">💼</span>
                 Employee
               </button>
             </div>
@@ -105,7 +83,7 @@ interface TestUser {
                   {{ loginAsEmployee() ? 'Email' : 'Email or Phone' }}
                 </label>
                 <div class="input-wrapper">
-                  <ion-icon name="mail-outline" class="input-icon"></ion-icon>
+                  <span  class="emoji-icon input-icon">✉️</span>
                   <input
                     type="{{ loginAsEmployee() ? 'email' : 'text' }}"
                     class="custom-input"
@@ -123,7 +101,7 @@ interface TestUser {
               <div class="input-group">
                 <label class="input-label">Password</label>
                 <div class="input-wrapper">
-                  <ion-icon name="lock-closed-outline" class="input-icon"></ion-icon>
+                  <span  class="emoji-icon input-icon">🔒</span>
                   <input
                     [type]="showPassword() ? 'text' : 'password'"
                     class="custom-input"
@@ -139,7 +117,7 @@ interface TestUser {
                     (click)="togglePassword()"
                     [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
                   >
-                    <ion-icon [name]="showPassword() ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+                    <span  class="emoji-icon">{{ showPassword() ? '🙈' : '👁️' }}</span>
                   </button>
                 </div>
               </div>
@@ -153,7 +131,7 @@ interface TestUser {
                 (click)="onSubmit()"
               >
                 <ion-spinner name="crescent" *ngIf="loading()"></ion-spinner>
-                <ion-icon name="log-in-outline" *ngIf="!loading()"></ion-icon>
+                <span  *ngIf="!loading()" class="emoji-icon">🔐</span>
                 <span *ngIf="!loading()">Sign In</span>
                 <span *ngIf="loading()">Signing in...</span>
               </ion-button>
@@ -192,7 +170,7 @@ interface TestUser {
                     <p class="user-name">{{ user.name }}</p>
                     <p class="user-role">{{ user.role }}</p>
                   </div>
-                  <ion-icon name="arrow-forward-outline" class="card-arrow"></ion-icon>
+                  <span  class="emoji-icon card-arrow">➡️</span>
                 </div>
               </div>
             }
@@ -329,20 +307,7 @@ export class LoginPage {
     { email: 'employee1@techstart.com', password: 'Admin@123', name: 'Employee1 TechStart', role: 'Loan Officer', initials: 'E1', type: 'employee' },
   ];
 
-  constructor() {
-    addIcons({
-      cashOutline,
-      personOutline,
-      briefcaseOutline,
-      mailOutline,
-      lockClosedOutline,
-      eyeOutline,
-      eyeOffOutline,
-      logInOutline,
-      arrowForwardOutline
-    });
-    
-    effect(() => {
+  constructor() {effect(() => {
       if (this.loginAsEmployee()) {
         this.email.set('');
         this.password.set('');

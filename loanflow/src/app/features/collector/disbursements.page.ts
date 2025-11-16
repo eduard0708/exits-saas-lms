@@ -47,22 +47,7 @@ import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import {
-  IonContent,
-  IonRefresher,
-  IonRefresherContent,
-  IonIcon,
-  ToastController,
-  AlertController,
-  ViewWillEnter,
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import {
-  cashOutline,
-  sparklesOutline,
-  clipboardOutline,
-  checkmarkOutline
-} from 'ionicons/icons';
+import { IonContent, IonRefresher, IonRefresherContent, ToastController, AlertController, ViewWillEnter } from '@ionic/angular/standalone';
 import {
   CollectorService,
   PendingDisbursement,
@@ -80,7 +65,6 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
     IonContent,
     IonRefresher,
     IonRefresherContent,
-    IonIcon,
     CollectorTopBarComponent
   ],
   template: `
@@ -112,13 +96,13 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
         @else if (disbursements().length === 0) {
           <div class="empty-state">
             <div class="empty-icon-wrapper">
-              <ion-icon name="cash-outline" class="empty-icon"></ion-icon>
+              <span  class="emoji-icon empty-icon">💰</span>
             </div>
             <h3 class="empty-title">No Pending Disbursements</h3>
             <p class="empty-subtitle">All approved loans have been disbursed</p>
             <div class="hint-box">
               <div class="hint-icon">
-                <ion-icon name="sparkles-outline"></ion-icon>
+                <span  class="emoji-icon">✨</span>
               </div>
               <div class="hint-content">
                 <div class="hint-label">Quick Tip</div>
@@ -323,15 +307,15 @@ import { CollectorTopBarComponent } from '../../shared/components/collector-top-
                 <!-- Info Box -->
                 <div class="info-box">
                   <div class="info-icon-wrapper">
-                    <ion-icon name="clipboard-outline" class="info-icon"></ion-icon>
+                    <span  class="emoji-icon info-icon">📋</span>
                   </div>
                   <div class="info-content">
                     <div class="info-title">Important Checklist:</div>
                     <ul class="checklist">
-                      <li><ion-icon name="checkmark-outline"></ion-icon> Verify customer identity before disbursing</li>
-                      <li><ion-icon name="checkmark-outline"></ion-icon> Customer must sign disbursement receipt</li>
-                      <li><ion-icon name="checkmark-outline"></ion-icon> For cash: Count amount in front of customer</li>
-                      <li><ion-icon name="checkmark-outline"></ion-icon> For transfers: Confirm receipt before closing</li>
+                      <li><span  class="emoji-icon">✔️</span> Verify customer identity before disbursing</li>
+                      <li><span  class="emoji-icon">✔️</span> Customer must sign disbursement receipt</li>
+                      <li><span  class="emoji-icon">✔️</span> For cash: Count amount in front of customer</li>
+                      <li><span  class="emoji-icon">✔️</span> For transfers: Confirm receipt before closing</li>
                     </ul>
                   </div>
                 </div>
@@ -1064,14 +1048,7 @@ export class CollectorDisbursementsPage implements OnInit, ViewWillEnter {
     notes: '',
   };
 
-  constructor() {
-    addIcons({
-      cashOutline,
-      sparklesOutline,
-      clipboardOutline,
-      checkmarkOutline
-    });
-  }
+  constructor() {}
 
   ngOnInit() {
     const user = this.authService.currentUser();

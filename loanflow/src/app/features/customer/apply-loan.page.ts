@@ -1,33 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { Router } from '@angular/router';
-import {
-  IonContent,
-  IonButton,
-  IonRefresher,
-  IonRefresherContent,
-  IonSkeletonText,
-  IonIcon,
-  ToastController,
-  ModalController
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import {
-  cardOutline,
-  starOutline,
-  refreshOutline,
-  hourglassOutline,
-  briefcaseOutline,
-  cashOutline,
-  trendingUpOutline,
-  timeOutline,
-  calendarOutline,
-  cogOutline,
-  shieldOutline,
-  checkmarkOutline,
-  clipboardOutline,
-  rocketOutline
-} from 'ionicons/icons';
+import { IonContent, IonButton, IonRefresher, IonRefresherContent, IonSkeletonText, ToastController, ModalController } from '@ionic/angular/standalone';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
@@ -67,7 +41,6 @@ interface LoanProduct {
     IonRefresher,
     IonRefresherContent,
     IonSkeletonText,
-    IonIcon,
     CustomerTopBarComponent
   ],
   template: `
@@ -107,14 +80,14 @@ interface LoanProduct {
         @else if (products().length === 0) {
           <div class="empty-state">
             <div class="empty-icon-wrapper">
-              <ion-icon name="star-outline" class="empty-icon"></ion-icon>
+              <span  class="emoji-icon empty-icon">⭐</span>
             </div>
             <h3 class="empty-title">No loan products available</h3>
             <p class="empty-message">
               We currently don't have any loan products available for your account. Please contact your lender for more information or check back later.
             </p>
             <div class="empty-hint">
-              <ion-icon name="refresh-outline" class="hint-icon"></ion-icon>
+              <span  class="emoji-icon hint-icon">🔄</span>
               <span>Pull down to refresh or tap the button below</span>
             </div>
             <div class="empty-actions">
@@ -124,7 +97,7 @@ interface LoanProduct {
                 (click)="refreshProducts()"
                 [disabled]="loading()"
               >
-                <ion-icon name="refresh-outline" slot="start"></ion-icon>
+                <span  slot="start" class="emoji-icon">🔄</span>
                 Refresh products
               </ion-button>
               <button type="button" class="empty-secondary" (click)="goToDashboard()">
@@ -141,13 +114,13 @@ interface LoanProduct {
               <div class="product-card" [class.card-disabled]="isProductPending(product.id)">
                 @if (isProductPending(product.id)) {
                   <div class="pending-overlay">
-                    <ion-icon name="hourglass-outline" class="overlay-icon"></ion-icon>
+                    <span  class="emoji-icon overlay-icon">⏳</span>
                     <span class="overlay-text">Application Pending</span>
                   </div>
                 }
                 <div class="product-headline">
                   <div class="headline-main">
-                    <ion-icon name="briefcase-outline" class="product-emoji"></ion-icon>
+                    <span  class="emoji-icon product-emoji">💼</span>
                     <div class="product-title-section">
                       <h3 class="product-name">{{ product.name }}</h3>
                       <p class="product-description">{{ product.description }}</p>
@@ -160,15 +133,15 @@ interface LoanProduct {
 
                 <div class="product-info">
                   <div class="info-item">
-                    <ion-icon name="cash-outline" class="info-emoji"></ion-icon>
+                    <span  class="emoji-icon info-emoji">💰</span>
                     <span class="info-text">₱{{ formatCurrency(product.minAmount) }} - ₱{{ formatCurrency(product.maxAmount) }}</span>
                   </div>
                   <div class="info-item">
-                    <ion-icon name="trending-up-outline" class="info-emoji"></ion-icon>
+                    <span  class="emoji-icon info-emoji">📈</span>
                     <span class="info-text">{{ product.interestRate }}% monthly ({{ product.interestType || 'flat' }})</span>
                   </div>
                   <div class="info-item">
-                    <ion-icon name="time-outline" class="info-emoji"></ion-icon>
+                    <span  class="emoji-icon info-emoji">⏰</span>
                     <span class="info-text">
                       @if (product.loanTermType === 'fixed') {
                         {{ Math.round((product.fixedTermDays || 90) / 30) }} month term
@@ -179,19 +152,19 @@ interface LoanProduct {
                   </div>
                   @if (product.paymentFrequency) {
                     <div class="info-item">
-                      <ion-icon name="calendar-outline" class="info-emoji"></ion-icon>
+                      <span  class="emoji-icon info-emoji">📅</span>
                       <span class="info-text">{{ formatFrequency(product.paymentFrequency) }} payments</span>
                     </div>
                   }
                   @if (product.processingFee > 0) {
                     <div class="info-item">
-                      <ion-icon name="cog-outline" class="info-emoji"></ion-icon>
+                      <span  class="emoji-icon info-emoji">⚙️</span>
                       <span class="info-text">Processing fee {{ product.processingFee }}%</span>
                     </div>
                   }
                   @if (product.platformFee && product.platformFee > 0) {
                     <div class="info-item">
-                      <ion-icon name="shield-outline" class="info-emoji"></ion-icon>
+                      <span  class="emoji-icon info-emoji">🛡️</span>
                       <span class="info-text">Platform fee ₱{{ formatCurrency(product.platformFee) }}/mo</span>
                     </div>
                   }
@@ -203,7 +176,7 @@ interface LoanProduct {
                     <ul class="features-list">
                       @for (feature of product.features.slice(0, 3); track feature) {
                         <li class="feature-item">
-                          <ion-icon name="checkmark-outline" class="feature-bullet"></ion-icon>
+                          <span  class="emoji-icon feature-bullet">✔️</span>
                           <span class="feature-text">{{ feature }}</span>
                         </li>
                       }
@@ -215,7 +188,7 @@ interface LoanProduct {
                   @if (isProductPending(product.id)) {
                     <div class="application-status">
                       <div class="status-header">
-                        <ion-icon name="clipboard-outline" class="status-icon"></ion-icon>
+                        <span  class="emoji-icon status-icon">📋</span>
                         <span class="status-title">Your Application</span>
                       </div>
                       <div class="status-details">
@@ -240,7 +213,7 @@ interface LoanProduct {
                   } @else {
                     <button class="apply-btn" (click)="applyForProduct(product)">
                       <span>Apply Now</span>
-                      <ion-icon name="rocket-outline" class="btn-emoji"></ion-icon>
+                      <span  class="emoji-icon btn-emoji">🚀</span>
                     </button>
                   }
                 </div>
@@ -1061,24 +1034,7 @@ export class ApplyLoanPage implements OnInit {
     private location: Location,
     public themeService: ThemeService,
     private toastController: ToastController
-  ) {
-    addIcons({
-      cardOutline,
-      starOutline,
-      refreshOutline,
-      hourglassOutline,
-      briefcaseOutline,
-      cashOutline,
-      trendingUpOutline,
-      timeOutline,
-      calendarOutline,
-      cogOutline,
-      shieldOutline,
-      checkmarkOutline,
-      clipboardOutline,
-      rocketOutline
-    });
-  }
+  ) {}
 
   ngOnInit() {
     this.loadLoanProducts();
