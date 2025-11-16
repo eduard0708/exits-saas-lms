@@ -1,15 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { 
   IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, 
-  IonList, IonItem, IonIcon, IonLabel, IonButton,
-  IonRouterOutlet, MenuController 
+  IonList, IonItem, IonIcon, IonLabel, IonCard, IonCardContent,
+  IonMenuToggle, MenuController 
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { 
   homeOutline, peopleOutline, shieldOutline, businessOutline, 
-  documentTextOutline, personOutline, settingsOutline, logOutOutline 
+  documentTextOutline, personOutline, personCircleOutline, settingsOutline, logOutOutline 
 } from 'ionicons/icons';
 import { AuthService } from '@app/core/services/auth.service';
 
@@ -18,8 +18,7 @@ import { AuthService } from '@app/core/services/auth.service';
   standalone: true,
   imports: [
     CommonModule,
-    RouterLink,
-    RouterOutlet,
+  RouterLink,
     IonMenu,
     IonHeader,
     IonToolbar,
@@ -29,8 +28,9 @@ import { AuthService } from '@app/core/services/auth.service';
     IonItem,
     IonIcon,
     IonLabel,
-    IonButton,
-    IonRouterOutlet
+    IonCard,
+    IonCardContent,
+    IonMenuToggle
   ],
   templateUrl: './menu.page.html',
   styleUrls: ['./menu.page.scss'],
@@ -59,8 +59,9 @@ export class MenuPage implements OnInit {
       'business-outline': businessOutline,
       'document-text-outline': documentTextOutline,
       'person-outline': personOutline,
+      'person-circle-outline': personCircleOutline,
       'settings-outline': settingsOutline,
-      'log-out-outline': logOutOutline,
+      'log-out-outline': logOutOutline
     });
   }
 
@@ -71,10 +72,7 @@ export class MenuPage implements OnInit {
   }
 
   logout(): void {
-    this.authService.logout().subscribe({
-      next: () => {
-        this.menu.close('mainMenu');
-      },
-    });
+    this.authService.logout();
+    this.menu.close('mainMenu');
   }
 }

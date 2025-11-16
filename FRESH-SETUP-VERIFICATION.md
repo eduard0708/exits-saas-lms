@@ -59,7 +59,16 @@
    ✓ Build Angular app
    ```
 
-3. **API Setup**
+3. **Mobile (loanflow) Build Sanity Check**
+  ```
+  cd loanflow
+  npm install   # first-time only
+  npm run build # wraps ng build with scripts/ng-build-filter.mjs
+  ```
+  - The wrapper filters Ionic's `[empty-glob]` warning so a clean build log actually signals success.
+  - Production budgets (2 MB total bundle / 64 kB component styles) are enforced automatically; see `STYLE-BUDGET-REVIEW.md` for the latest snapshot.
+
+4. **API Setup**
    ```
    ✓ Install dependencies
    ✓ Start server (with db connection)

@@ -1432,7 +1432,7 @@ export class CollectorApplicationsPage implements OnInit, OnDestroy {
         { text: 'Cancel', role: 'cancel' },
         {
           text: 'Submit',
-          handler: async (data) => {
+          handler: async (data: { notes?: string }) => {
             try {
               await this.collectorService.requestApplicationReview(
                 this.collectorId(),

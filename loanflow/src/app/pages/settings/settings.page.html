@@ -36,7 +36,7 @@
           <ion-label>Language</ion-label>
           <ion-select
             [value]="settings.language"
-            (ionChange)="changeLanguage($event.detail.value)"
+            (ionChange)="changeLanguage($event)"
           >
             <ion-select-option value="en">English</ion-select-option>
             <ion-select-option value="es">Spanish</ion-select-option>
@@ -48,7 +48,7 @@
           <ion-label>Timezone</ion-label>
           <ion-select
             [value]="settings.timezone"
-            (ionChange)="changeTimezone($event.detail.value)"
+            (ionChange)="changeTimezone($event)"
           >
             <ion-select-option value="UTC">UTC</ion-select-option>
             <ion-select-option value="EST">Eastern Standard</ion-select-option>

@@ -2,8 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { 
   IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton, 
-  IonContent, IonList, IonItem, IonLabel, IonBadge, 
-  IonButton, IonIcon 
+  IonContent, IonList, IonItem, IonLabel,
+  IonButton, IonIcon, IonListHeader, IonItemSliding, IonItemOptions, IonItemOption,
+  IonCard, IonCardContent, IonText 
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { trashOutline, checkmarkOutline } from 'ionicons/icons';
@@ -21,12 +22,18 @@ import { Observable } from 'rxjs';
     IonButtons,
     IonBackButton,
     IonContent,
-    IonList,
-    IonItem,
-    IonLabel,
-    IonBadge,
+  IonList,
+  IonItem,
+  IonLabel,
     IonButton,
-    IonIcon
+    IonIcon,
+    IonListHeader,
+    IonItemSliding,
+    IonItemOptions,
+    IonItemOption,
+    IonCard,
+    IonCardContent,
+    IonText
   ],
   templateUrl: './notifications.page.html',
   styleUrls: ['./notifications.page.scss'],

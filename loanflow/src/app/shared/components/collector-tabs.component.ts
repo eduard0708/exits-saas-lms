@@ -11,15 +11,10 @@ import {
 import { addIcons } from 'ionicons';
 import {
   gridOutline,
-  grid,
   mapOutline,
-  map,
   documentTextOutline,
-  documentText,
   cashOutline,
-  cash,
   peopleOutline,
-  people,
   alertCircleOutline,
   alertCircle
 } from 'ionicons/icons';
@@ -161,15 +156,10 @@ export class CollectorTabsComponent {
   constructor() {
     addIcons({
       gridOutline,
-      grid,
       mapOutline,
-      map,
       documentTextOutline,
-      documentText,
       cashOutline,
-      cash,
       peopleOutline,
-      people,
       alertCircleOutline,
       alertCircle
     });

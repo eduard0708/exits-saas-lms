@@ -13,6 +13,9 @@
     "downlevelIteration": true,
     "experimentalDecorators": true,
     "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "importHelpers": true,
     "target": "ES2022",
     "module": "ES2020",
@@ -22,9 +25,8 @@
     ],
     "useDefineForClassFields": false,
     "paths": {
-      "@shared/models": ["../libs/shared-models/src/index.ts"],
-      "@shared/api": ["../libs/shared-api/src/index.ts"],
-      "@shared/ui": ["../libs/shared-ui/src/index.ts"],
+      "@shared/models": ["src/app/shared/models/index.ts"],
+      "@shared/api": ["src/app/shared/api/index.ts"],
       "@app/*": [
         "src/app/*"
       ],

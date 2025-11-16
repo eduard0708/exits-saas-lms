@@ -1,1 +1,35 @@
-{"name":"exitsaas-web","version":"1.0.0","description":"ExITS SaaS - Angular Web Application","scripts":{"ng":"ng","start":"ng serve","dev":"ng serve","build":"ng build","build:prod":"ng build --configuration production","watch":"ng build --watch --configuration development","test":"ng test --watch=false","test:watch":"ng test","test:coverage":"ng test --no-watch --code-coverage","lint":"ng lint","e2e":"ng e2e"},"private":true,"dependencies":{"@angular/animations":"^15.0.0","@angular/common":"^15.0.0","@angular/compiler":"^15.0.0","@angular/core":"^15.0.0","@angular/forms":"^15.0.0","@angular/material":"^15.0.0","@angular/platform-browser":"^15.0.0","@angular/platform-browser-dynamic":"^15.0.0","@angular/router":"^15.0.0","rxjs":"^7.5.0","tslib":"^2.3.0","zone.js":"^0.12.0"},"devDependencies":{"@analogjs/vite-plugin-angular":"^1.22.4","@angular-devkit/build-angular":"^15.0.0","@angular/cli":"^15.0.0","@angular/compiler-cli":"^15.0.0","@types/jasmine":"~4.3.0","jasmine-core":"~4.5.0","karma":"~6.4.0","karma-chrome-launcher":"~3.1.0","karma-coverage":"~2.2.0","karma-jasmine":"~5.1.0","karma-jasmine-html-reporter":"~2.0.0","typescript":"~4.8.4"}}
+{
+  "name": "exits-saas-lms-monorepo",
+  "version": "1.0.0",
+  "description": "ExITS SaaS LMS - Monorepo with API, Web, Mobile, and Shared Libraries",
+  "private": true,
+  "scripts": {
+    "dev:api": "cd api && npm run start:dev",
+    "dev:web": "cd web && npm run dev",
+    "dev:mobile": "cd loanflow && npm run dev",
+    "dev:all": "concurrently -n \"API,WEB,MOBILE\" -c \"bgBlue,bgGreen,bgMagenta\" \"npm run dev:api\" \"npm run dev:web\" \"npm run dev:mobile\"",
+    "build:api": "cd api && npm run build",
+    "build:web": "cd web && npm run build",
+    "build:mobile": "cd loanflow && npm run build",
+    "build:all": "npm run build:api && npm run build:web && npm run build:mobile",
+    "test:api": "cd api && npm run test",
+    "test:web": "cd web && npm run test",
+    "test:mobile": "cd loanflow && npm run test",
+    "test:all": "npm run test:api && npm run test:web && npm run test:mobile",
+    "lint:api": "cd api && npm run lint",
+    "lint:web": "cd web && npm run lint",
+    "lint:mobile": "cd loanflow && npm run lint",
+    "lint:all": "npm run lint:api && npm run lint:web && npm run lint:mobile",
+    "install:all": "cd api && npm install && cd ../web && npm install && cd ../loanflow && npm install",
+    "db:migrate": "cd api && npm run db:migrate",
+    "db:seed": "cd api && npm run db:seed",
+    "db:rollback": "cd api && npm run db:migrate:rollback"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { 
   IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton, 
-  IonContent, IonList, IonItem, IonLabel, IonToggle, IonSelect, IonSelectOption 
+  IonContent, IonItem, IonLabel, IonToggle, IonSelect, IonSelectOption,
+  IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonText 
 } from '@ionic/angular/standalone';
 import { SettingsService } from '@app/core/services/settings.service';
 import { Observable } from 'rxjs';
@@ -17,13 +18,17 @@ import { Observable } from 'rxjs';
     IonTitle,
     IonButtons,
     IonBackButton,
-    IonContent,
-    IonList,
+  IonContent,
     IonItem,
     IonLabel,
     IonToggle,
     IonSelect,
-    IonSelectOption
+    IonSelectOption,
+    IonCard,
+    IonCardHeader,
+    IonCardTitle,
+    IonCardContent,
+    IonText
   ],
   templateUrl: './settings.page.html',
   styleUrls: ['./settings.page.scss'],
@@ -53,11 +58,17 @@ export class SettingsPage implements OnInit {
     this.settingsService.toggleBiometricAuth();
   }
 
-  changeLanguage(lang: string): void {
-    this.settingsService.updateSetting('language', lang);
+  changeLanguage(event: Event): void {
+    const value = (event as CustomEvent<{ value: string }>).detail?.value;
+    if (typeof value === 'string') {
+      this.settingsService.updateSetting('language', value);
+    }
   }
 
-  changeTimezone(tz: string): void {
-    this.settingsService.updateSetting('timezone', tz);
+  changeTimezone(event: Event): void {
+    const value = (event as CustomEvent<{ value: string }>).detail?.value;
+    if (typeof value === 'string') {
+      this.settingsService.updateSetting('timezone', value);
+    }
   }
 }

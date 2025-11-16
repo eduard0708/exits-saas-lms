@@ -101,6 +101,12 @@ interface RouteCustomer {
   totalPenalties?: number;
 }
 
+interface GraceExtensionFormData {
+  extensionDays: number;
+  reason: string;
+  detailedReason: string;
+}
+
 interface CollectionStats {
   totalAssigned: number;
   visited: number;
@@ -1513,7 +1519,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
         },
         {
           text: 'Select Installments',
-          handler: async (data) => {
+          handler: async (data: GraceExtensionFormData) => {
             if (!this.validateGraceExtensionInput(data)) {
               return false;
             }
@@ -1524,7 +1530,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
         {
           text: 'Apply to All',
           cssClass: 'alert-button-confirm',
-          handler: async (data) => {
+          handler: async (data: GraceExtensionFormData) => {
             if (!this.validateGraceExtensionInput(data)) {
               return false;
             }
@@ -1541,7 +1547,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
   /**
    * Validate grace extension input
    */
-  validateGraceExtensionInput(data: any): boolean {
+  validateGraceExtensionInput(data: GraceExtensionFormData): boolean {
     if (!data.extensionDays || data.extensionDays < 1 || data.extensionDays > 7) {
       this.toastController.create({
         message: 'Extension must be between 1-7 days',
@@ -1566,7 +1572,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
   /**
    * Show installment selector
    */
-  async showInstallmentSelector(loan: RouteCustomer, installments: any[], extensionData: any) {
+  async showInstallmentSelector(loan: RouteCustomer, installments: any[], extensionData: GraceExtensionFormData) {
     const alert = await this.alertController.create({
       header: 'Select Installments',
       message: 'Choose which installments to extend',
@@ -1584,7 +1590,7 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
         },
         {
           text: 'Extend Selected',
-          handler: async (selectedIds) => {
+          handler: async (selectedIds: string[] | undefined) => {
             if (!selectedIds || selectedIds.length === 0) {
               const toast = await this.toastController.create({
                 message: 'Please select at least one installment',
@@ -1736,8 +1742,11 @@ export class CollectorRoutePage implements OnInit, ViewWillEnter {
         },
         {
           text: `Apply to ${eligibleLoans.length} Customer(s)`,
-          handler: async (selectedOption) => {
-            const option = JSON.parse(selectedOption);
+          handler: async (selectedOption: string) => {
+            if (!selectedOption) {
+              return false;
+            }
+            const option = JSON.parse(selectedOption) as { days: number; reason: string; detail: string };
             return this.submitBulkGraceExtension(eligibleLoans, option.days, option.reason, option.detail);
           }
         }

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { 
   IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton, 
   IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent, 
-  IonList, IonItem, IonLabel, IonButton 
+  IonList, IonItem, IonLabel, IonButton, IonText 
 } from '@ionic/angular/standalone';
 import { AuthService } from '@app/core/services/auth.service';
 
@@ -25,7 +25,8 @@ import { AuthService } from '@app/core/services/auth.service';
     IonList,
     IonItem,
     IonLabel,
-    IonButton
+    IonButton,
+    IonText
   ],
   templateUrl: './profile.page.html',
   styleUrls: ['./profile.page.scss'],

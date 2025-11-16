@@ -255,6 +255,21 @@ docker-compose up -d
 # - Database: localhost:5432
 ```
 
+### Mobile (loanflow) dev server
+
+```bash
+cd loanflow
+npm install
+npm run dev       # ng serve with the proxy config
+# alias for folks who expect it
+npm run dev:all   # currently just forwards to npm run dev
+ 
+# production sanity check (uses the warning-filtered wrapper)
+npm run build     # runs ng build via scripts/ng-build-filter.mjs
+```
+
+> `npm run build` automatically pipes through `scripts/ng-build-filter.mjs`, so the known Ionic `[empty-glob]` warning is suppressed while every other log still shows up.  This also enforces the 2 MB / 64 kB budgets documented in `STYLE-BUDGET-REVIEW.md`.
+
 ---
 
 ## 📋 What's Ready for Phase 2
