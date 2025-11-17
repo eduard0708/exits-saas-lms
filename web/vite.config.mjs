@@ -12,9 +12,9 @@ export default defineConfig({
   plugins: [angular()],
   resolve: {
     alias: {
-      '@shared/models': resolve(__dirname, '../libs/shared-models/src/index.ts'),
-      '@shared/api': resolve(__dirname, '../libs/shared-api/src/index.ts'),
-      '@shared/ui': resolve(__dirname, '../libs/shared-ui/src/index.ts')
+      '@shared/models': resolve(__dirname, 'src/libs/shared-models/src/index.ts'),
+      '@shared/api': resolve(__dirname, 'src/libs/shared-api/src/index.ts'),
+      '@shared/ui': resolve(__dirname, 'src/libs/shared-ui/src/index.ts')
     }
   },
   server: {

@@ -6,8 +6,8 @@ import './app/icons';
 
 import { Capacitor } from '@capacitor/core';
 
-// Initialize jeep-sqlite for web
-async function initializeApp() {
+// Initialize jeep-sqlite for web before bootstrapping
+(async () => {
   try {
     // Only initialize jeep-sqlite on web platform
     if (Capacitor.getPlatform() === 'web') {
@@ -29,13 +29,12 @@ async function initializeApp() {
     } else {
       console.log('📱 Running on native platform - jeep-sqlite not needed');
     }
-
-    // Bootstrap Angular app
-    await bootstrapApplication(AppComponent, appConfig);
-    console.log('✅ Angular application bootstrapped successfully');
   } catch (err) {
-    console.error('❌ Error starting app:', err);
+    console.error('⚠️ jeep-sqlite initialization warning:', err);
   }
-}
+})();
 
-initializeApp();
+// Bootstrap Angular app immediately (not inside async function to preserve injection context)
+bootstrapApplication(AppComponent, appConfig)
+  .then(() => console.log('✅ Angular application bootstrapped successfully'))
+  .catch(err => console.error('❌ Error starting app:', err));

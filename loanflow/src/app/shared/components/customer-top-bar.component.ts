@@ -188,11 +188,9 @@ export class CustomerTopBarComponent {
     private authService: AuthService,
     private notificationService: NotificationService
   ) {
-    // Subscribe to notification count changes
-    effect(() => {
-      this.notificationService.unreadCount$.subscribe(count => {
-        this.unreadCount.set(count);
-      });
+    // Subscribe to notification count changes directly without effect
+    this.notificationService.unreadCount$.subscribe(count => {
+      this.unreadCount.set(count);
     });
   }
 

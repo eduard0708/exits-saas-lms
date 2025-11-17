@@ -3,6 +3,7 @@
   "compilerOptions": {
     "baseUrl": "./",
     "outDir": "./dist/out-tsc",
+    "preserveSymlinks": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "noImplicitReturns": true,
@@ -26,13 +27,13 @@
     "useDefineForClassFields": false,
     "paths": {
       "@shared/models": [
-        "../libs/shared-models/src/index.ts"
+        "src/libs/shared-models/src/index.ts"
       ],
       "@shared/api": [
-        "../libs/shared-api/src/index.ts"
+        "src/libs/shared-api/src/index.ts"
       ],
       "@shared/ui": [
-        "../libs/shared-ui/src/index.ts"
+        "src/libs/shared-ui/src/index.ts"
       ],
       "@app/*": [
         "src/app/*"

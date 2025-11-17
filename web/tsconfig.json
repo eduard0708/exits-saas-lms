@@ -6,9 +6,9 @@
     "baseUrl": "./",
     "outDir": "./dist/out-tsc",
     "paths": {
-      "@shared/models": ["../libs/shared-models/src/index.ts"],
-      "@shared/api": ["../libs/shared-api/src/index.ts"],
-      "@shared/ui": ["../libs/shared-ui/src/index.ts"]
+      "@shared/models": ["src/libs/shared-models/src/index.ts"],
+      "@shared/api": ["src/libs/shared-api/src/index.ts"],
+      "@shared/ui": ["src/libs/shared-ui/src/index.ts"]
     },
     "forceConsistentCasingInFileNames": true,
     "strict": true,

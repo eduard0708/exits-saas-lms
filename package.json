@@ -1,32 +1,20 @@
 {
-  "name": "exits-saas-lms-monorepo",
+  "name": "exits-saas-lms",
   "version": "1.0.0",
-  "description": "ExITS SaaS LMS - Monorepo with API, Web, Mobile, and Shared Libraries",
+  "description": "ExITS SaaS LMS - API, Web, and Mobile Applications",
   "private": true,
   "scripts": {
     "dev:api": "cd api && npm run start:dev",
     "dev:web": "cd web && npm run dev",
-    "dev:mobile": "cd loanflow && npm run dev",
-    "dev:all": "concurrently -n \"API,WEB,MOBILE\" -c \"bgBlue,bgGreen,bgMagenta\" \"npm run dev:api\" \"npm run dev:web\" \"npm run dev:mobile\"",
+    "dev:mobile": "cd loanflow && npm start",
+    "dev:all": "echo 'Run dev servers individually: npm run dev:api, npm run dev:web, npm run dev:mobile'",
     "build:api": "cd api && npm run build",
     "build:web": "cd web && npm run build",
     "build:mobile": "cd loanflow && npm run build",
-    "build:all": "npm run build:api && npm run build:web && npm run build:mobile",
-    "test:api": "cd api && npm run test",
-    "test:web": "cd web && npm run test",
-    "test:mobile": "cd loanflow && npm run test",
-    "test:all": "npm run test:api && npm run test:web && npm run test:mobile",
-    "lint:api": "cd api && npm run lint",
-    "lint:web": "cd web && npm run lint",
-    "lint:mobile": "cd loanflow && npm run lint",
-    "lint:all": "npm run lint:api && npm run lint:web && npm run lint:mobile",
     "install:all": "cd api && npm install && cd ../web && npm install && cd ../loanflow && npm install",
     "db:migrate": "cd api && npm run db:migrate",
     "db:seed": "cd api && npm run db:seed",
     "db:rollback": "cd api && npm run db:migrate:rollback"
-  },
-  "devDependencies": {
-    "concurrently": "^8.2.2"
   },
   "engines": {
     "node": ">=18.0.0",
