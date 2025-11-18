@@ -18,35 +18,37 @@ interface Collector {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="p-4 md:p-6 space-y-6">
+    <div class="space-y-4">
       <!-- Header -->
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3">
         <button (click)="goBack()"
-                class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
           </svg>
         </button>
         <div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">💰 Issue Float</h1>
-          <p class="text-sm text-gray-600 dark:text-gray-400">Give starting cash to collector</p>
+          <h1 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <span class="text-2xl">💰</span> Issue Float
+          </h1>
+          <p class="text-xs text-gray-600 dark:text-gray-400">Give starting cash to collector</p>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <!-- Form -->
         <div class="lg:col-span-2">
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-            <form (ngSubmit)="submitFloat()" class="space-y-6">
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+            <form (ngSubmit)="submitFloat()" class="space-y-4">
               <!-- Collector Selection -->
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   Select Collector *
                 </label>
                 <select [(ngModel)]="form.collectorId" name="collector" required
-                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
+                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg
                                dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  <option value="">-- Choose Collector --</option>
+                  <option [value]="0">-- Choose Collector --</option>
                   @for (collector of collectors(); track collector.id) {
                     <option [value]="collector.id">
                       {{ collector.firstName }} {{ collector.lastName }} ({{ collector.email }})
@@ -60,39 +62,39 @@ interface Collector {
 
               <!-- Date -->
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   Float Date *
                 </label>
                 <input type="date" [(ngModel)]="form.floatDate" name="date" required
-                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
+                       class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg
                               dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500">
               </div>
 
               <!-- Amount and Daily Cap -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Float Amount *
                   </label>
                   <div class="relative">
-                    <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg">₱</span>
+                    <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">₱</span>
                     <input type="number" [(ngModel)]="form.amount" name="amount" required min="0" step="100"
-                           class="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
-                                  dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 text-lg font-semibold"
+                           class="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                                  dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 text-sm font-semibold"
                            placeholder="50,000.00">
                   </div>
                   <p class="mt-1 text-xs text-gray-500">Total cash given to collector</p>
                 </div>
 
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Daily Disbursement Cap *
                   </label>
                   <div class="relative">
-                    <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg">₱</span>
+                    <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">₱</span>
                     <input type="number" [(ngModel)]="form.dailyCap" name="dailyCap" required min="0" step="100"
-                           class="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
-                                  dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 text-lg font-semibold"
+                           class="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                                  dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 text-sm font-semibold"
                            placeholder="50,000.00">
                   </div>
                   <p class="mt-1 text-xs text-gray-500">Max loans they can disburse today</p>
@@ -101,30 +103,30 @@ interface Collector {
 
               <!-- Notes -->
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   Notes (Optional)
                 </label>
-                <textarea [(ngModel)]="form.notes" name="notes" rows="3"
-                          class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
+                <textarea [(ngModel)]="form.notes" name="notes" rows="2"
+                          class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg
                                  dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
                           placeholder="Any special instructions or notes..."></textarea>
               </div>
 
               <!-- Submit Button -->
-              <div class="flex gap-3">
+              <div class="flex gap-2 pt-2">
                 <button type="button" (click)="goBack()"
-                        class="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 
-                               text-gray-800 dark:text-white rounded-lg px-6 py-3 font-medium transition-colors">
+                        class="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600
+                               text-gray-800 dark:text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors">
                   Cancel
                 </button>
                 <button type="submit" [disabled]="issuing() || !isFormValid()"
-                        class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white 
-                               rounded-lg px-6 py-3 font-medium transition-colors flex items-center justify-center gap-2">
+                        class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white
+                               rounded-lg px-4 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-1.5">
                   @if (issuing()) {
-                    <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                     <span>Issuing...</span>
                   } @else {
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                     </svg>
                     <span>Issue Float</span>
@@ -136,10 +138,12 @@ interface Collector {
         </div>
 
         <!-- Instructions -->
-        <div class="space-y-4">
-          <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800">
-            <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-200 mb-4">📋 Instructions</h3>
-            <ol class="space-y-3 text-sm text-blue-800 dark:text-blue-300">
+        <div class="space-y-3">
+          <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+            <h3 class="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-3 flex items-center gap-1.5">
+              <span class="text-base">📋</span> Instructions
+            </h3>
+            <ol class="space-y-2 text-xs text-blue-800 dark:text-blue-300">
               <li class="flex items-start gap-2">
                 <span class="font-bold">1.</span>
                 <span>Count the exact cash amount you're giving</span>
@@ -163,9 +167,11 @@ interface Collector {
             </ol>
           </div>
 
-          <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-6 border border-yellow-200 dark:border-yellow-800">
-            <h3 class="text-lg font-semibold text-yellow-900 dark:text-yellow-200 mb-3">⚠️ Important</h3>
-            <ul class="space-y-2 text-sm text-yellow-800 dark:text-yellow-300">
+          <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-800">
+            <h3 class="text-sm font-semibold text-yellow-900 dark:text-yellow-200 mb-2.5 flex items-center gap-1.5">
+              <span class="text-base">⚠️</span> Important
+            </h3>
+            <ul class="space-y-1.5 text-xs text-yellow-800 dark:text-yellow-300">
               <li class="flex items-start gap-2">
                 <span>•</span>
                 <span>Do NOT give cash until you've submitted this form</span>
@@ -212,7 +218,7 @@ export class IssueFloatComponent implements OnInit {
   collectors = signal<Collector[]>([]);
 
   form = {
-    collectorId: '',
+    collectorId: 0,
     amount: 0,
     dailyCap: 0,
     floatDate: new Date().toISOString().split('T')[0],
@@ -232,7 +238,7 @@ export class IssueFloatComponent implements OnInit {
   async loadCollectors() {
     this.loading.set(true);
     try {
-      const response: any = await this.http.get('/api/users?role=collector').toPromise();
+      const response: any = await this.http.get('/api/collectors').toPromise();
       this.collectors.set(response.data || []);
     } catch (error) {
       console.error('Error loading collectors:', error);
@@ -258,22 +264,32 @@ export class IssueFloatComponent implements OnInit {
 
     this.issuing.set(true);
     try {
-      const response = await this.cashFloatApi.issueFloat(this.form).toPromise();
-      
+      // Ensure collectorId is a number
+      const payload = {
+        ...this.form,
+        collectorId: Number(this.form.collectorId),
+        amount: Number(this.form.amount),
+        dailyCap: Number(this.form.dailyCap)
+      };
+      const response = await this.cashFloatApi.issueFloat(payload).toPromise();
+
       if (response?.success) {
         alert(`✓ Float issued successfully!\n\nAmount: ₱${this.formatAmount(this.form.amount)}\n\nCollector will be notified to confirm receipt.`);
-        this.router.navigate(['/platforms/money-loan/admin/cashier/pending-confirmations']);
+        this.router.navigate(['/platforms/money-loan/dashboard/cashier/pending-confirmations']);
       }
     } catch (error: any) {
       console.error('Error issuing float:', error);
-      alert(error.error?.message || 'Failed to issue float. Please try again.');
+      console.error('Error status:', error.status);
+      console.error('Error details:', error.error);
+      const errorMsg = error.error?.message || error.error?.error || error.message || 'Failed to issue float. Please try again.';
+      alert(`❌ Error: ${errorMsg}`);
     } finally {
       this.issuing.set(false);
     }
   }
 
   goBack() {
-    this.router.navigate(['/platforms/money-loan/admin/cashier']);
+    this.router.navigate(['/platforms/money-loan/dashboard/cashier']);
   }
 
   formatAmount(amount: number): string {

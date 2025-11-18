@@ -28,7 +28,7 @@ interface PendingHandover {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="min-h-screen bg-gray-50 p-6">
+    <div class="space-y-6">
       <!-- Header -->
       <div class="mb-6">
         <div class="flex items-center justify-between">
@@ -89,7 +89,7 @@ interface PendingHandover {
       </div>
 
       <!-- Empty State -->
-      <div *ngIf="!loading() && pendingHandovers().length === 0" 
+      <div *ngIf="!loading() && pendingHandovers().length === 0"
            class="bg-white rounded-lg shadow-lg p-12 text-center">
         <div class="text-6xl mb-4">✅</div>
         <h3 class="text-xl font-semibold text-gray-900 mb-2">
@@ -107,9 +107,9 @@ interface PendingHandover {
       </div>
 
       <!-- Pending Handovers Grid -->
-      <div *ngIf="!loading() && pendingHandovers().length > 0" 
+      <div *ngIf="!loading() && pendingHandovers().length > 0"
            class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div *ngFor="let handover of pendingHandovers()" 
+        <div *ngFor="let handover of pendingHandovers()"
              class="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
           <!-- Header with Status -->
           <div class="px-6 py-4 border-b"
@@ -196,10 +196,10 @@ interface PendingHandover {
             </div>
 
             <!-- Variance Alert -->
-            <div *ngIf="handover.variance !== 0" 
+            <div *ngIf="handover.variance !== 0"
                  class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
               <p class="text-sm text-yellow-800">
-                <strong>⚠️ Attention:</strong> There is a variance of 
+                <strong>⚠️ Attention:</strong> There is a variance of
                 <strong>{{ formatAmount(Math.abs(handover.variance)) }}</strong>.
                 Please verify the amount before confirming.
               </p>
@@ -238,7 +238,7 @@ interface PendingHandover {
       </div>
 
       <!-- Reject Dialog -->
-      <div *ngIf="showRejectModal" 
+      <div *ngIf="showRejectModal"
            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
            (click)="closeRejectDialog()">
         <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6"
@@ -396,6 +396,6 @@ export class PendingHandoversComponent implements OnInit, OnDestroy {
   formatAmount = formatCurrency;
 
   goBack() {
-    this.router.navigate(['/platforms/money-loan/admin/cashier']);
+    this.router.navigate(['/platforms/money-loan/dashboard/cashier']);
   }
 }

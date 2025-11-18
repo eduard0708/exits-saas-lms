@@ -11,7 +11,7 @@ import type { CollectorCashBalance } from '@shared/models';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="min-h-screen bg-gray-50 p-6">
+    <div class="space-y-6">
       <!-- Header -->
       <div class="mb-6">
         <div class="flex items-center justify-between">
@@ -80,7 +80,7 @@ import type { CollectorCashBalance } from '@shared/models';
       </div>
 
       <!-- Empty State -->
-      <div *ngIf="!loading() && balances().length === 0" 
+      <div *ngIf="!loading() && balances().length === 0"
            class="bg-white rounded-lg shadow-lg p-12 text-center">
         <div class="text-6xl mb-4">📊</div>
         <h3 class="text-xl font-semibold text-gray-900 mb-2">
@@ -92,7 +92,7 @@ import type { CollectorCashBalance } from '@shared/models';
       </div>
 
       <!-- Balances Table -->
-      <div *ngIf="!loading() && balances().length > 0" 
+      <div *ngIf="!loading() && balances().length > 0"
            class="bg-white rounded-lg shadow-lg overflow-hidden">
         <div class="overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200">
@@ -128,7 +128,7 @@ import type { CollectorCashBalance } from '@shared/models';
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-              <tr *ngFor="let balance of balances()" 
+              <tr *ngFor="let balance of balances()"
                   [class.bg-yellow-50]="balance.status === 'pending_confirmation'"
                   [class.bg-green-50]="balance.status === 'active'"
                   class="hover:bg-gray-50 transition-colors">
@@ -339,6 +339,6 @@ export class BalanceMonitorComponent implements OnInit, OnDestroy {
   formatAmount = formatCurrency;
 
   goBack() {
-    this.router.navigate(['/platforms/money-loan/admin/cashier']);
+    this.router.navigate(['/platforms/money-loan/dashboard/cashier']);
   }
 }

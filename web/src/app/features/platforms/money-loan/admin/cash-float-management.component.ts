@@ -123,7 +123,7 @@ interface CashFloat {
                   Collector *
                 </label>
                 <select [(ngModel)]="form.collectorId" name="collector" required
-                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
                                dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500">
                   <option value="">Select Collector</option>
                   @for (collector of collectors(); track collector.id) {
@@ -142,7 +142,7 @@ interface CashFloat {
                   <div class="relative">
                     <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₱</span>
                     <input type="number" [(ngModel)]="form.amount" name="amount" required min="0" step="100"
-                           class="w-full pl-8 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                           class="w-full pl-8 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
                                   dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
                            placeholder="50000">
                   </div>
@@ -155,7 +155,7 @@ interface CashFloat {
                   <div class="relative">
                     <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₱</span>
                     <input type="number" [(ngModel)]="form.dailyCap" name="dailyCap" required min="0" step="100"
-                           class="w-full pl-8 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                           class="w-full pl-8 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
                                   dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
                            placeholder="50000">
                   </div>
@@ -167,13 +167,13 @@ interface CashFloat {
                   Notes (Optional)
                 </label>
                 <textarea [(ngModel)]="form.notes" name="notes" rows="3"
-                          class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                          class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
                                  dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
                           placeholder="Additional notes..."></textarea>
               </div>
 
               <button type="submit" [disabled]="issuing()"
-                      class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white 
+                      class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white
                              rounded-lg px-6 py-3 font-medium transition-colors">
                 @if (issuing()) {
                   <span>Issuing Float...</span>
@@ -184,7 +184,7 @@ interface CashFloat {
             </form>
           </div>
 
-          <div class="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 
+          <div class="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900
                       rounded-lg p-6 border border-blue-200 dark:border-gray-700">
             <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">💡 Quick Tips</h3>
             <ul class="space-y-3 text-sm text-gray-700 dark:text-gray-300">
@@ -353,7 +353,7 @@ interface CashFloat {
                       </span>
                     }
                   </div>
-                  
+
                   <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg p-4 text-white mb-3">
                     <p class="text-xs opacity-90 mb-1">On-Hand Cash</p>
                     <p class="text-2xl font-bold">₱{{ formatAmount(balance.currentBalance) }}</p>
@@ -416,7 +416,7 @@ export class CashFloatManagementComponent implements OnInit {
 
   async loadCollectors() {
     try {
-      const response: any = await this.http.get('/api/users?role=collector').toPromise();
+      const response: any = await this.http.get('/api/collectors').toPromise();
       this.collectors.set(response.data || []);
     } catch (error) {
       console.error('Error loading collectors:', error);

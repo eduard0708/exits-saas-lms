@@ -11,28 +11,28 @@ const cashFloatPermissions = [
   // ============================================
   {
     permission_key: 'money-loan:cash:issue',
-    resource: 'money-loan-cash',
+    resource: 'money-loan:cash',
     action: 'issue',
     description: 'Issue cash float to collectors (morning operation)',
     space: 'tenant'
   },
   {
     permission_key: 'money-loan:cash:receive',
-    resource: 'money-loan-cash',
+    resource: 'money-loan:cash',
     action: 'receive',
     description: 'Confirm handover receipt from collectors (end-of-day)',
     space: 'tenant'
   },
   {
     permission_key: 'money-loan:cash:read',
-    resource: 'money-loan-cash',
+    resource: 'money-loan:cash',
     action: 'read',
     description: 'View cash float history, pending confirmations, and balance monitor',
     space: 'tenant'
   },
   {
     permission_key: 'money-loan:cash:manage',
-    resource: 'money-loan-cash',
+    resource: 'money-loan:cash',
     action: 'manage',
     description: 'Full cash management access (issue, receive, monitor, history)',
     space: 'tenant'
@@ -42,8 +42,8 @@ const cashFloatPermissions = [
   // COLLECTOR PERMISSIONS
   // ============================================
   {
-    permission_key: 'money-loan:collector',
-    resource: 'money-loan-collector',
+    permission_key: 'money-loan:collector:operate',
+    resource: 'money-loan:collector',
     action: 'operate',
     description: 'Collector operations (confirm float, record transactions, handover)',
     space: 'tenant'
@@ -97,7 +97,8 @@ exports.seed = async function (knex) {
             'money-loan:cash:issue',
             'money-loan:cash:receive',
             'money-loan:cash:read',
-            'money-loan:cash:manage'
+            'money-loan:cash:manage',
+            'money-loan:collector-management:read'
           ]);
 
         // Remove existing cash permissions for this role
