@@ -62,14 +62,22 @@ export class CashFloatApiService {
   }
 
   getCurrentBalance(collectorId: number): Observable<CollectorCashBalance> {
-    return this.http.get<CollectorCashBalance>(`${this.baseUrl}/collector/${collectorId}/balance`);
+    return this.http.get<CollectorCashBalance>(`${this.baseUrl}/balance`, {
+      params: { collectorId: collectorId.toString() }
+    });
   }
 
   confirmFloatReceipt(floatId: number, location?: { lat: number; lng: number }): Observable<ApiResponse<CashFloat>> {
-    return this.http.post<ApiResponse<CashFloat>>(`${this.baseUrl}/confirm-float`, {
-      float_id: floatId,
-      location
-    });
+    const payload: any = {
+      floatId: floatId
+    };
+    
+    if (location) {
+      payload.latitude = location.lat;
+      payload.longitude = location.lng;
+    }
+    
+    return this.http.post<ApiResponse<CashFloat>>(`${this.baseUrl}/confirm-float`, payload);
   }
 
   initiateHandover(data: Partial<CashHandover>): Observable<ApiResponse<CashHandover>> {
@@ -107,6 +115,9 @@ export class GraceExtensionApiService {
 }
 
 export function formatCurrency(amount: number, currency = 'PHP'): string {
+  if (amount === null || amount === undefined || isNaN(amount)) {
+    return '0.00';
+  }
   return new Intl.NumberFormat('en-PH', {
     style: 'currency',
     currency
@@ -114,7 +125,10 @@ export function formatCurrency(amount: number, currency = 'PHP'): string {
 }
 
 export function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-PH', {
+  if (!dateStr) return 'N/A';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return 'Invalid Date';
+  return date.toLocaleDateString('en-PH', {
     month: 'short',
     day: 'numeric',
     year: 'numeric'
@@ -122,7 +136,10 @@ export function formatDate(dateStr: string): string {
 }
 
 export function formatTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleTimeString('en-PH', {
+  if (!dateStr) return 'N/A';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return 'Invalid Time';
+  return date.toLocaleTimeString('en-PH', {
     hour: '2-digit',
     minute: '2-digit'
   });

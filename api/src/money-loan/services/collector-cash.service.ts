@@ -575,6 +575,28 @@ export class CollectorCashService {
   }
 
   /**
+   * Get pending floats for a specific collector
+   */
+  async getPendingFloatsForCollector(tenantId: number, collectorId: number) {
+    const knex = this.knexService.instance;
+
+    return await knex('money_loan_cash_floats as cf')
+      .select(
+        'cf.*',
+        'cashier.first_name as cashier_first_name',
+        'cashier.last_name as cashier_last_name'
+      )
+      .leftJoin('users as cashier', 'cf.cashier_id', 'cashier.id')
+      .where({
+        'cf.tenant_id': tenantId,
+        'cf.collector_id': collectorId,
+        'cf.type': 'issuance',
+        'cf.status': 'pending',
+      })
+      .orderBy('cf.created_at', 'desc');
+  }
+
+  /**
    * Get float issuance history
    */
   async getFloatHistory(tenantId: number, fromDate?: string, toDate?: string) {

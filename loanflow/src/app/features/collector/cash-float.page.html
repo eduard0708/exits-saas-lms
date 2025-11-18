@@ -144,19 +144,20 @@
             }
           </div>
 
-          <shared-button
-            variant="success"
-            size="lg"
-            [fullWidth]="true"
-            [loading]="confirming()"
+          <ion-button
+            expand="block"
+            color="success"
+            size="large"
             [disabled]="confirming()"
-            (click)="confirmFloat(float)">
+            (click)="confirmFloat(float)"
+            class="confirm-button">
             @if (confirming()) {
+              <ion-spinner name="crescent"></ion-spinner>
               Confirming...
             } @else {
               Confirm Receipt of ₱{{ formatAmount(float.amount) }}
             }
-          </shared-button>
+          </ion-button>
 
           <div class="warning-box">
             <span aria-hidden="true">⚠️</span>

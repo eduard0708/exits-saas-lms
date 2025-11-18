@@ -182,12 +182,18 @@ export class CashierDashboardComponent implements OnInit {
   async loadStats() {
     this.loading.set(true);
     try {
-      const response: any = await this.cashFloatApi.getCashierStats().toPromise();
-      const data = response.data || response;
+      // Fetch both stats and pending confirmations in parallel
+      const [statsResponse, pendingConfirmationsResponse]: [any, any] = await Promise.all([
+        this.cashFloatApi.getCashierStats().toPromise(),
+        this.cashFloatApi.getPendingConfirmations().toPromise()
+      ]);
+
+      const data = statsResponse.data || statsResponse;
+      const pendingData = pendingConfirmationsResponse.data || pendingConfirmationsResponse;
 
       // Map API response to component format
       this.stats.set({
-        pendingFloats: 0, // TODO: Add this to API
+        pendingFloats: Array.isArray(pendingData) ? pendingData.length : 0,
         pendingHandovers: data.pending_handovers || 0,
         totalCashOut: data.total_float_issued || 0,
         activeCollectors: data.active_collectors || 0,

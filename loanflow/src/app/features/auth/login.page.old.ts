@@ -2,7 +2,7 @@ import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonCard, IonCardContent, IonButton, IonSpinner, IonIcon, ToastController, AlertController } from '@ionic/angular/standalone';
+import { IonContent, IonCard, IonCardContent, IonButton, IonSpinner, ToastController, AlertController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { cashOutline, personOutline, briefcaseOutline, mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline, logInOutline, arrowForwardOutline } from 'ionicons/icons';
 import { AuthService, User } from '../../core/services/auth.service';
@@ -30,7 +30,6 @@ interface TestUser {
     IonCardContent,
     IonButton,
     IonSpinner,
-    IonIcon,
     HeaderUtilsComponent,
   ],
   template: `

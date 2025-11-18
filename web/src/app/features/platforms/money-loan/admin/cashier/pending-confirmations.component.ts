@@ -219,7 +219,8 @@ export class PendingConfirmationsComponent implements OnInit, OnDestroy {
     this.cashFloatApi.getPendingConfirmations()
       .subscribe({
         next: (response: any) => {
-          this.pendingFloats.set(response.data || []);
+          const floats = (response.data || []).map((float: any) => this.mapFloatData(float));
+          this.pendingFloats.set(floats);
           this.loading.set(false);
           this.lastUpdated = new Date().toLocaleTimeString();
         },
@@ -237,10 +238,46 @@ export class PendingConfirmationsComponent implements OnInit, OnDestroy {
       .pipe(switchMap(() => this.cashFloatApi.getPendingConfirmations()))
       .subscribe({
         next: (response: any) => {
-          this.pendingFloats.set(response.data || []);
+          const floats = (response.data || []).map((float: any) => this.mapFloatData(float));
+          this.pendingFloats.set(floats);
           this.lastUpdated = new Date().toLocaleTimeString();
         }
       });
+  }
+
+  mapFloatData(float: any): PendingFloat {
+    console.log('Raw float data:', float); // Debug log
+
+    // Knex auto-converts snake_case to camelCase
+    const collectorName = `${float.collectorFirstName || ''} ${float.collectorLastName || ''}`.trim() || 'Unknown';
+    const issuedDate = new Date(float.createdAt || float.issuedAt);
+    const now = new Date();
+    const diffMs = now.getTime() - issuedDate.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+
+    let timeElapsed = 'Just now';
+    if (diffHours > 0) {
+      timeElapsed = `${diffHours}h ${diffMins % 60}m ago`;
+    } else if (diffMins > 0) {
+      timeElapsed = `${diffMins}m ago`;
+    }
+
+    const mapped = {
+      id: float.id,
+      collector_id: float.collectorId || 0,
+      collector_name: collectorName,
+      float_date: float.floatDate,
+      float_amount: parseFloat(float.amount) || 0,
+      daily_cap: parseFloat(float.dailyCap) || parseFloat(float.amount) || 0,
+      issued_at: float.createdAt || float.issuedAt,
+      status: float.status,
+      notes: float.notes || '',
+      time_elapsed: timeElapsed
+    };
+
+    console.log('Mapped float data:', mapped); // Debug log
+    return mapped;
   }
 
   totalPendingAmount(): number {

@@ -120,10 +120,12 @@ export class CollectorCashController {
    * GET /api/money-loan/cash/pending-confirmations
    */
   @Get('pending-confirmations')
-  @Permissions('money-loan:cash:read')
+  @Permissions('money-loan:collector:operate', 'money-loan:cash:read')
   async getPendingConfirmations(@Req() req: any) {
-    const floats = await this.collectorCashService.getPendingFloatsForCashier(
-      req.user.tenantId
+    // Collectors can only see their own pending floats
+    const floats = await this.collectorCashService.getPendingFloatsForCollector(
+      req.user.tenantId,
+      req.user.id
     );
     return {
       success: true,
@@ -247,7 +249,7 @@ export class CollectorCashController {
    * POST /api/money-loan/cash/confirm-float
    */
   @Post('confirm-float')
-  @Permissions('money-loan:collector')
+  @Permissions('money-loan:collector:operate')
   async confirmFloatReceipt(@Req() req: any, @Body() dto: ConfirmFloatReceiptDto) {
     const balance = await this.collectorCashService.confirmFloatReceipt(
       req.user.tenantId,
@@ -266,7 +268,7 @@ export class CollectorCashController {
    * POST /api/money-loan/cash/record-collection
    */
   @Post('record-collection')
-  @Permissions('money-loan:collector')
+  @Permissions('money-loan:collector:operate')
   async recordCollection(@Req() req: any, @Body() dto: RecordCashCollectionDto) {
     const balance = await this.collectorCashService.recordCollection(
       req.user.tenantId,
@@ -285,7 +287,7 @@ export class CollectorCashController {
    * POST /api/money-loan/cash/record-disbursement
    */
   @Post('record-disbursement')
-  @Permissions('money-loan:collector')
+  @Permissions('money-loan:collector:operate')
   async recordDisbursement(@Req() req: any, @Body() dto: RecordCashDisbursementDto) {
     const balance = await this.collectorCashService.recordDisbursement(
       req.user.tenantId,
@@ -304,7 +306,7 @@ export class CollectorCashController {
    * POST /api/money-loan/cash/initiate-handover
    */
   @Post('initiate-handover')
-  @Permissions('money-loan:collector')
+  @Permissions('money-loan:collector:operate')
   async initiateHandover(@Req() req: any, @Body() dto: InitiateHandoverDto) {
     const handover = await this.collectorCashService.initiateHandover(
       req.user.tenantId,
@@ -319,11 +321,43 @@ export class CollectorCashController {
   }
 
   /**
+   * Get collector balance by ID (specific route)
+   * GET /api/money-loan/cash/collector/:collectorId/balance
+   */
+  @Get('collector/:collectorId/balance')
+  @Permissions('money-loan:collector:operate', 'money-loan:cash:read')
+  async getCollectorBalance(
+    @Req() req: any,
+    @Param('collectorId') collectorId: string,
+    @Query('date') date?: string
+  ) {
+    const targetCollectorId = parseInt(collectorId);
+    
+    // If not querying own balance, require admin permission
+    if (targetCollectorId !== req.user.id && !req.user.permissions?.includes('money-loan:cash:read')) {
+      return {
+        success: false,
+        message: 'Unauthorized to view other collectors balance',
+      };
+    }
+
+    const balance = await this.collectorCashService.getCurrentBalance(
+      req.user.tenantId,
+      targetCollectorId,
+      date
+    );
+    return {
+      success: true,
+      data: balance,
+    };
+  }
+
+  /**
    * Get current cash balance
    * GET /api/money-loan/cash/balance
    */
   @Get('balance')
-  @Permissions('money-loan:collector', 'money-loan:cash:read')
+  @Permissions('money-loan:collector:operate', 'money-loan:cash:read')
   async getCurrentBalance(
     @Req() req: any,
     @Query('date') date?: string,
@@ -355,7 +389,7 @@ export class CollectorCashController {
    * GET /api/money-loan/cash/history
    */
   @Get('history')
-  @Permissions('money-loan:collector', 'money-loan:cash:read')
+  @Permissions('money-loan:collector:operate', 'money-loan:cash:read')
   async getCashFlowHistory(
     @Req() req: any,
     @Query() dto: GetCashFlowHistoryDto,
@@ -387,7 +421,7 @@ export class CollectorCashController {
    * GET /api/money-loan/cash/pending-floats
    */
   @Get('pending-floats')
-  @Permissions('money-loan:collector')
+  @Permissions('money-loan:collector:operate')
   async getPendingFloats(@Req() req: any) {
     const floats = await this.collectorCashService.getPendingFloats(
       req.user.tenantId,
@@ -404,7 +438,7 @@ export class CollectorCashController {
    * GET /api/money-loan/cash/handover/:id
    */
   @Get('handover/:id')
-  @Permissions('money-loan:collector', 'money-loan:cash:read')
+  @Permissions('money-loan:collector:operate', 'money-loan:cash:read')
   async getHandoverDetails(@Req() req: any, @Param('id') id: string) {
     const handover = await this.collectorCashService.getHandoverDetails(
       req.user.tenantId,
