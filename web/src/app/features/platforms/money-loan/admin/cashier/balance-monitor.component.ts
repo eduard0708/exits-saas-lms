@@ -151,47 +151,47 @@ import type { CollectorCashBalance } from '@shared/models';
                 <!-- Collector Name -->
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="text-sm font-medium text-gray-900">
-                    {{ balance.collector_name }}
+                    {{ balance.collectorName || balance.collector_name }}
                   </div>
                   <div class="text-xs text-gray-500">
-                    ID: {{ balance.collector_id }}
+                    ID: {{ balance.collectorId || balance.collector_id }}
                   </div>
                 </td>
 
                 <!-- Opening Float -->
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
-                  {{ formatAmount(balance.opening_float) }}
+                  {{ formatAmount(balance.openingFloat || balance.opening_float) }}
                 </td>
 
                 <!-- Collections -->
                 <td class="px-6 py-4 whitespace-nowrap text-right">
                   <div class="text-sm font-semibold text-green-600">
-                    +{{ formatAmount(balance.total_collections) }}
+                    +{{ formatAmount(balance.totalCollections || balance.total_collections) }}
                   </div>
                 </td>
 
                 <!-- Disbursements -->
                 <td class="px-6 py-4 whitespace-nowrap text-right">
                   <div class="text-sm font-semibold text-red-600">
-                    -{{ formatAmount(balance.total_disbursements) }}
+                    -{{ formatAmount(balance.totalDisbursements || balance.total_disbursements) }}
                   </div>
                 </td>
 
                 <!-- On-Hand Cash -->
                 <td class="px-6 py-4 whitespace-nowrap text-right">
                   <div class="text-lg font-bold text-blue-600">
-                    {{ formatAmount(balance.on_hand_cash) }}
+                    {{ formatAmount(balance.currentBalance || balance.current_balance || balance.onHandCash || balance.on_hand_cash) }}
                   </div>
                 </td>
 
                 <!-- Available for Disbursement -->
                 <td class="px-6 py-4 whitespace-nowrap text-right">
                   <div class="text-sm font-semibold"
-                       [class.text-green-600]="balance.available_for_disbursement > 0"
-                       [class.text-gray-400]="balance.available_for_disbursement <= 0">
-                    {{ formatAmount(balance.available_for_disbursement) }}
+                       [class.text-green-600]="(balance.availableForDisbursement || balance.available_for_disbursement) > 0"
+                       [class.text-gray-400]="(balance.availableForDisbursement || balance.available_for_disbursement) <= 0">
+                    {{ formatAmount(balance.availableForDisbursement || balance.available_for_disbursement) }}
                   </div>
-                  <div *ngIf="balance.available_for_disbursement <= 0"
+                  <div *ngIf="(balance.availableForDisbursement || balance.available_for_disbursement) <= 0"
                        class="text-xs text-red-500">
                     Cap reached
                   </div>
@@ -199,15 +199,15 @@ import type { CollectorCashBalance } from '@shared/models';
 
                 <!-- Daily Cap -->
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
-                  {{ formatAmount(balance.daily_cap) }}
+                  {{ formatAmount(balance.dailyCap || balance.daily_cap) }}
                 </td>
 
                 <!-- Last Activity -->
                 <td class="px-6 py-4 whitespace-nowrap text-center text-xs text-gray-500">
-                  <div *ngIf="balance.last_transaction_time">
-                    {{ formatTime(balance.last_transaction_time) }}
+                  <div *ngIf="balance.lastTransactionTime || balance.last_transaction_time">
+                    {{ formatTime(balance.lastTransactionTime || balance.last_transaction_time) }}
                   </div>
-                  <div *ngIf="!balance.last_transaction_time" class="text-gray-400">
+                  <div *ngIf="!balance.lastTransactionTime && !balance.last_transaction_time" class="text-gray-400">
                     No activity
                   </div>
                 </td>
@@ -324,15 +324,15 @@ export class BalanceMonitorComponent implements OnInit, OnDestroy {
   }
 
   totalCashOut(): number {
-    return this.balances().reduce((sum, b) => sum + b.on_hand_cash, 0);
+    return this.balances().reduce((sum, b) => sum + Number(b.onHandCash || b.on_hand_cash || 0), 0);
   }
 
   totalCollections(): number {
-    return this.balances().reduce((sum, b) => sum + b.total_collections, 0);
+    return this.balances().reduce((sum, b) => sum + Number(b.totalCollections || b.total_collections || 0), 0);
   }
 
   totalDisbursements(): number {
-    return this.balances().reduce((sum, b) => sum + b.total_disbursements, 0);
+    return this.balances().reduce((sum, b) => sum + Number(b.totalDisbursements || b.total_disbursements || 0), 0);
   }
 
   // Utility methods now use shared functions

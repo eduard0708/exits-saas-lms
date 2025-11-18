@@ -288,7 +288,10 @@ export class CollectorCashService {
     const knex = this.knexService.instance;
     const today = new Date().toISOString().split('T')[0];
 
+    console.log('💰 Recording disbursement:', { tenantId, collectorId, amount: dto.amount, loanId: dto.loanId });
+    
     const balance = await this.getCurrentBalance(tenantId, collectorId, today);
+    console.log('📊 Current balance before disbursement:', balance);
 
     // SAFETY CHECKS
     if (dto.amount > balance.currentBalance) {
@@ -322,6 +325,14 @@ export class CollectorCashService {
         available_for_disbursement: newAvailable,
       });
 
+    console.log('✅ Balance updated:', {
+      oldBalance: balance.currentBalance,
+      newBalance,
+      disbursedAmount: dto.amount,
+      totalDisbursements: newTotalDisbursements,
+      availableForDisbursement: newAvailable
+    });
+
     // Log transaction
     await knex('money_loan_cash_transactions').insert({
       tenant_id: tenantId,
@@ -338,7 +349,9 @@ export class CollectorCashService {
     });
 
     console.log(`✅ Disbursement recorded: ${dto.amount} for loan ${dto.loanId}`);
-    return await this.getCurrentBalance(tenantId, collectorId);
+    const updatedBalance = await this.getCurrentBalance(tenantId, collectorId);
+    console.log('📊 Balance after disbursement:', updatedBalance);
+    return updatedBalance;
   }
 
   /**
@@ -537,12 +550,13 @@ export class CollectorCashService {
     const knex = this.knexService.instance;
     const statusDate = date || new Date().toISOString().split('T')[0];
 
-    return await knex('money_loan_collector_cash_balances as cb')
+    const results = await knex('money_loan_collector_cash_balances as cb')
       .select(
         'cb.*',
         'u.first_name',
         'u.last_name',
-        'u.email'
+        'u.email',
+        knex.raw("CONCAT(u.first_name, ' ', u.last_name) as collector_name")
       )
       .leftJoin('users as u', 'cb.collector_id', 'u.id')
       .where({
@@ -550,6 +564,14 @@ export class CollectorCashService {
         'cb.balance_date': statusDate,
       })
       .orderBy('u.first_name', 'asc');
+
+    // Determine status based on confirmation and day closure
+    return results.map(balance => ({
+      ...balance,
+      status: balance.isDayClosed 
+        ? 'inactive' 
+        : (balance.isFloatConfirmed ? 'active' : 'pending_confirmation')
+    }));
   }
 
   /**

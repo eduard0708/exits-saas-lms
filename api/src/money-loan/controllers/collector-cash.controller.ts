@@ -98,12 +98,14 @@ export class CollectorCashController {
       req.user.tenantId
     );
     
-    const totalFloat = status.reduce((sum, s) => sum + (s.opening_float || 0), 0);
-    const totalOnHand = status.reduce((sum, s) => sum + (s.on_hand_cash || 0), 0);
-    const pendingHandovers = status.filter(s => s.has_pending_handover).length;
-    const activeCollectors = status.filter(s => s.on_hand_cash > 0).length;
+    console.log('🔍 Cashier Stats - Collector Status:', JSON.stringify(status, null, 2));
+    
+    const totalFloat = status.reduce((sum, s) => sum + parseFloat(s.openingFloat || '0'), 0);
+    const totalOnHand = status.reduce((sum, s) => sum + parseFloat(s.currentBalance || '0'), 0);
+    const pendingHandovers = status.filter(s => s.handoverId !== null).length;
+    const activeCollectors = status.filter(s => parseFloat(s.currentBalance || '0') > 0).length;
 
-    return {
+    const result = {
       success: true,
       data: {
         total_float_issued: totalFloat,
@@ -113,6 +115,10 @@ export class CollectorCashController {
         collectors: status
       }
     };
+    
+    console.log('📊 Cashier Stats Result:', JSON.stringify(result, null, 2));
+    
+    return result;
   }
 
   /**
@@ -122,11 +128,29 @@ export class CollectorCashController {
   @Get('pending-confirmations')
   @Permissions('money-loan:collector:operate', 'money-loan:cash:read')
   async getPendingConfirmations(@Req() req: any) {
-    // Collectors can only see their own pending floats
-    const floats = await this.collectorCashService.getPendingFloatsForCollector(
-      req.user.tenantId,
-      req.user.id
-    );
+    // Check if user is cashier (has money-loan:cash:read permission) or collector
+    const isCashier = req.user.permissions?.includes('money-loan:cash:read');
+    
+    console.log('🔍 Pending Confirmations - User:', req.user.id, 'Is Cashier:', isCashier);
+    
+    let floats;
+    if (isCashier) {
+      // Cashiers see all pending floats waiting for collector confirmation
+      floats = await this.collectorCashService.getPendingFloatsForCashier(
+        req.user.tenantId
+      );
+      console.log('💰 Cashier - Pending Floats Count:', floats.length);
+    } else {
+      // Collectors only see their own pending floats
+      floats = await this.collectorCashService.getPendingFloatsForCollector(
+        req.user.tenantId,
+        req.user.id
+      );
+      console.log('👤 Collector - Pending Floats Count:', floats.length);
+    }
+    
+    console.log('📦 Pending Floats Data:', JSON.stringify(floats, null, 2));
+    
     return {
       success: true,
       data: floats,

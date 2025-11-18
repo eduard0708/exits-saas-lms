@@ -191,12 +191,15 @@ export class CashierDashboardComponent implements OnInit {
       const data = statsResponse.data || statsResponse;
       const pendingData = pendingConfirmationsResponse.data || pendingConfirmationsResponse;
 
-      // Map API response to component format
+      console.log('📊 Dashboard - Raw data:', data);
+      console.log('📦 Dashboard - Pending data:', pendingData);
+
+      // Map API response to component format - ensure numbers are parsed
       this.stats.set({
         pendingFloats: Array.isArray(pendingData) ? pendingData.length : 0,
-        pendingHandovers: data.pending_handovers || 0,
-        totalCashOut: data.total_float_issued || 0,
-        activeCollectors: data.active_collectors || 0,
+        pendingHandovers: Number(data.pending_handovers || 0),
+        totalCashOut: Number(data.total_float_issued || 0),
+        activeCollectors: Number(data.active_collectors || 0),
         todayFloatsIssued: 0, // TODO: Add this to API
         todayHandovers: 0 // TODO: Add this to API
       });

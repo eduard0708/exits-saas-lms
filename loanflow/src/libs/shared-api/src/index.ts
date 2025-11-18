@@ -68,10 +68,16 @@ export class CashFloatApiService {
   }
 
   confirmFloatReceipt(floatId: number, location?: { lat: number; lng: number }): Observable<ApiResponse<CashFloat>> {
-    return this.http.post<ApiResponse<CashFloat>>(`${this.baseUrl}/confirm-float`, {
-      float_id: floatId,
-      location
-    });
+    const payload: any = {
+      floatId: Number(floatId)
+    };
+    
+    if (location) {
+      payload.latitude = Number(location.lat);
+      payload.longitude = Number(location.lng);
+    }
+    
+    return this.http.post<ApiResponse<CashFloat>>(`${this.baseUrl}/confirm-float`, payload);
   }
 
   initiateHandover(data: Partial<CashHandover>): Observable<ApiResponse<CashHandover>> {

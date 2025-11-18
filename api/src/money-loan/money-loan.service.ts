@@ -1225,6 +1225,35 @@ export class MoneyLoanService {
 
       console.log('✅ Loan created and application status updated to disbursed');
 
+      // Record cash disbursement if payment method is cash
+      if (disburseDto.disbursementMethod === 'cash') {
+        // Use netDisbursementAmount from calculation which already accounts for upfront deductions
+        const netDisbursementAmount = Number(calculation.netDisbursementAmount || calculation.loanAmount);
+        console.log(`💰 Recording cash disbursement: ₱${netDisbursementAmount} for loan ${createdLoan.id}`);
+        console.log('   📊 Calculation details:', {
+          loanAmount: calculation.loanAmount,
+          processingFee: calculation.processingFeeAmount,
+          platformFee: calculation.platformFee,
+          netDisbursement: calculation.netDisbursementAmount
+        });
+        
+        try {
+          await this.collectorCashService.recordDisbursement(
+            tenantId,
+            disbursedBy, // collector ID
+            {
+              amount: netDisbursementAmount,
+              loanId: createdLoan.id,
+              notes: `Loan disbursement to customer ${application.customerId}. Loan: ${loanNumber}`,
+            }
+          );
+          console.log(`✅ Cash disbursement recorded in cash float system`);
+        } catch (error) {
+          console.error('❌ Failed to record cash disbursement:', error.message);
+          // Don't fail the whole disbursement, just log the error
+        }
+      }
+
       // Return the created loan with customer and product details
       const [loanWithDetails] = await knex('money_loan_loans as mll')
         .leftJoin('customers as c', 'mll.customer_id', 'c.id')
@@ -1262,6 +1291,33 @@ export class MoneyLoanService {
         disbursement_reference: disburseDto.disbursementReference,
         disbursement_notes: disburseDto.disbursementNotes,
       });
+
+    // Record cash disbursement if payment method is cash
+    if (disburseDto.disbursementMethod === 'cash') {
+      const netDisbursementAmount = Number(loan.principal_amount);
+      console.log(`💰 Recording cash disbursement (old flow): ₱${netDisbursementAmount} for loan ${loanId}`);
+      console.log('   📊 Loan details:', {
+        principalAmount: loan.principal_amount,
+        processingFee: loan.processing_fee,
+        platformFee: loan.platform_fee
+      });
+      
+      try {
+        await this.collectorCashService.recordDisbursement(
+          tenantId,
+          disbursedBy, // collector ID
+          {
+            amount: netDisbursementAmount,
+            loanId: loanId,
+            notes: `Loan disbursement to customer ${loan.customer_id}. Loan: ${loan.loan_number}`,
+          }
+        );
+        console.log(`✅ Cash disbursement recorded in cash float system (old flow)`);
+      } catch (error) {
+        console.error('❌ Failed to record cash disbursement:', error.message);
+        // Don't fail the whole disbursement, just log the error
+      }
+    }
 
     // Update corresponding application status to 'disbursed' if exists
     if (loan.application_id) {

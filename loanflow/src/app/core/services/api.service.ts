@@ -129,7 +129,9 @@ export class ApiService {
   }
 
   recordPayment(loanId: number | string, paymentData: any): Observable<any> {
-    return this.post<any>(`money-loan/loans/${loanId}/payments`, paymentData);
+    // Use collector-specific endpoint which has proper permissions
+    const collectorId = this.authService.getCurrentUserId();
+    return this.post<any>(`money-loan/collectors/${collectorId}/payments`, paymentData);
   }
 
   getApplicationDetails(applicationId: number | string): Observable<any> {

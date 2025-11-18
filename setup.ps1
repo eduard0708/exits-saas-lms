@@ -476,6 +476,63 @@ function Main {
         return
     }
 
+    # Grant collector permissions
+    Write-Header "Granting Collector Permissions"
+    $resolvedPsqlPath = Resolve-PsqlPath
+    if ($resolvedPsqlPath) {
+        $env:PGPASSWORD = $dbPassword
+        
+        Write-Step "Granting money-loan:collector:operate permission to Collector role..."
+        $grantCollectorSQL = @"
+-- Grant collector operate permission to Collector role
+INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
+SELECT 
+    r.id as role_id,
+    p.id as permission_id,
+    NOW() as created_at,
+    NOW() as updated_at
+FROM roles r
+CROSS JOIN permissions p
+WHERE r.name = 'Collector'
+AND p.permission_key = 'money-loan:collector:operate'
+AND NOT EXISTS (
+    SELECT 1 FROM role_permissions rp 
+    WHERE rp.role_id = r.id AND rp.permission_id = p.id
+)
+ON CONFLICT DO NOTHING;
+
+-- Grant collector operate permission to Money Loan Staff role (if exists)
+INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
+SELECT 
+    r.id as role_id,
+    p.id as permission_id,
+    NOW() as created_at,
+    NOW() as updated_at
+FROM roles r
+CROSS JOIN permissions p
+WHERE r.name = 'Money Loan Staff'
+AND p.permission_key = 'money-loan:collector:operate'
+AND NOT EXISTS (
+    SELECT 1 FROM role_permissions rp 
+    WHERE rp.role_id = r.id AND rp.permission_id = p.id
+)
+ON CONFLICT DO NOTHING;
+"@
+        
+        $tempFile = [System.IO.Path]::GetTempFileName()
+        $grantCollectorSQL | Out-File -FilePath $tempFile -Encoding UTF8
+        & $resolvedPsqlPath -U postgres -h localhost -p 5432 -d exits_saas_db -f $tempFile 2>&1 | Out-Null
+        Remove-Item $tempFile -ErrorAction SilentlyContinue
+        
+        if ($LASTEXITCODE -eq 0) {
+            Write-Success "Collector permissions granted successfully"
+        } else {
+            Write-Warning "Could not grant collector permissions automatically"
+        }
+        
+        Remove-Item env:PGPASSWORD -ErrorAction SilentlyContinue
+    }
+
     if (-not $NoStart) {
         if (!(Invoke-WebBuild)) { 
             Write-Error-Custom "Web build failed"

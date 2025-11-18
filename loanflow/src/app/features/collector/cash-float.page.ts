@@ -68,18 +68,18 @@ export class CashFloatPage implements OnInit {
       
       console.log('🔍 Raw pending floats response:', floats);
       
-      // Map API response to PendingFloat format
+      // Map API response to PendingFloat format (Knex returns camelCase)
       const pendingFloats: PendingFloat[] = floats.map((float: any) => {
         const mapped = {
           id: float.id,
           amount: parseFloat(float.amount) || 0,
-          dailyCap: parseFloat(float.daily_cap) || 0,
-          floatDate: float.float_date,
-          cashierFirstName: float.cashier_first_name || '',
-          cashierLastName: float.cashier_last_name || '',
-          createdAt: float.created_at,
-          issuanceLatitude: float.issuance_latitude,
-          issuanceLongitude: float.issuance_longitude,
+          dailyCap: parseFloat(float.dailyCap) || 0,
+          floatDate: float.floatDate,
+          cashierFirstName: float.cashierFirstName || '',
+          cashierLastName: float.cashierLastName || '',
+          createdAt: float.createdAt,
+          issuanceLatitude: float.issuanceLatitude,
+          issuanceLongitude: float.issuanceLongitude,
           notes: float.notes
         };
         console.log('📦 Mapped float:', mapped);

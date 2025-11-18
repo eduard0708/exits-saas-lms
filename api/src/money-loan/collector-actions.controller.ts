@@ -482,6 +482,7 @@ export class CollectorActionsController {
     }
 
     // Disburse the loan
+    console.log('💳 Disbursement method:', disburseDto.disbursementMethod, 'DTO:', disburseDto);
     const disbursedLoan = await this.moneyLoanService.disburseLoan(
       tenantId,
       loanIdNum,

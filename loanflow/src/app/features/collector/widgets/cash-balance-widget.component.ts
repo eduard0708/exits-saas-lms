@@ -1,8 +1,9 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonButton, IonBadge, IonText, IonSpinner } from '@ionic/angular/standalone';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter, Subscription } from 'rxjs';
 interface CashBalance {
   collectorId: number;
   balanceDate: string;
@@ -34,10 +35,11 @@ interface CashBalance {
     IonSpinner,
   ],
 })
-export class CashBalanceWidgetComponent implements OnInit {
+export class CashBalanceWidgetComponent implements OnInit, OnDestroy {
   balance = signal<CashBalance | null>(null);
   loading = signal(false);
   pendingFloatsCount = signal(0);
+  private routerSubscription?: Subscription;
 
   constructor(
     private http: HttpClient,
@@ -47,6 +49,21 @@ export class CashBalanceWidgetComponent implements OnInit {
   ngOnInit() {
     this.loadBalance();
     this.checkPendingFloats();
+    
+    // Reload data when navigating back to dashboard
+    this.routerSubscription = this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe((event: any) => {
+        if (event.url.includes('/collector/dashboard')) {
+          console.log('🔄 Dashboard visible, reloading cash balance...');
+          this.loadBalance();
+          this.checkPendingFloats();
+        }
+      });
+  }
+
+  ngOnDestroy() {
+    this.routerSubscription?.unsubscribe();
   }
 
   async loadBalance() {
