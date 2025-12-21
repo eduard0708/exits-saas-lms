@@ -23,19 +23,19 @@
         <div class="summary-grid">
           <div class="summary-item">
             <div class="label">Opening Float</div>
-            <div class="value">₱{{ formatAmount(balance()!.openingFloat) }}</div>
+            <div class="value">₱{{ formatNumber(getOpeningFloat()) }}</div>
           </div>
           <div class="summary-item success">
             <div class="label">+ Collections</div>
-            <div class="value">₱{{ formatAmount(balance()!.totalCollections) }}</div>
+            <div class="value">₱{{ formatNumber(getTotalCollections()) }}</div>
           </div>
           <div class="summary-item danger">
             <div class="label">− Disbursements</div>
-            <div class="value">₱{{ formatAmount(balance()!.totalDisbursements) }}</div>
+            <div class="value">₱{{ formatNumber(getTotalDisbursements()) }}</div>
           </div>
           <div class="summary-item total">
             <div class="label"><strong>Expected Handover</strong></div>
-            <div class="value"><strong>₱{{ formatAmount(expectedHandover()) }}</strong></div>
+            <div class="value"><strong>₱{{ formatNumber(expectedHandover()) }}</strong></div>
           </div>
         </div>
 
@@ -44,19 +44,19 @@
           <span  class="emoji-icon">🧮</span>
           <div class="calculation">
             <div class="calc-row">
-              <span>{{ formatAmount(balance()!.openingFloat) }}</span>
+              <span>{{ formatNumber(getOpeningFloat()) }}</span>
               <span class="label">(Opening)</span>
             </div>
             <div class="calc-row plus">
-              <span>+ {{ formatAmount(balance()!.totalCollections) }}</span>
+              <span>+ {{ formatNumber(getTotalCollections()) }}</span>
               <span class="label">(Collections)</span>
             </div>
             <div class="calc-row minus">
-              <span>− {{ formatAmount(balance()!.totalDisbursements) }}</span>
+              <span>− {{ formatNumber(getTotalDisbursements()) }}</span>
               <span class="label">(Disbursements)</span>
             </div>
             <div class="calc-row total">
-              <span>= {{ formatAmount(expectedHandover()) }}</span>
+              <span>= {{ formatNumber(expectedHandover()) }}</span>
               <span class="label">(Expected)</span>
             </div>
           </div>
@@ -102,7 +102,7 @@
               <span>Variance Check</span>
             </div>
             <div class="variance-amount" [class]="varianceColor()">
-              {{ variance() >= 0 ? '+' : '' }}₱{{ formatAmount(variance()) }}
+              {{ variance() >= 0 ? '+' : '' }}₱{{ formatNumber(variance()) }}
             </div>
             @if (hasVariance()) {
               <div class="variance-warning">

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonInput, IonItem, IonLabel, IonNote, IonSpinner, IonText, IonBadge, IonAlert } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { CashFloatApiService, formatCurrency } from '@shared/api';
 import type { CollectorCashBalance } from '@shared/models';
 
@@ -51,7 +52,13 @@ export class CashHandoverPage implements OnInit {
   expectedHandover = computed(() => {
     const bal = this.balance();
     if (!bal) return 0;
-    return bal.openingFloat + bal.totalCollections - bal.totalDisbursements;
+    
+    // Type-safe property access (API returns camelCase)
+    const openingFloat = Number(bal.openingFloat || 0);
+    const totalCollections = Number(bal.totalCollections || 0);
+    const totalDisbursements = Number(bal.totalDisbursements || 0);
+    
+    return openingFloat + totalCollections - totalDisbursements;
   });
 
   variance = computed(() => {
@@ -69,6 +76,7 @@ export class CashHandoverPage implements OnInit {
   });
 
   constructor(
+    private http: HttpClient,
     private cashFloatApi: CashFloatApiService,
     private router: Router
   ) {}
@@ -81,11 +89,26 @@ export class CashHandoverPage implements OnInit {
   async loadBalance() {
     this.loading.set(true);
     try {
-      // TODO: Pass actual collector ID from auth service
-      const data = await this.cashFloatApi.getCurrentBalance(0).toPromise();
-      this.balance.set(data || null);
-      // Pre-fill with expected amount
-      this.actualHandover.set(this.expectedHandover());
+      // Use the same endpoint as the cash balance widget - gets current collector's balance
+      const response: any = await this.http.get('/api/money-loan/cash/balance').toPromise();
+      
+      console.log('💰 Handover - Raw balance response:', response);
+      
+      // Handle wrapped response with success flag
+      if (response?.success && response?.data) {
+        this.balance.set(response.data);
+      } else {
+        // Handle direct response
+        this.balance.set(response || null);
+      }
+      
+      console.log('💰 Handover - Parsed balance:', this.balance());
+      console.log('💰 Handover - Expected amount:', this.expectedHandover());
+      
+      // Pre-fill with expected amount after balance is loaded
+      setTimeout(() => {
+        this.actualHandover.set(this.expectedHandover());
+      }, 100);
     } catch (error) {
       console.error('Error loading balance:', error);
       alert('Failed to load cash balance. Please try again.');
@@ -140,13 +163,18 @@ export class CashHandoverPage implements OnInit {
     this.submitting.set(true);
 
     try {
+      const bal = this.balance();
+      const collectorId = bal?.collectorId || 0;
+      
       const handoverData = {
-        collectorId: this.balance()?.collectorId || 0,
-        actualAmount: this.actualHandover(),
-        notes: this.hasVariance() ? `Variance: ₱${formatCurrency(this.variance())}` : undefined,
-        handoverLatitude: this.currentLocation()?.latitude,
-        handoverLongitude: this.currentLocation()?.longitude
+        collector_id: Number(collectorId),
+        actual_amount: Number(this.actualHandover()),
+        notes: this.hasVariance() ? `Variance: ${formatCurrency(this.variance())}` : undefined,
+        handover_latitude: this.currentLocation()?.latitude,
+        handover_longitude: this.currentLocation()?.longitude
       };
+
+      console.log('📤 Submitting handover:', handoverData);
 
       const response = await this.cashFloatApi.initiateHandover(handoverData).toPromise();
       
@@ -162,8 +190,35 @@ export class CashHandoverPage implements OnInit {
     }
   }
 
-  // Utility methods now use shared functions
-  formatAmount = formatCurrency;
+  // Utility methods
+  // Format with currency symbol (₱)
+  formatAmount(amount: number): string {
+    return formatCurrency(amount);
+  }
+
+  // Format without currency symbol (for use with manual ₱ in template)
+  formatNumber(amount: number): string {
+    return amount.toLocaleString('en-PH', { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    });
+  }
+
+  // Helper methods to safely access balance properties
+  getOpeningFloat(): number {
+    const bal = this.balance();
+    return Number(bal?.openingFloat || 0);
+  }
+
+  getTotalCollections(): number {
+    const bal = this.balance();
+    return Number(bal?.totalCollections || 0);
+  }
+
+  getTotalDisbursements(): number {
+    const bal = this.balance();
+    return Number(bal?.totalDisbursements || 0);
+  }
 
   setExpectedAmount() {
     this.actualHandover.set(this.expectedHandover());

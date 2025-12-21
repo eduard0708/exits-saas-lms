@@ -244,6 +244,32 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
                 <span>My Customers</span>
               </button>
             </div>
+
+            <!-- End of Day Action -->
+            <div class="end-of-day-card">
+              <div class="card-header">
+                <div class="card-icon">🏦</div>
+                <div>
+                  <div class="card-title">End of Day</div>
+                  <div class="card-subtitle">Close day & handover cash to cashier</div>
+                </div>
+              </div>
+              <button 
+                class="action-btn handover" 
+                (click)="navigateTo('/collector/cash-handover')"
+                [disabled]="!canHandover()">
+                <span class="emoji-icon">💰</span>
+                <span>{{ canHandover() ? 'Handover Cash' : 'Day Already Closed' }}</span>
+              </button>
+              @if (summary()?.collectedToday && summary()!.collectedToday > 0) {
+                <div class="handover-summary">
+                  <div class="summary-row">
+                    <span class="label">Cash to handover:</span>
+                    <span class="value">₱{{ summary()!.collectedToday.toLocaleString() }}</span>
+                  </div>
+                </div>
+              }
+            </div>
           </div>
         }
       </div>
@@ -839,6 +865,78 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
     .action-btn.success {
       background: linear-gradient(135deg, #10b981 0%, #059669 100%);
       color: white;
+    }
+
+    .action-btn.handover {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+      width: 100%;
+      margin-top: 0.75rem;
+      padding: 1rem;
+    }
+
+    .action-btn.handover:disabled {
+      background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .end-of-day-card {
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+      border: 2px solid #fbbf24;
+      border-radius: 14px;
+      padding: 1rem;
+      margin-top: 1rem;
+      box-shadow: 0 4px 12px rgba(251, 191, 36, 0.15);
+    }
+
+    .end-of-day-card .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .end-of-day-card .card-icon {
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .end-of-day-card .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #78350f;
+    }
+
+    .end-of-day-card .card-subtitle {
+      font-size: 0.75rem;
+      color: #92400e;
+      margin-top: 0.15rem;
+    }
+
+    .end-of-day-card .handover-summary {
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 8px;
+      padding: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .end-of-day-card .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .end-of-day-card .summary-row .label {
+      font-size: 0.8rem;
+      color: #78350f;
+      font-weight: 500;
+    }
+
+    .end-of-day-card .summary-row .value {
+      font-size: 1.1rem;
+      color: #78350f;
+      font-weight: 700;
     }
 
     .modal-backdrop {
@@ -1721,6 +1819,12 @@ export class CollectorDashboardPage implements OnInit, ViewWillEnter {
     return this.summary()!.pendingApplications + 
            this.summary()!.pendingDisbursements + 
            this.summary()!.pendingWaivers;
+  }
+
+  canHandover(): boolean {
+    // Collector can handover if there's a summary (day is active)
+    // In a real implementation, you might check isDayClosed status from the API
+    return !!this.summary();
   }
 
   navigateTo(path: string) {

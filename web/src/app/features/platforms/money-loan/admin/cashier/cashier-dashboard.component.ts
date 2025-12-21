@@ -1,9 +1,9 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { CashFloatApiService, formatCurrency } from '@shared/api';
+import { CashFloatApiService, formatCurrency, formatTime } from '@shared/api';
 import { StatCardComponent, SharedButtonComponent } from '@shared/ui';
-import type { CashierStats } from '@shared/models';
+import type { CashierStats, CollectorCashBalance } from '@shared/models';
 
 interface DashboardStats {
   pendingFloats: number;
@@ -161,12 +161,209 @@ interface DashboardStats {
           </div>
         </div>
       }
+
+      <!-- Collectors Table (Compact Design) -->
+      @if (!loading() && collectors().length > 0) {
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <!-- Table Header -->
+          <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <div>
+              <h2 class="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <span class="text-base">👥</span> All Collectors
+              </h2>
+              <p class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Real-time cash positions</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-gray-500 dark:text-gray-400">
+                Auto-refresh: <span class="font-semibold text-green-600">30s</span>
+              </span>
+              <button
+                (click)="loadCollectors()"
+                class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Refresh now">
+                <svg class="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Compact Table -->
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead class="bg-gray-50 dark:bg-gray-900">
+                <tr>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    Collector
+                  </th>
+                  <th class="px-3 py-2 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th class="px-3 py-2 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    Float
+                  </th>
+                  <th class="px-3 py-2 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    Collections
+                  </th>
+                  <th class="px-3 py-2 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    Disbursed
+                  </th>
+                  <th class="px-3 py-2 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    On Hand
+                  </th>
+                  <th class="px-3 py-2 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    Available
+                  </th>
+                  <th class="px-3 py-2 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    Last Activity
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                @for (collector of collectors(); track collector.collectorId || collector.collector_id) {
+                  <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                      [class.bg-yellow-50]="(collector.status === 'pending_confirmation')"
+                      [class.dark:bg-yellow-900/10]="(collector.status === 'pending_confirmation')"
+                      (click)="viewCollectorDetails(collector)">
+                    <!-- Collector Name & ID -->
+                    <td class="px-3 py-2.5 whitespace-nowrap">
+                      <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs">
+                          {{ getInitials(collector.collectorName || collector.collector_name) }}
+                        </div>
+                        <div>
+                          <div class="text-sm font-medium text-gray-900 dark:text-white">
+                            {{ collector.collectorName || collector.collector_name }}
+                          </div>
+                          <div class="text-xs text-gray-500 dark:text-gray-400">
+                            #{{ collector.collectorId || collector.collector_id }}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- Status Badge -->
+                    <td class="px-3 py-2.5 whitespace-nowrap text-center">
+                      @if (collector.status === 'active') {
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                          <span class="w-1.5 h-1.5 rounded-full bg-green-600 dark:bg-green-400"></span>
+                          Active
+                        </span>
+                      } @else if (collector.status === 'pending_confirmation') {
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                          <span class="w-1.5 h-1.5 rounded-full bg-yellow-600 dark:bg-yellow-400 animate-pulse"></span>
+                          Pending
+                        </span>
+                      } @else {
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400">
+                          <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                          Inactive
+                        </span>
+                      }
+                    </td>
+
+                    <!-- Opening Float -->
+                    <td class="px-3 py-2.5 whitespace-nowrap text-right">
+                      <span class="text-sm font-medium text-gray-900 dark:text-white">
+                        {{ formatAmount(collector.openingFloat || collector.opening_float) }}
+                      </span>
+                    </td>
+
+                    <!-- Collections -->
+                    <td class="px-3 py-2.5 whitespace-nowrap text-right">
+                      <span class="text-sm font-semibold text-green-600 dark:text-green-400">
+                        +{{ formatAmount(collector.totalCollections || collector.total_collections) }}
+                      </span>
+                    </td>
+
+                    <!-- Disbursements -->
+                    <td class="px-3 py-2.5 whitespace-nowrap text-right">
+                      <span class="text-sm font-semibold text-red-600 dark:text-red-400">
+                        -{{ formatAmount(collector.totalDisbursements || collector.total_disbursements) }}
+                      </span>
+                    </td>
+
+                    <!-- On-Hand Cash -->
+                    <td class="px-3 py-2.5 whitespace-nowrap text-right">
+                      <span class="text-sm font-bold text-blue-600 dark:text-blue-400">
+                        {{ formatAmount(collector.currentBalance || collector.current_balance || collector.onHandCash || collector.on_hand_cash) }}
+                      </span>
+                    </td>
+
+                    <!-- Available for Disbursement -->
+                    <td class="px-3 py-2.5 whitespace-nowrap text-right">
+                      <div class="flex flex-col items-end">
+                        <span class="text-sm font-semibold"
+                              [class.text-green-600]="(collector.availableForDisbursement || collector.available_for_disbursement) > 0"
+                              [class.dark:text-green-400]="(collector.availableForDisbursement || collector.available_for_disbursement) > 0"
+                              [class.text-gray-400]="(collector.availableForDisbursement || collector.available_for_disbursement) <= 0"
+                              [class.dark:text-gray-500]="(collector.availableForDisbursement || collector.available_for_disbursement) <= 0">
+                          {{ formatAmount(collector.availableForDisbursement || collector.available_for_disbursement) }}
+                        </span>
+                        @if ((collector.availableForDisbursement || collector.available_for_disbursement) <= 0) {
+                          <span class="text-xs text-red-500 dark:text-red-400 font-medium">Cap reached</span>
+                        }
+                      </div>
+                    </td>
+
+                    <!-- Last Activity -->
+                    <td class="px-3 py-2.5 whitespace-nowrap text-center">
+                      @if (collector.lastTransactionTime || collector.last_transaction_time) {
+                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                          {{ formatTime(collector.lastTransactionTime || collector.last_transaction_time) }}
+                        </span>
+                      } @else {
+                        <span class="text-xs text-gray-400 dark:text-gray-500">No activity</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Table Footer with Summary -->
+          <div class="px-4 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-gray-600 dark:text-gray-400">
+                Showing {{ collectors().length }} collector(s)
+              </span>
+              <div class="flex items-center gap-4">
+                <span class="text-gray-600 dark:text-gray-400">
+                  Total Cash Out: <span class="font-bold text-blue-600 dark:text-blue-400">{{ formatAmount(totalCashOut()) }}</span>
+                </span>
+                <span class="text-gray-600 dark:text-gray-400">
+                  Total Collections: <span class="font-bold text-green-600 dark:text-green-400">{{ formatAmount(totalCollections()) }}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Empty State for Collectors -->
+      @if (!loading() && collectors().length === 0) {
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-8 text-center">
+          <div class="text-4xl mb-3">👥</div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No Collectors Yet</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            No collectors have been issued floats today.
+          </p>
+          <shared-button
+            variant="primary"
+            size="md"
+            (click)="navigate('/platforms/money-loan/dashboard/cashier/issue-float')">
+            Issue First Float
+          </shared-button>
+        </div>
+      }
     </div>
   `
 })
 export class CashierDashboardComponent implements OnInit {
   loading = signal(false);
   stats = signal<DashboardStats | null>(null);
+  collectors = signal<CollectorCashBalance[]>([]);
 
   constructor(
     private cashFloatApi: CashFloatApiService,
@@ -175,8 +372,12 @@ export class CashierDashboardComponent implements OnInit {
 
   ngOnInit() {
     this.loadStats();
-    // Refresh stats every 30 seconds
-    setInterval(() => this.loadStats(), 30000);
+    this.loadCollectors();
+    // Refresh both stats and collectors every 30 seconds
+    setInterval(() => {
+      this.loadStats();
+      this.loadCollectors();
+    }, 30000);
   }
 
   async loadStats() {
@@ -219,12 +420,55 @@ export class CashierDashboardComponent implements OnInit {
     }
   }
 
+  loadCollectors() {
+    this.cashFloatApi.getBalanceMonitor()
+      .subscribe({
+        next: (data: CollectorCashBalance[]) => {
+          this.collectors.set(data);
+        },
+        error: (error: any) => {
+          console.error('Error loading collectors:', error);
+          this.collectors.set([]);
+        }
+      });
+  }
+
   navigate(path: string) {
     this.router.navigate([path]);
+  }
+
+  viewCollectorDetails(collector: CollectorCashBalance) {
+    // Navigate to balance monitor or collector details
+    this.router.navigate(['/platforms/money-loan/dashboard/cashier/balance-monitor']);
+  }
+
+  getInitials(name: string | undefined): string {
+    if (!name) return '?';
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  }
+
+  // Computed values for table footer
+  totalCashOut(): number {
+    return this.collectors().reduce((sum, c) =>
+      sum + Number(c.onHandCash || c.on_hand_cash || 0), 0
+    );
+  }
+
+  totalCollections(): number {
+    return this.collectors().reduce((sum, c) =>
+      sum + Number(c.totalCollections || c.total_collections || 0), 0
+    );
   }
 
   formatAmount(amount: number | undefined): string {
     if (amount === undefined || amount === null) return '0.00';
     return amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
+
+  formatTime = formatTime;
 }
