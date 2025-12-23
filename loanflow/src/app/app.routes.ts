@@ -124,6 +124,18 @@ export const routes: Routes = [
         loadComponent: () => import('./features/collector/cash-handover.page').then((m) => m.CashHandoverPage),
       },
       {
+        path: 'history',
+        loadComponent: () => import('./features/collector/history.page').then((m) => m.CollectorHistoryPage),
+      },
+      {
+        path: 'history/:id',
+        loadComponent: () => import('./features/collector/history-detail.page').then((m) => m.CollectorHistoryDetailPage),
+      },
+      {
+        path: 'profile',
+        loadComponent: () => import('./pages/profile/profile.page').then((m) => m.ProfilePage),
+      },
+      {
         path: 'visits',
         loadComponent: () => import('./features/collector/visits.page').then((m) => m.CollectorVisitsPage),
       },

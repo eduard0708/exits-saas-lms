@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { IonContent, IonRefresher, IonRefresherContent, IonSkeletonText, ToastController, ViewWillEnter } from '@ionic/angular/standalone';
+import { IonContent, IonRefresher, IonRefresherContent, IonSkeletonText, ToastController, ViewWillEnter, IonButton } from '@ionic/angular/standalone';
 import {
   CollectorService,
   CollectorDailySummary,
@@ -11,6 +11,8 @@ import {
 import { AuthService } from '../../core/services/auth.service';
 import { CollectorTopBarComponent } from '../../shared/components/collector-top-bar.component';
 import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.component';
+import { CashFloatApiService } from '@shared/api';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-collector-dashboard',
@@ -21,6 +23,7 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
     IonRefresher,
     IonRefresherContent,
     IonSkeletonText,
+    IonButton,
     CollectorTopBarComponent,
     CashBalanceWidgetComponent,
   ],
@@ -33,9 +36,41 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
       <app-collector-top-bar
         icon="shield-outline"
         title="Collector HQ"
-      />
+      >
+        <ion-button topbar-right fill="clear" class="icon-button" size="small" (click)="navigateTo('/collector/profile')">
+          <span slot="icon-only" class="emoji-icon">👤</span>
+        </ion-button>
+      </app-collector-top-bar>
 
       <div class="dashboard-container">
+        @if (handoverOverdue() && !overdueHasOverride()) {
+          <div class="status-banner pending">
+            <div class="status-icon">🚫</div>
+            <div class="status-text">
+              <div class="status-title">Overdue Handover Required</div>
+              <div class="status-sub">Yesterday ({{ overdueDate() }}) is not closed. Disbursements are locked until you handover or cashier applies an override.</div>
+            </div>
+            <button class="status-action" type="button" (click)="navigateTo('/collector/cash-handover')">Handover</button>
+          </div>
+        }
+        @if (handoverPending()) {
+          <div class="status-banner pending">
+            <div class="status-icon">⏳</div>
+            <div class="status-text">
+              <div class="status-title">Handover Pending Confirmation</div>
+              <div class="status-sub">Cashier needs to confirm your handover. Actions are temporarily locked.</div>
+            </div>
+            <button class="status-action" type="button" (click)="viewPendingHandover()">View</button>
+          </div>
+        } @else if (handoverConfirmed()) {
+          <div class="status-banner confirmed">
+            <div class="status-icon">✅</div>
+            <div class="status-text">
+              <div class="status-title">Day Closed</div>
+              <div class="status-sub">Your handover is confirmed. New actions are locked until tomorrow.</div>
+            </div>
+          </div>
+        }
         @if (loading()) {
           <div class="loading-skeletons">
             <ion-skeleton-text animated style="height: 180px;"></ion-skeleton-text>
@@ -155,9 +190,20 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
                 <span class="card-title">⚡ Pending Actions</span>
                 <div class="badge-count">{{ totalPendingActions() }}</div>
               </div>
+
+              @if (floatPending()) {
+                <div class="policy-banner" (click)="navigateTo('/collector/cash-float')">
+                  <div class="policy-icon">💵</div>
+                  <div class="policy-text">
+                    <div class="policy-title">Float decision required</div>
+                    <div class="policy-sub">You have {{ pendingFloatCount() }} pending float(s). Accept or reject to unlock disbursements.</div>
+                  </div>
+                  <div class="policy-cta">Resolve ›</div>
+                </div>
+              }
               
               <div class="actions-list">
-                <div class="action-item applications" (click)="navigateTo('/collector/applications')">
+                <div class="action-item applications" (click)="navigateIfAllowed('/collector/applications')" [class.locked]="actionsLocked()">
                   <div class="action-info">
                     <div class="action-icon">📄</div>
                     <div>
@@ -171,12 +217,12 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
                   </div>
                 </div>
 
-                <div class="action-item disbursements" (click)="navigateTo('/collector/disbursements')">
+                <div class="action-item disbursements" (click)="navigateIfAllowed('/collector/disbursements')" [class.locked]="disbursementLocked()">
                   <div class="action-info">
                     <div class="action-icon">💳</div>
                     <div>
                       <div class="action-title">Disbursements</div>
-                      <div class="action-subtitle">Ready to disburse</div>
+                      <div class="action-subtitle">{{ floatPending() ? 'Locked until float is accepted/rejected' : 'Ready to disburse' }}</div>
                     </div>
                   </div>
                   <div class="action-right">
@@ -185,7 +231,7 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
                   </div>
                 </div>
 
-                <div class="action-item waivers" (click)="navigateTo('/collector/waivers')">
+                <div class="action-item waivers" (click)="navigateIfAllowed('/collector/waivers')" [class.locked]="actionsLocked()">
                   <div class="action-info">
                     <div class="action-icon">⏰</div>
                     <div>
@@ -235,13 +281,17 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
 
             <!-- Quick Actions -->
             <div class="quick-actions">
-              <button class="action-btn primary" (click)="navigateTo('/collector/visits')">
+              <button class="action-btn primary" (click)="navigateIfAllowed('/collector/visits')" [disabled]="actionsLocked()">
                 <span  class="emoji-icon">📍</span>
                 <span>Start Visit</span>
               </button>
-              <button class="action-btn success" (click)="navigateTo('/collector/route')">
+              <button class="action-btn success" (click)="navigateIfAllowed('/collector/route')" [disabled]="actionsLocked()">
                 <span  class="emoji-icon">👥</span>
                 <span>My Customers</span>
+              </button>
+              <button class="action-btn" (click)="navigateTo('/collector/history')">
+                <span  class="emoji-icon">🗂️</span>
+                <span>History</span>
               </button>
             </div>
 
@@ -256,10 +306,10 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
               </div>
               <button 
                 class="action-btn handover" 
-                (click)="navigateTo('/collector/cash-handover')"
-                [disabled]="!canHandover()">
+                (click)="navigateIfAllowed('/collector/cash-handover')"
+                [disabled]="actionsLocked() || !canHandover()">
                 <span class="emoji-icon">💰</span>
-                <span>{{ canHandover() ? 'Handover Cash' : 'Day Already Closed' }}</span>
+                <span>{{ getHandoverButtonText() }}</span>
               </button>
               @if (summary()?.collectedToday && summary()!.collectedToday > 0) {
                 <div class="handover-summary">
@@ -722,6 +772,28 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
       transition: all 0.2s;
     }
 
+    .action-item.locked {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .policy-banner {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 0.65rem;
+      align-items: center;
+      padding: 0.75rem;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      margin-bottom: 0.65rem;
+      cursor: pointer;
+    }
+    .policy-icon { font-size: 1.2rem; }
+    .policy-title { font-weight: 800; font-size: 0.9rem; color: #0f172a; }
+    .policy-sub { font-size: 0.78rem; color: #334155; }
+    .policy-cta { font-weight: 800; color: #1d4ed8; }
+
     .action-item.applications {
       background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
     }
@@ -881,6 +953,11 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
       cursor: not-allowed;
     }
 
+    .quick-actions .action-btn[disabled] {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
     .end-of-day-card {
       background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
       border: 2px solid #fbbf24;
@@ -888,6 +965,52 @@ import { CashBalanceWidgetComponent } from './widgets/cash-balance-widget.compon
       padding: 1rem;
       margin-top: 1rem;
       box-shadow: 0 4px 12px rgba(251, 191, 36, 0.15);
+    }
+
+    /* Status Banner */
+    .status-banner {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 0.65rem;
+      border-radius: 12px;
+      padding: 0.75rem;
+      margin-bottom: 0.75rem;
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+    .status-banner .status-icon {
+      font-size: 1.25rem;
+    }
+    .status-banner .status-title {
+      font-weight: 800;
+      font-size: 0.95rem;
+    }
+    .status-banner .status-sub {
+      font-size: 0.8rem;
+      color: #475569;
+    }
+    .status-banner .status-action {
+      border: none;
+      border-radius: 999px;
+      padding: 0.45rem 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .status-banner.pending {
+      background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+      border-color: #fdba74;
+    }
+    .status-banner.pending .status-action {
+      background: #f59e0b;
+      color: white;
+    }
+    .status-banner.confirmed {
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+      border-color: #6ee7b7;
+    }
+    .status-banner.confirmed .status-action {
+      background: #10b981;
+      color: white;
     }
 
     .end-of-day-card .card-header {
@@ -1528,6 +1651,9 @@ export class CollectorDashboardPage implements OnInit, ViewWillEnter {
   private authService = inject(AuthService);
   private router = inject(Router);
   private toastController = inject(ToastController);
+  private cashFloatApi = inject(CashFloatApiService);
+  private http = inject(HttpClient);
+  private statusInterval: any;
 
   Math = Math;
   loading = signal(true);
@@ -1546,6 +1672,20 @@ export class CollectorDashboardPage implements OnInit, ViewWillEnter {
   customers = signal<AssignedCustomer[]>([]);
   customerSearch = signal('');
   customerFilter = signal<'all' | 'active' | 'overdue' | 'clear'>('all');
+
+  // Handover status
+  handoverPending = signal(false);
+  handoverConfirmed = signal(false);
+  pendingHandover = signal<any | null>(null);
+
+  // After-midnight overdue (yesterday not closed)
+  handoverOverdue = signal(false);
+  overdueDate = signal('');
+  overdueHasOverride = signal(false);
+
+  // Float decision status (Policy A)
+  floatPending = signal(false);
+  pendingFloatCount = signal(0);
 
   customerStats = computed(() => {
     const list = this.customers();
@@ -1635,6 +1775,10 @@ export class CollectorDashboardPage implements OnInit, ViewWillEnter {
     }
 
     await this.loadDashboard(!this.summary());
+    await this.loadHandoverStatus();
+    await this.loadFloatStatus();
+    await this.loadOverdueStatus();
+    this.startStatusPolling();
   }
 
   async loadDashboard(showSkeleton = false) {
@@ -1662,7 +1806,75 @@ export class CollectorDashboardPage implements OnInit, ViewWillEnter {
 
   async handleRefresh(event: any) {
     await this.loadDashboard();
+    await this.loadHandoverStatus();
+    await this.loadFloatStatus();
+    await this.loadOverdueStatus();
     event.target.complete();
+  }
+
+  async loadOverdueStatus() {
+    try {
+      const resp: any = await this.http
+        .get(`/api/money-loan/cash/collector/${this.collectorId()}/overdue`)
+        .toPromise();
+      const data = resp?.data;
+      this.handoverOverdue.set(!!data?.isOverdue);
+      this.overdueDate.set(data?.date || '');
+      this.overdueHasOverride.set(!!data?.activeOverride);
+    } catch {
+      this.handoverOverdue.set(false);
+      this.overdueHasOverride.set(false);
+      this.overdueDate.set('');
+    }
+  }
+
+  async loadHandoverStatus() {
+    try {
+      // Check day closed state via balance endpoint
+      const balanceResp: any = await this.http.get('/api/money-loan/cash/balance').toPromise();
+      const isClosed = !!(balanceResp && balanceResp.success && balanceResp.data && balanceResp.data.isDayClosed);
+      this.handoverConfirmed.set(isClosed);
+
+      // Check pending handovers for this collector
+      const list = await this.cashFloatApi.getPendingHandovers().toPromise();
+      const myPending = (list || []).find((h: any) => Number(h.collector_id) === this.collectorId());
+      this.handoverPending.set(!isClosed && !!myPending);
+      this.pendingHandover.set(myPending || null);
+    } catch (err) {
+      // Fail safe: don't block UI if status fetch fails
+      this.handoverPending.set(false);
+      // handoverConfirmed remains as last known (default false)
+    }
+  }
+
+  async loadFloatStatus() {
+    try {
+      const response: any = await this.http.get('/api/money-loan/cash/pending-floats').toPromise();
+      const list = (response && response.success && response.data) ? response.data : (response || []);
+      const count = Array.isArray(list) ? list.length : 0;
+      this.pendingFloatCount.set(count);
+      this.floatPending.set(count > 0);
+    } catch {
+      // fail open; don't block UI if endpoint fails
+      this.pendingFloatCount.set(0);
+      this.floatPending.set(false);
+    }
+  }
+
+  startStatusPolling() {
+    this.stopStatusPolling();
+    this.statusInterval = setInterval(() => {
+      this.loadHandoverStatus();
+      this.loadFloatStatus();
+      this.loadOverdueStatus();
+    }, 30000);
+  }
+
+  stopStatusPolling() {
+    if (this.statusInterval) {
+      clearInterval(this.statusInterval);
+      this.statusInterval = null;
+    }
   }
 
   async loadCustomers() {
@@ -1827,6 +2039,43 @@ export class CollectorDashboardPage implements OnInit, ViewWillEnter {
     return !!this.summary();
   }
 
+  actionsLocked(): boolean {
+    return this.handoverPending() || this.handoverConfirmed() || (this.handoverOverdue() && !this.overdueHasOverride());
+  }
+
+  disbursementLocked(): boolean {
+    // Policy A: must accept/reject float before disbursing
+    return this.actionsLocked() || this.floatPending();
+  }
+
+  getHandoverButtonText(): string {
+    if (this.handoverPending()) return 'Awaiting Cashier Confirmation';
+    if (this.handoverConfirmed() || !this.canHandover()) return 'Day Already Closed';
+    return 'Handover Cash';
+  }
+
+  navigateIfAllowed(path: string) {
+    if (this.actionsLocked()) {
+      this.showToast('Action unavailable during pending/closed handover', 'warning');
+      return;
+    }
+    if (path === '/collector/disbursements' && this.floatPending()) {
+      this.showToast('Accept or reject your float before disbursing', 'warning');
+      this.router.navigate(['/collector/cash-float']);
+      return;
+    }
+    this.navigateTo(path);
+  }
+
+  viewPendingHandover() {
+    const item = this.pendingHandover();
+    if (item && item.id) {
+      this.router.navigate([`/collector/history/${item.id}`], { state: { item } });
+    } else {
+      this.router.navigate(['/collector/history']);
+    }
+  }
+
   navigateTo(path: string) {
     this.router.navigate([path]);
   }
@@ -1839,5 +2088,9 @@ export class CollectorDashboardPage implements OnInit, ViewWillEnter {
       position: 'bottom',
     });
     await toast.present();
+  }
+
+  ngOnDestroy() {
+    this.stopStatusPolling();
   }
 }

@@ -1,9 +1,11 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CashFloatApiService, formatCurrency, formatTime } from '@shared/api';
 import { StatCardComponent, SharedButtonComponent } from '@shared/ui';
 import type { CashierStats, CollectorCashBalance } from '@shared/models';
+import { HttpClient } from '@angular/common/http';
 
 interface DashboardStats {
   pendingFloats: number;
@@ -17,9 +19,10 @@ interface DashboardStats {
 @Component({
   selector: 'app-cashier-dashboard',
   standalone: true,
-  imports: [CommonModule, StatCardComponent, SharedButtonComponent],
+  imports: [CommonModule, FormsModule, StatCardComponent, SharedButtonComponent],
   template: `
-    <div class="space-y-4">
+    <div class="p-4 sm:p-6">
+      <div class="max-w-6xl mx-auto space-y-4">
       <!-- Header with Quick Actions -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -217,6 +220,10 @@ interface DashboardStats {
                   <th class="px-3 py-2 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     Last Activity
                   </th>
+
+                  <th class="px-3 py-2 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -260,7 +267,7 @@ interface DashboardStats {
                           Inactive
                         </span>
                       }
-                    </td>
+                              (click)="$event.stopPropagation(); openOverrideModal(collector)">
 
                     <!-- Opening Float -->
                     <td class="px-3 py-2.5 whitespace-nowrap text-right">
@@ -269,6 +276,82 @@ interface DashboardStats {
                       </span>
                     </td>
 
+
+                <!-- Override Modal -->
+                @if (overrideModalOpen()) {
+                  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div class="absolute inset-0 bg-black/40" (click)="closeOverrideModal()"></div>
+
+                    <div class="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl">
+                      <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                        <div>
+                          <div class="text-sm font-bold text-gray-900 dark:text-white">Create Override</div>
+                          <div class="text-xs text-gray-600 dark:text-gray-400">
+                            Collector: {{ overrideCollectorName() }} (#{{ overrideCollectorId() }})
+                          </div>
+                        </div>
+                        <button class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" (click)="closeOverrideModal()" title="Close">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+
+                      <div class="p-4 space-y-3">
+                        <div>
+                          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Reason *</label>
+                          <textarea
+                            rows="3"
+                            [(ngModel)]="overrideReason"
+                            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                            placeholder="e.g., Collector had an emergency; manager approved temporary unlock"></textarea>
+                          <div class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">Minimum 5 characters.</div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                          <div>
+                            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (minutes)</label>
+                            <input
+                              type="number"
+                              min="5"
+                              max="1440"
+                              [(ngModel)]="overrideMinutes"
+                              class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white" />
+                            <div class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">5–1440</div>
+                          </div>
+
+                          <div class="flex items-end">
+                            <label class="inline-flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
+                              <input type="checkbox" [(ngModel)]="overrideAllowDisbursement" />
+                              Allow disbursement
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex gap-2">
+                        <button
+                          type="button"
+                          class="flex-1 px-3 py-2 text-sm rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
+                          (click)="closeOverrideModal()">
+                          Cancel
+                        </button>
+
+                        <button
+                          type="button"
+                          [disabled]="overrideSubmitting() || !isOverrideValid()"
+                          class="flex-1 px-3 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white"
+                          (click)="submitOverride()">
+                          @if (overrideSubmitting()) {
+                            Creating...
+                          } @else {
+                            Create Override
+                          }
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
                     <!-- Collections -->
                     <td class="px-3 py-2.5 whitespace-nowrap text-right">
                       <span class="text-sm font-semibold text-green-600 dark:text-green-400">
@@ -316,6 +399,17 @@ interface DashboardStats {
                         <span class="text-xs text-gray-400 dark:text-gray-500">No activity</span>
                       }
                     </td>
+
+                    <!-- Actions -->
+                    <td class="px-3 py-2.5 whitespace-nowrap text-center">
+                      <button
+                        type="button"
+                        class="text-xs px-2 py-1 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        title="Create temporary override if collector is overdue after midnight"
+                        (click)="$event.stopPropagation(); createOverride(collector)">
+                        Override
+                      </button>
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -357,6 +451,7 @@ interface DashboardStats {
           </shared-button>
         </div>
       }
+      </div>
     </div>
   `
 })
@@ -365,8 +460,18 @@ export class CashierDashboardComponent implements OnInit {
   stats = signal<DashboardStats | null>(null);
   collectors = signal<CollectorCashBalance[]>([]);
 
+  overrideModalOpen = signal(false);
+  overrideSubmitting = signal(false);
+  overrideCollectorId = signal<number>(0);
+  overrideCollectorName = signal<string>('');
+
+  overrideReason: string = '';
+  overrideMinutes: number = 60;
+  overrideAllowDisbursement: boolean = true;
+
   constructor(
     private cashFloatApi: CashFloatApiService,
+    private http: HttpClient,
     private router: Router
   ) {}
 
@@ -442,6 +547,67 @@ export class CashierDashboardComponent implements OnInit {
     this.router.navigate(['/platforms/money-loan/dashboard/cashier/balance-monitor']);
   }
 
+  openOverrideModal(collector: CollectorCashBalance) {
+    const collectorId = Number(collector.collectorId || (collector as any).collector_id);
+    const collectorName = String(collector.collectorName || (collector as any).collector_name || '');
+    if (!collectorId || Number.isNaN(collectorId)) {
+      alert('Invalid collector id');
+      return;
+    }
+
+    this.overrideCollectorId.set(collectorId);
+    this.overrideCollectorName.set(collectorName);
+    this.overrideReason = '';
+    this.overrideMinutes = 60;
+    this.overrideAllowDisbursement = true;
+    this.overrideModalOpen.set(true);
+  }
+
+  closeOverrideModal() {
+    if (this.overrideSubmitting()) return;
+    this.overrideModalOpen.set(false);
+  }
+
+  isOverrideValid(): boolean {
+    return (this.overrideReason || '').trim().length >= 5 && Number(this.overrideMinutes) >= 5;
+  }
+
+  async submitOverride() {
+    if (!this.isOverrideValid()) {
+      alert('Please provide a valid reason and duration.');
+      return;
+    }
+
+    const collectorId = this.overrideCollectorId();
+    const minutes = Math.max(5, Math.min(Number(this.overrideMinutes || 60), 24 * 60));
+
+    this.overrideSubmitting.set(true);
+    try {
+      const res: any = await this.http
+        .post('/api/money-loan/cash/overrides', {
+          collectorId,
+          reason: (this.overrideReason || '').trim(),
+          expiresInMinutes: minutes,
+          allowIssueFloat: true,
+          allowDisbursement: !!this.overrideAllowDisbursement,
+        })
+        .toPromise();
+
+      if (res?.success) {
+        alert('Override created successfully.');
+        this.overrideModalOpen.set(false);
+        this.loadStats();
+        this.loadCollectors();
+      } else {
+        alert(res?.message || 'Failed to create override');
+      }
+    } catch (e: any) {
+      alert(e?.error?.message || e?.message || 'Failed to create override');
+    } finally {
+      this.overrideSubmitting.set(false);
+    }
+  }
+
   getInitials(name: string | undefined): string {
     if (!name) return '?';
     return name
@@ -455,13 +621,13 @@ export class CashierDashboardComponent implements OnInit {
   // Computed values for table footer
   totalCashOut(): number {
     return this.collectors().reduce((sum, c) =>
-      sum + Number(c.onHandCash || c.on_hand_cash || 0), 0
+      sum + Number(c.onHandCash || 0), 0
     );
   }
 
   totalCollections(): number {
     return this.collectors().reduce((sum, c) =>
-      sum + Number(c.totalCollections || c.total_collections || 0), 0
+      sum + Number(c.totalCollections || 0), 0
     );
   }
 

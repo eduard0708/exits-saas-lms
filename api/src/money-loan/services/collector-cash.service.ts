@@ -24,6 +24,15 @@ export class CollectorCashService {
     const knex = this.knexService.instance;
     const floatDate = dto.floatDate || new Date().toISOString().split('T')[0];
 
+    // After-midnight rule: if yesterday is not closed for this collector, block issuing new float
+    // unless an active override allows it.
+    const overdue = await this.getCollectorOverdueStatus(tenantId, dto.collectorId);
+    if (overdue.isOverdue && !(overdue.activeOverride && overdue.override?.allow_issue_float)) {
+      throw new BadRequestException(
+        `Cannot issue float: overdue handover for ${overdue.date}. Collector must handover or an override is required.`
+      );
+    }
+
     // Check if float already issued for this collector today
     const existingFloat = await knex('money_loan_cash_floats')
       .where({
@@ -565,13 +574,113 @@ export class CollectorCashService {
       })
       .orderBy('u.first_name', 'asc');
 
+    const yesterday = this.getYesterdayYmd();
+
+    const overrides = await knex('money_loan_cash_overrides')
+      .select('collector_id')
+      .where({
+        tenant_id: tenantId,
+        for_date: yesterday,
+      })
+      .whereNull('revoked_at')
+      .andWhere('expires_at', '>', knex.fn.now());
+
+    const overrideSet = new Set<number>(overrides.map((o: any) => Number(o.collector_id)));
+
     // Determine status based on confirmation and day closure
     return results.map(balance => ({
       ...balance,
+      statusDate,
+      activeOverride: overrideSet.has(Number(balance.collectorId || balance.collector_id)),
       status: balance.isDayClosed 
         ? 'inactive' 
         : (balance.isFloatConfirmed ? 'active' : 'pending_confirmation')
     }));
+  }
+
+  private toYmd(date: Date): string {
+    return date.toISOString().split('T')[0];
+  }
+
+  private getYesterdayYmd(now: Date = new Date()): string {
+    const d = new Date(now);
+    d.setDate(d.getDate() - 1);
+    return this.toYmd(d);
+  }
+
+  /**
+   * After-midnight overdue rule:
+   * A collector is overdue if yesterday has a cash-balance row and is_day_closed = false.
+   * (This only triggers after midnight because we're checking "yesterday".)
+   */
+  async getCollectorOverdueStatus(tenantId: number, collectorId: number) {
+    const knex = this.knexService.instance;
+    const yesterday = this.getYesterdayYmd();
+
+    const row = await knex('money_loan_collector_cash_balances')
+      .select('balance_date', 'is_day_closed')
+      .where({
+        tenant_id: tenantId,
+        collector_id: collectorId,
+        balance_date: yesterday,
+      })
+      .first();
+
+    const override = await knex('money_loan_cash_overrides')
+      .select('id', 'expires_at', 'allow_issue_float', 'allow_disbursement', 'reason', 'created_by')
+      .where({
+        tenant_id: tenantId,
+        collector_id: collectorId,
+        for_date: yesterday,
+      })
+      .whereNull('revoked_at')
+      .andWhere('expires_at', '>', knex.fn.now())
+      .orderBy('expires_at', 'desc')
+      .first();
+
+    return {
+      date: yesterday,
+      exists: !!row,
+      isDayClosed: !!row?.is_day_closed,
+      isOverdue: !!row && !row.is_day_closed,
+      activeOverride: !!override,
+      override: override
+        ? {
+            id: override.id,
+            expires_at: override.expires_at,
+            allow_issue_float: override.allow_issue_float,
+            allow_disbursement: override.allow_disbursement,
+          }
+        : null,
+    };
+  }
+
+  async createCashOverride(params: {
+    tenantId: number;
+    collectorId: number;
+    forDate: string;
+    createdBy: number;
+    reason: string;
+    expiresAt: Date;
+    allowIssueFloat?: boolean;
+    allowDisbursement?: boolean;
+  }) {
+    const knex = this.knexService.instance;
+
+    const [row] = await knex('money_loan_cash_overrides')
+      .insert({
+        tenant_id: params.tenantId,
+        collector_id: params.collectorId,
+        for_date: params.forDate,
+        created_by: params.createdBy,
+        reason: params.reason,
+        allow_issue_float: params.allowIssueFloat ?? true,
+        allow_disbursement: params.allowDisbursement ?? true,
+        expires_at: params.expiresAt,
+      })
+      .returning('*');
+
+    return row;
   }
 
   /**

@@ -92,7 +92,7 @@ export class CollectorCashController {
    * GET /api/money-loan/cash/cashier-stats
    */
   @Get('cashier-stats')
-  @Permissions('money-loan:cash:read')
+  @Permissions('money-loan:cash:read', 'money_loan:cash:read', 'money-loan:cash:manage', 'money_loan:cash:manage')
   async getCashierStats(@Req() req: any) {
     const status = await this.collectorCashService.getCollectorsCashStatus(
       req.user.tenantId
@@ -119,6 +119,51 @@ export class CollectorCashController {
     console.log('📊 Cashier Stats Result:', JSON.stringify(result, null, 2));
     
     return result;
+  }
+
+  /**
+   * Create an after-midnight override for a collector's overdue day.
+   * POST /api/money-loan/cash/overrides
+   */
+  @Post('overrides')
+  @Permissions('money-loan:cash:manage', 'money_loan:cash:manage')
+  async createOverride(
+    @Req() req: any,
+    @Body()
+    body: {
+      collectorId: number;
+      forDate?: string; // defaults to yesterday
+      reason: string;
+      expiresInMinutes?: number; // defaults 60
+      allowIssueFloat?: boolean;
+      allowDisbursement?: boolean;
+    }
+  ) {
+    const collectorId = Number(body.collectorId);
+    if (!collectorId || Number.isNaN(collectorId)) {
+      return { success: false, message: 'Invalid collectorId' };
+    }
+    if (!body.reason || String(body.reason).trim().length < 5) {
+      return { success: false, message: 'Reason is required (min 5 chars)' };
+    }
+
+    const minutes = Math.max(5, Math.min(Number(body.expiresInMinutes ?? 60), 24 * 60));
+    const expiresAt = new Date(Date.now() + minutes * 60 * 1000);
+
+    const forDate = body.forDate || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    const row = await this.collectorCashService.createCashOverride({
+      tenantId: req.user.tenantId,
+      collectorId,
+      forDate,
+      createdBy: req.user.id,
+      reason: String(body.reason).trim(),
+      expiresAt,
+      allowIssueFloat: body.allowIssueFloat,
+      allowDisbursement: body.allowDisbursement,
+    });
+
+    return { success: true, data: row };
   }
 
   /**
@@ -162,7 +207,7 @@ export class CollectorCashController {
    * GET /api/money-loan/cash/pending-handovers
    */
   @Get('pending-handovers')
-  @Permissions('money-loan:cash:read')
+  @Permissions('money-loan:cash:read', 'money_loan:cash:read', 'money-loan:cash:manage', 'money_loan:cash:manage')
   async getPendingHandovers(
     @Req() req: any,
     @Query('collectorId') collectorId?: string
@@ -179,7 +224,7 @@ export class CollectorCashController {
    * GET /api/money-loan/cash/balance-monitor
    */
   @Get('balance-monitor')
-  @Permissions('money-loan:cash:read')
+  @Permissions('money-loan:cash:read', 'money_loan:cash:read', 'money-loan:cash:manage', 'money_loan:cash:manage')
   async getBalanceMonitor(@Req() req: any) {
     const balances = await this.collectorCashService.getCollectorsCashStatus(
       req.user.tenantId
@@ -192,7 +237,7 @@ export class CollectorCashController {
    * GET /api/money-loan/cash/float-history
    */
   @Get('float-history')
-  @Permissions('money-loan:cash:read')
+  @Permissions('money-loan:cash:read', 'money_loan:cash:read', 'money-loan:cash:manage', 'money_loan:cash:manage')
   async getFloatHistory(
     @Req() req: any,
     @Query('from_date') fromDate?: string,
@@ -211,7 +256,7 @@ export class CollectorCashController {
    * GET /api/money-loan/cash/collectors-status
    */
   @Get('collectors-status')
-  @Permissions('money-loan:cash:read')
+  @Permissions('money-loan:cash:read', 'money_loan:cash:read', 'money-loan:cash:manage', 'money_loan:cash:manage')
   async getCollectorsCashStatus(
     @Req() req: any,
     @Query('date') date?: string
@@ -265,6 +310,41 @@ export class CollectorCashController {
         is_float_confirmed: balance.isFloatConfirmed,
         is_day_closed: balance.isDayClosed,
       }
+    };
+  }
+
+  /**
+   * After-midnight overdue check (yesterday not closed)
+   * GET /api/money-loan/cash/collector/:collectorId/overdue
+   */
+  @Get('collector/:collectorId/overdue')
+  @Permissions('money-loan:collector', 'money-loan:cash:read')
+  async getCollectorOverdue(
+    @Req() req: any,
+    @Param('collectorId') collectorId: string
+  ) {
+    const targetCollectorId = parseInt(collectorId, 10);
+
+    if (Number.isNaN(targetCollectorId)) {
+      return { success: false, message: 'Invalid collectorId' };
+    }
+
+    // If not querying own status, require cashier/admin permission
+    if (targetCollectorId !== req.user.id && !req.user.permissions?.includes('money-loan:cash:read')) {
+      return {
+        success: false,
+        message: 'Unauthorized to view other collectors overdue status',
+      };
+    }
+
+    const status = await this.collectorCashService.getCollectorOverdueStatus(
+      req.user.tenantId,
+      targetCollectorId
+    );
+
+    return {
+      success: true,
+      data: status,
     };
   }
 

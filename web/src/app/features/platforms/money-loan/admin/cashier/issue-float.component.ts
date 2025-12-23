@@ -11,6 +11,7 @@ interface Collector {
   firstName: string;
   lastName: string;
   email: string;
+  roleName?: string;
 }
 
 @Component({
@@ -18,7 +19,8 @@ interface Collector {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="space-y-4">
+    <div class="p-4 sm:p-6">
+      <div class="max-w-6xl mx-auto space-y-4">
       <!-- Header -->
       <div class="flex items-center gap-3">
         <button (click)="goBack()"
@@ -119,7 +121,12 @@ interface Collector {
                                text-gray-800 dark:text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors">
                   Cancel
                 </button>
-                <button type="submit" [disabled]="issuing() || !isFormValid()"
+                @if (!isFormValid()) {
+                  <div class="flex-1 text-xs text-red-600 flex items-center">
+                    Please select collector and enter amount.
+                  </div>
+                }
+                <button type="button" (click)="onSubmitClick()" [disabled]="issuing()"
                         class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white
                                rounded-lg px-4 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-1.5">
                   @if (issuing()) {
@@ -132,6 +139,16 @@ interface Collector {
                     <span>Issue Float</span>
                   }
                 </button>
+              </div>
+
+              @if (submitError()) {
+                <div class="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-200">
+                  {{ submitError() }}
+                </div>
+              }
+
+              <div class="text-[11px] text-gray-500 dark:text-gray-400">
+                Last action: {{ lastAction() || '—' }}
               </div>
             </form>
           </div>
@@ -209,13 +226,40 @@ interface Collector {
           }
         </div>
       </div>
+      </div>
     </div>
+
+    @if (confirmOpen()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/50" (click)="cancelConfirm()"></div>
+        <div class="relative w-full max-w-md mx-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl p-4">
+          <h3 class="text-base font-bold text-gray-900 dark:text-white">Confirm Issue Float</h3>
+          <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+            Issue <span class="font-semibold">₱{{ formatAmount(form.amount) }}</span>
+            to selected collector?
+          </p>
+          <div class="mt-4 flex gap-2">
+            <button type="button" (click)="cancelConfirm()"
+                    class="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-lg px-4 py-2 text-sm font-medium">
+              Cancel
+            </button>
+            <button type="button" (click)="confirmIssue()" [disabled]="issuing()"
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg px-4 py-2 text-sm font-medium">
+              Confirm
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `
 })
 export class IssueFloatComponent implements OnInit {
   loading = signal(false);
   issuing = signal(false);
   collectors = signal<Collector[]>([]);
+  lastAction = signal<string>('');
+  submitError = signal<string>('');
+  confirmOpen = signal(false);
 
   form = {
     collectorId: 0,
@@ -239,7 +283,9 @@ export class IssueFloatComponent implements OnInit {
     this.loading.set(true);
     try {
       const response: any = await this.http.get('/api/collectors').toPromise();
-      this.collectors.set(response.data || []);
+      const raw = (response?.data || []) as Collector[];
+      const onlyCollectors = raw.filter((u) => (u.roleName || '').toLowerCase().includes('collector'));
+      this.collectors.set(onlyCollectors);
     } catch (error) {
       console.error('Error loading collectors:', error);
       alert('Failed to load collectors');
@@ -252,15 +298,35 @@ export class IssueFloatComponent implements OnInit {
     return !!(this.form.collectorId && this.form.amount > 0 && this.form.dailyCap > 0);
   }
 
-  async submitFloat() {
+  onSubmitClick() {
+    this.lastAction.set('Submit button clicked');
+    this.submitError.set('');
+
     if (!this.isFormValid()) {
-      alert('Please fill in all required fields');
+      this.submitError.set('Please select a collector, date, and enter amounts greater than 0.');
       return;
     }
 
-    if (!confirm(`Issue float of ₱${this.formatAmount(this.form.amount)} to collector?`)) {
+    this.confirmOpen.set(true);
+  }
+
+  async confirmIssue() {
+    this.confirmOpen.set(false);
+    await this.submitFloat();
+  }
+
+  cancelConfirm() {
+    this.confirmOpen.set(false);
+    this.lastAction.set('Issue cancelled');
+  }
+
+  async submitFloat() {
+    if (!this.isFormValid()) {
+      this.submitError.set('Please fill in all required fields');
       return;
     }
+
+    this.lastAction.set('Submitting request...');
 
     this.issuing.set(true);
     try {
@@ -274,14 +340,22 @@ export class IssueFloatComponent implements OnInit {
       const response = await this.cashFloatApi.issueFloat(payload).toPromise();
 
       if (response?.success) {
+        this.lastAction.set('Float issued successfully');
         alert(`✓ Float issued successfully!\n\nAmount: ₱${this.formatAmount(this.form.amount)}\n\nCollector will be notified to confirm receipt.`);
         this.router.navigate(['/platforms/money-loan/dashboard/cashier/pending-confirmations']);
+      } else {
+        const msg = response?.message || 'Failed to issue float. Please try again.';
+        this.submitError.set(msg);
+        this.lastAction.set('Submit failed');
+        alert(msg);
       }
     } catch (error: any) {
       console.error('Error issuing float:', error);
       console.error('Error status:', error.status);
       console.error('Error details:', error.error);
       const errorMsg = error.error?.message || error.error?.error || error.message || 'Failed to issue float. Please try again.';
+      this.submitError.set(errorMsg);
+      this.lastAction.set('Submit error');
       alert(`❌ Error: ${errorMsg}`);
     } finally {
       this.issuing.set(false);

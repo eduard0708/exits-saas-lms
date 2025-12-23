@@ -1,8 +1,10 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { LoanService } from '../shared/services/loan.service';
 import { LoanOverview } from '../shared/models/loan.models';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-loan-overview',
@@ -189,10 +191,21 @@ import { LoanOverview } from '../shared/models/loan.models';
 export class LoanOverviewComponent implements OnInit {
   private loanService = inject(LoanService);
 
+  // Cashiers don't always have `money-loan:read` (loan portfolio access). If they
+  // land here by default, the overview call will 403 and look like a broken login.
+  // Redirect them to the cashier dashboard instead.
+  private auth = inject(AuthService);
+  private router = inject(Router);
+
   overview = signal<LoanOverview | null>(null);
   loading = signal(false);
 
   ngOnInit(): void {
+    const hasMoneyLoanRead = this.auth.hasPermission('money-loan:read') || this.auth.hasPermission('money_loan:read');
+    if (!hasMoneyLoanRead) {
+      this.router.navigate(['/platforms/money-loan/dashboard/cashier']);
+      return;
+    }
     this.loadOverview();
   }
 

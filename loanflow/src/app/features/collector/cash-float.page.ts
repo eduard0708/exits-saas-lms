@@ -147,8 +147,12 @@ export class CashFloatPage implements OnInit {
         lat: this.currentLocation()!.latitude,
         lng: this.currentLocation()!.longitude
       } : undefined;
+      // Accept
+      const api: any = this.cashFloatApi as any;
 
-      const response = await this.cashFloatApi.confirmFloatReceipt(floatData.id, location).toPromise();
+      const response = api.confirmFloatDecision
+        ? await api.confirmFloatDecision(floatData.id, true, { location }).toPromise()
+        : await this.cashFloatApi.confirmFloatReceipt(floatData.id, location).toPromise();
       
       if (response?.success) {
         alert(`✅ Float of ₱${formatCurrency(floatData.amount)} confirmed successfully!`);
@@ -159,6 +163,40 @@ export class CashFloatPage implements OnInit {
     } catch (error: any) {
       console.error('Error confirming float:', error);
       alert(error.error?.message || 'Failed to confirm float. Please try again.');
+    } finally {
+      this.confirming.set(false);
+    }
+  }
+
+  async rejectFloat(floatData: PendingFloat) {
+    const reason = window.prompt('Please enter a reason for rejecting this float (required):');
+    if (!reason || !reason.trim()) {
+      alert('Rejection reason is required to proceed.');
+      return;
+    }
+    this.confirming.set(true);
+    try {
+      const location = this.currentLocation() ? {
+        lat: this.currentLocation()!.latitude,
+        lng: this.currentLocation()!.longitude
+      } : undefined;
+      const api: any = this.cashFloatApi as any;
+      if (!api.confirmFloatDecision) {
+        alert('Reject is not available yet on this build. Please update the app/API.');
+        return;
+      }
+      const response = await api
+        .confirmFloatDecision(floatData.id, false, { reason: reason.trim(), location })
+        .toPromise();
+      if (response?.success) {
+        alert('❌ Float rejected. The cashier has been notified.');
+        await this.loadPendingFloats();
+        await this.loadCurrentBalance();
+        this.router.navigate(['/collector/dashboard']);
+      }
+    } catch (error: any) {
+      console.error('Error rejecting float:', error);
+      alert(error.error?.message || 'Failed to reject float. Please try again.');
     } finally {
       this.confirming.set(false);
     }

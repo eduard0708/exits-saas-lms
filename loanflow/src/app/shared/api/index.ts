@@ -80,6 +80,26 @@ export class CashFloatApiService {
     return this.http.post<ApiResponse<CashFloat>>(`${this.baseUrl}/confirm-float`, payload);
   }
 
+  // Generalized decision API: confirmed=true accepts, confirmed=false rejects (with optional reason)
+  confirmFloatDecision(
+    floatId: number,
+    confirmed: boolean,
+    params?: { reason?: string; location?: { lat: number; lng: number } }
+  ): Observable<ApiResponse<CashFloat>> {
+    const payload: any = {
+      floatId: Number(floatId),
+      confirmed: !!confirmed,
+    };
+    if (params?.reason) {
+      payload.rejection_reason = params.reason;
+    }
+    if (params?.location) {
+      payload.latitude = Number(params.location.lat);
+      payload.longitude = Number(params.location.lng);
+    }
+    return this.http.post<ApiResponse<CashFloat>>(`${this.baseUrl}/confirm-float`, payload);
+  }
+
   initiateHandover(data: Partial<CashHandover>): Observable<ApiResponse<CashHandover>> {
     return this.http.post<ApiResponse<CashHandover>>(`${this.baseUrl}/initiate-handover`, data);
   }

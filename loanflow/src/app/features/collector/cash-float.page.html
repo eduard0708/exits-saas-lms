@@ -144,20 +144,32 @@
             }
           </div>
 
-          <ion-button
-            expand="block"
-            color="success"
-            size="large"
-            [disabled]="confirming()"
-            (click)="confirmFloat(float)"
-            class="confirm-button">
-            @if (confirming()) {
-              <ion-spinner name="crescent"></ion-spinner>
-              Confirming...
-            } @else {
-              Confirm Receipt of ₱{{ formatAmount(float.amount) }}
-            }
-          </ion-button>
+          <div class="confirm-actions">
+            <ion-button
+              expand="block"
+              color="success"
+              size="large"
+              [disabled]="confirming()"
+              (click)="confirmFloat(float)"
+              class="confirm-button">
+              @if (confirming()) {
+                <ion-spinner name="crescent"></ion-spinner>
+                Confirming...
+              } @else {
+                Confirm Receipt of ₱{{ formatAmount(float.amount) }}
+              }
+            </ion-button>
+            <ion-button
+              expand="block"
+              color="danger"
+              fill="outline"
+              size="large"
+              [disabled]="confirming()"
+              (click)="rejectFloat(float)"
+              class="reject-button">
+              Reject Float
+            </ion-button>
+          </div>
 
           <div class="warning-box">
             <span aria-hidden="true">⚠️</span>
