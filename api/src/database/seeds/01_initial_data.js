@@ -7,6 +7,15 @@ const bcrypt = require('bcryptjs');
 exports.seed = async function(knex) {
   console.log('🌱 Starting comprehensive seed...\n');
 
+  const parseBool = (value) => {
+    if (value === undefined || value === null) return false;
+    return /^(1|true|yes|y)$/i.test(String(value).trim());
+  };
+
+  // By default, customers are stored only in `customers` (no login).
+  // Set SEED_CUSTOMER_USERS=1 to also create `users` rows for customers (portal login).
+  const seedCustomerUsers = parseBool(process.env.SEED_CUSTOMER_USERS);
+
   // Clean up existing data (but preserve permissions from migrations)
   await knex('role_permissions').del();
   await knex('user_roles').del();
@@ -507,21 +516,24 @@ exports.seed = async function(knex) {
     ];
     
     for (const [index, testCustomer] of testCustomersData.entries()) {
-      // Create user account for customer
-      const [customerUser] = await knex('users').insert({
-        tenant_id: acmeTenant.id,
-        email: testCustomer.email,
-        password_hash: customerPasswordHash,
-        first_name: testCustomer.firstName,
-        last_name: testCustomer.lastName,
-        status: 'active',
-        email_verified: true
-      }).returning('*');
+      let customerUser = null;
+      if (seedCustomerUsers) {
+        // Create user account for customer (portal login)
+        [customerUser] = await knex('users').insert({
+          tenant_id: acmeTenant.id,
+          email: testCustomer.email,
+          password_hash: customerPasswordHash,
+          first_name: testCustomer.firstName,
+          last_name: testCustomer.lastName,
+          status: 'active',
+          email_verified: true
+        }).returning('*');
+      }
       
       // Create customer record (only shared personal info)
       const [customer] = await knex('customers').insert({
         tenant_id: acmeTenant.id,
-        user_id: customerUser.id,
+        user_id: customerUser ? customerUser.id : null,
         customer_code: testCustomer.customerCode,
         customer_type: 'individual',
         first_name: testCustomer.firstName,
@@ -684,27 +696,30 @@ exports.seed = async function(knex) {
       const customerCode = `CUST-${tenantSubdomain.toUpperCase()}-${String(i).padStart(4, '0')}`;
       const customerEmail = `customer${i}@${tenantSubdomain}.com`;
       
-      // Create user account for customer
-      const [customerUser] = await knex('users').insert({
-        tenant_id: tenant.id,
-        email: customerEmail,
-        password_hash: additionalCustomerPasswordHash,
-        first_name: `Customer${i}`,
-        last_name: tenant.name.split(' ')[0],
-        status: 'active',
-        email_verified: true
-      }).returning('*');
-      
-      // Assign customer role
-      await knex('user_roles').insert({
-        user_id: customerUser.id,
-        role_id: customerRoleForTenant.id
-      });
+      let customerUser = null;
+      if (seedCustomerUsers) {
+        // Create user account for customer (portal login)
+        [customerUser] = await knex('users').insert({
+          tenant_id: tenant.id,
+          email: customerEmail,
+          password_hash: additionalCustomerPasswordHash,
+          first_name: `Customer${i}`,
+          last_name: tenant.name.split(' ')[0],
+          status: 'active',
+          email_verified: true
+        }).returning('*');
+
+        // Assign customer role
+        await knex('user_roles').insert({
+          user_id: customerUser.id,
+          role_id: customerRoleForTenant.id
+        });
+      }
       
       // Create customer record (only shared personal info)
       const [customer] = await knex('customers').insert({
         tenant_id: tenant.id,
-        user_id: customerUser.id, // With login access
+        user_id: customerUser ? customerUser.id : null,
         customer_code: customerCode,
         customer_type: 'individual',
         first_name: `Customer${i}`,

@@ -5,6 +5,7 @@ param(
     [switch]$SkipInstall,
     [switch]$NoStart,
     [switch]$ForceSeed,
+    [switch]$SeedCustomerUsers,
     [string]$PsqlPath
 )
 
@@ -350,10 +351,10 @@ CORS_ORIGIN=http://localhost:4200
     Write-Info "Running Knex migrations to apply database schema..."
     Write-Host "$($Bright)$($Cyan)+============================================================+$($Reset)"
     Write-Host "$($Bright)$($Cyan)|  NESTJS KNEX MIGRATION - Creating Database Schema       |$($Reset)"
-    Write-Host "$($Bright)$($Cyan)|  Command: npx knex migrate:latest                       |$($Reset)"
+    Write-Host "$($Bright)$($Cyan)|  Command: npm run db:migrate                            |$($Reset)"
     Write-Host "$($Bright)$($Cyan)+=========================================================+$($Reset)"
     Write-Host "$($Gray)  Migration output:$($Reset)"
-    $migrateOutput = npx knex migrate:latest 2>&1
+    $migrateOutput = npm run db:migrate 2>&1
     $migrateOutput | ForEach-Object { Write-Host "$($Gray)  |$($Reset) $_" }
     $migrateSuccess = $LASTEXITCODE -eq 0
     
@@ -377,12 +378,25 @@ CORS_ORIGIN=http://localhost:4200
         Write-Step "Running Knex seeds to populate baseline data..."
         Write-Host "$($Bright)$($Cyan)+============================================================+$($Reset)"
         Write-Host "$($Bright)$($Cyan)|  NESTJS KNEX SEED - Populating Initial Data              |$($Reset)"
-        Write-Host "$($Bright)$($Cyan)|  Command: npx knex seed:run                              |$($Reset)"
+        Write-Host "$($Bright)$($Cyan)|  Command: npm run db:seed                               |$($Reset)"
         Write-Host "$($Bright)$($Cyan)+=========================================================+$($Reset)"
         Write-Host "$($Gray)  Seed output:$($Reset)"
-        $seedOutput = npx knex seed:run 2>&1
+
+        # By default, avoid creating customer portal login accounts in `users`.
+        # Use -SeedCustomerUsers to also create customer `users` rows.
+        if ($SeedCustomerUsers) {
+            $env:SEED_CUSTOMER_USERS = '1'
+            Write-Info "Customer portal users seeding enabled (SEED_CUSTOMER_USERS=1)"
+        } else {
+            $env:SEED_CUSTOMER_USERS = '0'
+            Write-Info "Customer portal users seeding disabled (SEED_CUSTOMER_USERS=0)"
+        }
+
+        $seedOutput = npm run db:seed 2>&1
         $seedOutput | ForEach-Object { Write-Host "$($Gray)  |$($Reset) $_" }
         $seedSuccess = $LASTEXITCODE -eq 0
+
+        Remove-Item env:SEED_CUSTOMER_USERS -ErrorAction SilentlyContinue
 
         if (!$seedSuccess) {
             Pop-Location
@@ -571,8 +585,8 @@ ON CONFLICT DO NOTHING;
     Write-Host ""
     Write-Host "$($Bright)$($Cyan)📦 NestJS Backend:$($Reset)"
     Write-Host "  • Location: api/"
-    Write-Host "  • Migrations: npx knex migrate:latest"
-    Write-Host "  • Seeds: npx knex seed:run"
+    Write-Host "  • Migrations: npm run db:migrate"
+    Write-Host "  • Seeds: npm run db:seed"
     Write-Host "  • Start: npm run start:dev"
     Write-Host ""
     Write-Host "$($Cyan)To start the servers:$($Reset)"
@@ -583,8 +597,12 @@ ON CONFLICT DO NOTHING;
     Write-Host "  System Admin: admin@exitsaas.com / Admin@123"
     Write-Host "  Tenant Admin (ACME): admin-1@example.com / Admin@123"
     Write-Host "  Tenant Admin (TechStart): admin-2@example.com / Admin@123"
-    Write-Host "  Customer Portal (ACME): customer1@acme.com / Admin@123"
-    Write-Host "  Customer Portal (TechStart): customer1@techstart.com / Admin@123"
+    if ($SeedCustomerUsers) {
+        Write-Host "  Customer Portal (ACME): customer1@acme.com / Admin@123"
+        Write-Host "  Customer Portal (TechStart): customer1@techstart.com / Admin@123"
+    } else {
+        Write-Host "  Customer Portal Users: Not seeded (run setup.ps1 -SeedCustomerUsers)"
+    }
     Write-Host ""
     Write-Host "$($Bright)$($Magenta)🚀 Access Points:$($Reset)"
     Write-Host "  • Staff Portal: http://localhost:4200/platform/login"

@@ -52,6 +52,7 @@ const knexConfig: { [key: string]: Knex.Config } = {
       user: process.env.DB_USER || 'postgres',
       password: process.env.DB_PASSWORD || 'admin',
       database: process.env.DB_NAME || 'exits_saas_db',
+      ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
     },
     migrations: {
       directory: './src/migrations',

@@ -58,7 +58,9 @@ exports.seed = async function (knex) {
     const existingPermissions = await knex('permissions')
       .whereIn('permission_key', cashFloatPermissions.map(p => p.permission_key));
 
-    const existingKeys = existingPermissions.map(p => p.permission_key);
+    const existingKeys = existingPermissions
+      .map(p => p.permission_key || p.permissionKey)
+      .filter(Boolean);
     const newPermissions = cashFloatPermissions.filter(
       p => !existingKeys.includes(p.permission_key)
     );
